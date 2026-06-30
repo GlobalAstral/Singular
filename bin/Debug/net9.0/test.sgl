@@ -1,0 +1,9 @@
+
+public class Main {
+  public static fun main() : int {
+
+    
+
+    return 0;
+  }
+}

@@ -1,0 +1,14 @@
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\bin\Debug\net9.0\Singular.exe
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\bin\Debug\net9.0\Singular.deps.json
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\bin\Debug\net9.0\Singular.runtimeconfig.json
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\bin\Debug\net9.0\Singular.dll
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\bin\Debug\net9.0\Singular.pdb
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.AssemblyInfoInputs.cache
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.AssemblyInfo.cs
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.csproj.CoreCompileInputs.cache
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.dll
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\refint\Singular.dll
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.pdb
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.genruntimeconfig.cache
+C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\ref\Singular.dll
