@@ -171,8 +171,8 @@ public partial class Parser
     return arguments;
   }
 
-  public void SavePeek() => saved_peek = pik;
-  public void RestorePeek() => pik = saved_peek;
+  public void SavePeek() => saved_peek = peek;
+  public void RestorePeek() => peek = saved_peek;
 
   private int saved_peek = 0;
 

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 public abstract class Processor<T, O>(List<T> content) where T: new() where O: new()
 {
-  protected int pik = 0;
+  protected int peek = 0;
   protected List<O> output = [];
 
   protected static string EXPECTED_ERROR(T expected) => "Expected " + Convert.ToString(expected);
@@ -13,14 +13,14 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
   [DoesNotReturn]
   protected void Error(string msg) => throw new Exception(msg);
 
-  protected bool HasPeek(int offset = 0) => (pik + offset) >= 0 && (pik + offset) < content.Count;
-  protected T Peek(int offset = 0) => HasPeek(offset) ? content[pik + offset] : new T();
+  protected bool HasPeek(int offset = 0) => (peek + offset) >= 0 && (peek + offset) < content.Count;
+  protected T Peek(int offset = 0) => HasPeek(offset) ? content[peek + offset] : new T();
   protected bool Peek(T check, int offset = 0)
   {
     return EqualityComparer<T>.Default.Equals(Peek(offset), check);
   }
 
-  protected T Consume() => HasPeek() ? content[pik++] : new T();
+  protected T Consume() => HasPeek() ? content[peek++] : new T();
   protected void Consume(int amount) { for (int i = 0; i < amount; i++, Consume()); }
   protected bool TryConsume(T consume)
   {
@@ -81,14 +81,14 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
   protected void Switch(List<T> i, Action action)
   {
     List<T> prev = content;
-    int prev_peek = pik;
+    int prev_peek = peek;
 
     content = i;
-    pik = 0;
+    peek = 0;
 
     action();
 
-    pik = prev_peek;
+    peek = prev_peek;
     content = prev;
   }
   protected void Switch(List<T> i, Action action, T separator) => Switch(i, () => Alternate(separator, action));
@@ -101,7 +101,7 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
 
   protected bool CheckAheadFor(T find)
   {
-    int old_peek = pik;
+    int old_peek = peek;
     bool found = false;
     while (HasPeek())
     {
@@ -111,7 +111,7 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
         break;
       }
     }
-    pik = old_peek;
+    peek = old_peek;
     return found;
   }
 
