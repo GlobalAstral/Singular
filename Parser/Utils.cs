@@ -1,5 +1,3 @@
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
 using Lexer;
 
 namespace Parser;
@@ -109,22 +107,6 @@ public partial class Parser
     return 0;
   });
 
-  protected Field ParseField()
-  {
-    return WithModifiers(handler =>
-    {
-      if (handler.IsReadonly)
-        Error("Field cannot be readonly, only mutable is accepted");
-      DataType dataType = ParseType();
-      string name = ParseIdentifier();
-      Expression? expression = null;
-      if (TryConsume(new Token(Token.Type.EQUALS)))
-        expression = ParseExpression();
-      Semi();
-      return new Field(name, dataType, handler, expression);
-    });
-  }
-
   protected DataType ParseType()
   {
     DataType? dataType = null;
@@ -189,8 +171,16 @@ public partial class Parser
     return arguments;
   }
 
+  public void SavePeek() => saved_peek = pik;
+  public void RestorePeek() => pik = saved_peek;
+
+  private int saved_peek = 0;
+
   private static readonly Token IDENTIFIER = new(Token.Type.IDENTIFIER);
   private static readonly Token SEMI = new(Token.Type.SEMI);
+  private static readonly Token COMMA = new(Token.Type.COMMA);
+  private static readonly Token ANGLE_BLOCK = new(Token.Type.ANGLE_BLOCK);
+
   protected bool Wakeup(Token.Type token) => TryConsume(new Token(token));
   protected string ParseIdentifier() => (string)TryConsumeError(IDENTIFIER).value!;
   protected void Semi() => TryConsumeError(SEMI);
