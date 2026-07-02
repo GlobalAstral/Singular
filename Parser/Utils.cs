@@ -182,6 +182,18 @@ public partial class Parser
     return arguments;
   }
 
+  private string[] ParseGenerics()
+  {
+    if (Peek(ANGLE_BLOCK))
+    {
+      List<Token> generics_body = (List<Token>)Consume().value!;
+      List<string> generics = [];
+      Switch(generics_body, () => Alternate(COMMA, () => generics.Add((string) TryConsumeError(IDENTIFIER).value!) ));
+      return [.. generics];
+    }
+    return [];
+  }
+
   public void SavePeek() => saved_peek = peek;
   public void RestorePeek() => peek = saved_peek;
 

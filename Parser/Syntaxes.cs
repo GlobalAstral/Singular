@@ -8,19 +8,7 @@ public partial class Parser
   private readonly Stack<ClassContext> currentClass = [];
   private readonly List<ClassContext> classes = [];
 
-  private string[] ParseGenerics()
-  {
-    if (Peek(ANGLE_BLOCK))
-    {
-      List<Token> generics_body = (List<Token>)Consume().value!;
-      List<string> generics = [];
-      Switch(generics_body, () => Alternate(COMMA, () => generics.Add((string) TryConsumeError(IDENTIFIER).value!) ));
-      return [.. generics];
-    }
-    return [];
-  }
-
-  private void RegisterSyntaxes()
+  private void RegisterClassSyntax()
   {
     syntaxes.Add(
       new Syntax(NodeInstanceID.CLASS_DECL)
@@ -48,6 +36,11 @@ public partial class Parser
           classes.Add(currentClass.Pop());
         })
     );
+  }
+
+  private void RegisterSyntaxes()
+  {
+    RegisterClassSyntax();
   }
 }
 
