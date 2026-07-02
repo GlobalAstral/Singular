@@ -1,3 +1,3 @@
 namespace Parser;
 
-public record Variable(DataType Type, string Name) {}
+public record Variable(ModifierHandler Modifiers, DataType Type, string Name) {}

@@ -12,3 +12,4 @@ C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\ne
 C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.pdb
 C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.genruntimeconfig.cache
 C:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\ref\Singular.dll
+c:\Users\user\Desktop\SubDesktop\Oggetti\Programmazione\C#\Singular\obj\Debug\net9.0\Singular.sourcelink.json

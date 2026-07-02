@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "F0SkGjJ1I8s=",
+  "dgSpecHash": "N6HA9E1OOO4=",
   "success": true,
-  "projectFilePath": "C:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj",
+  "projectFilePath": "c:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\user\\.nuget\\packages\\microsoft.netcore.app.ref\\9.0.11\\microsoft.netcore.app.ref.9.0.11.nupkg.sha512",
     "C:\\Users\\user\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\9.0.11\\microsoft.windowsdesktop.app.ref.9.0.11.nupkg.sha512",

@@ -6,4 +6,6 @@ public class Main {
 
     return 0;
   }
+
+  private static int Salam = 0;
 }

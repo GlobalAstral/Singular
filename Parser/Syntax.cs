@@ -1,34 +1,47 @@
+using System.ComponentModel;
 using Lexer;
 
 namespace Parser;
 
 public enum NodeInstanceID
 {
-  
+  CLASS_DECL,
+  NULL
 }
 
-public class SyntaxInstance(NodeInstanceID id, Dictionary<string, (Type, object)> properties, Action<SyntaxInstance>? final)
+public class SyntaxInstance(NodeInstanceID id, Dictionary<string, (Type, object)> properties)
 {
-  private readonly NodeInstanceID Id = id;
+  public SyntaxInstance() : this(NodeInstanceID.NULL, []) { }
+  public readonly NodeInstanceID Id = id;
   private readonly Dictionary<string, (Type, object)> Properties = properties;
-  public readonly Action<SyntaxInstance>? Final = final;
+
+  private dynamic GetValue(string key)
+  {
+    var (type, value) = Properties[key];
+    return Convert.ChangeType(value, type);
+  }
+
+  public dynamic this[string key] {
+    get => GetValue(key);
+  }
 }
 
-public partial class Syntax
+public partial class Syntax(NodeInstanceID id)
 {
   private readonly List<SyntaxNode> PreNodes = [];
   private Token wakeup = new(Token.Type.NULL);
   private readonly List<SyntaxNode> Nodes = [];
-
+  private Action<SyntaxInstance>? finalize = null;
+  private bool DoNotInstantiate_ = false;
   public Syntax Wakeup(Token w)
   {
     wakeup = w;
     return this;
   }
 
-  public Syntax Capture(Type type, string name, Func<object> get)
+  public Syntax Capture<T>(string name, Func<object> get)
   {
-    Nodes.Add(new CaptureDef(type, name, get));
+    Nodes.Add(new CaptureDef(typeof(T), name, get));
     return this;
   }
 
@@ -38,9 +51,9 @@ public partial class Syntax
     return this;
   }
 
-  public Syntax CapturePre(Type type, string name, Func<object> get)
+  public Syntax CapturePre<T>(string name, Func<object> get)
   {
-    PreNodes.Add(new CaptureDef(type, name, get));
+    PreNodes.Add(new CaptureDef(typeof(T), name, get));
     return this;
   }
 
@@ -50,7 +63,19 @@ public partial class Syntax
     return this;
   }
 
-  public SyntaxInstance? Build(Parser parser, NodeInstanceID id, Action<SyntaxInstance>? final)
+  public Syntax Finalize(Action<SyntaxInstance> action)
+  {
+    finalize = action;
+    return this;
+  }
+
+  public Syntax DoNotInstantiate()
+  {
+    DoNotInstantiate_ = true;
+    return this;
+  }
+
+  public SyntaxInstance? Build(Parser parser)
   {
     Dictionary<string, (Type, object)> properties = [];
 
@@ -66,8 +91,10 @@ public partial class Syntax
 
     Nodes.ForEach(node => node.Run(parser, properties) );
 
-    return new SyntaxInstance(id, properties, final);
-  }
+    SyntaxInstance instance = new(id, properties);
 
-  public SyntaxInstance? Build(Parser parser, NodeInstanceID id) => Build(parser, id, null);
+    finalize?.Invoke(instance);
+
+    return DoNotInstantiate_ ? null : instance;
+  }
 }

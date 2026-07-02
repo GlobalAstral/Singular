@@ -1,11 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
+using Lexer;
 
 public abstract class Processor<T, O>(List<T> content) where T: new() where O: new()
 {
   protected int peek = 0;
   protected List<O> output = [];
 
-  protected static string EXPECTED_ERROR(T expected) => "Expected " + Convert.ToString(expected);
+  protected static string EXPECTED_ERROR(T expected, T found) => $"Expected {Convert.ToString(expected)} found {found}";
 
   [DoesNotReturn]
   protected void Error(string msg) => throw new Exception(msg);
@@ -33,7 +34,7 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
     if (EqualityComparer<T>.Default.Equals(Peek(), consume))
       return Consume();
 
-    Error(EXPECTED_ERROR(consume));
+    Error(EXPECTED_ERROR(consume, Peek()));
     return new T();
   }
 
@@ -52,17 +53,20 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
   protected void DoUntil(T find, Action action)
   {
     bool found = false;
+    T? instead = default;
     while (HasPeek())
     {
       if (TryConsume(find))
       {
+        instead = default;
         found = true;
         break; 
       }
+      instead = Peek();
       action();
     }
     if (!found)
-      Error(EXPECTED_ERROR(find));
+      Error(EXPECTED_ERROR(find, instead!));
   }
   protected void DoUntil(T find, Action action, T separator)
   {

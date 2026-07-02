@@ -60,9 +60,9 @@ public class FunctionType(DataType? Result, DataType[] Args) : DataType
   public DataType? Return {get;} = Result;
   public DataType[] Arguments {get;} = Args;
 }
-public class ObjectType(ClassDescriptor @class, DataType[] generics) : DataType
+public class ObjectType(ClassContext @class, DataType[] generics) : DataType
 {
-  public ClassDescriptor Class {get;} = @class;
+  public ClassContext Class {get;} = @class;
   public DataType[] Generics {get;} = generics;
 }
 
@@ -118,7 +118,7 @@ public static class References {
     return found;
   }
 
-  public static DataType GetObjectType(ClassDescriptor @class, DataType[] generics)
+  public static DataType GetObjectType(ClassContext @class, DataType[] generics)
   {
     ObjectType? found = ObjectCache.Find(ele =>
     {

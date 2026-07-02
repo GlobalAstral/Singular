@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj": {}
+    "c:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj": {}
   },
   "projects": {
-    "C:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj": {
+    "c:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj",
+        "projectUniqueName": "c:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj",
         "projectName": "Singular",
-        "projectPath": "C:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj",
+        "projectPath": "c:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj",
         "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\obj\\",
+        "outputPath": "c:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config"

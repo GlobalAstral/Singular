@@ -1,4 +1,5 @@
 ﻿using Lexer;
+using Parser;
 partial class Singular
 {
   public static readonly string SRC_EXT = ".sgl";
@@ -20,5 +21,11 @@ partial class Singular
     List<Token> tokens = lexer.Process();
     Console.WriteLine("TOKENS:\n");
     tokens.ForEach(token => Console.WriteLine(token));
+
+    Parser.Parser parser = new(tokens);
+    List<SyntaxInstance> statements = parser.Process();
+    Console.WriteLine("Statements:\n");
+    statements.ForEach(statement => Console.WriteLine(statement));
+
   }
 }

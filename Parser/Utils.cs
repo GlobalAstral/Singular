@@ -107,6 +107,15 @@ public partial class Parser
     return 0;
   });
 
+  protected ModifierHandler GetModifiers(Action<ModifierHandler> sanitize)
+  {
+    return WithModifiers(handler =>
+    {
+      sanitize(handler);
+      return handler;
+    });
+  }
+
   protected DataType ParseType()
   {
     DataType? dataType = null;
@@ -160,14 +169,16 @@ public partial class Parser
   {
     List<Token> args = (List<Token>)TryConsumeError(new Token(Token.Type.PAREN_BLOCK)).value!;
     List<Variable> arguments = [];
-    Switch(args, () =>
+    Switch(args, () => WithModifiers(handler =>
     {
+      if (handler.IsReadonly)
+        Error("Argument cannot be readonly");
       DataType t = ParseType();
       string ident = ParseIdentifier();
       if (arguments.Any(v => v.Name == ident))
         Error($"Function type cannot have duplicate arguments");
-      arguments.Add(new Variable(t, ident));
-    }, new Token(Token.Type.COMMA));
+      arguments.Add(new Variable(handler, t, ident));
+    }), new Token(Token.Type.COMMA));
     return arguments;
   }
 
@@ -180,6 +191,7 @@ public partial class Parser
   private static readonly Token SEMI = new(Token.Type.SEMI);
   private static readonly Token COMMA = new(Token.Type.COMMA);
   private static readonly Token ANGLE_BLOCK = new(Token.Type.ANGLE_BLOCK);
+  private static readonly Token CURLY_BLOCK = new(Token.Type.CURLY_BLOCK);
 
   protected bool Wakeup(Token.Type token) => TryConsume(new Token(token));
   protected string ParseIdentifier() => (string)TryConsumeError(IDENTIFIER).value!;
