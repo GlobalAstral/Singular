@@ -1,13 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "N6HA9E1OOO4=",
+  "dgSpecHash": "clcDCm+cAXg=",
   "success": true,
-  "projectFilePath": "c:\\Users\\user\\Desktop\\SubDesktop\\Oggetti\\Programmazione\\C#\\Singular\\Singular.csproj",
+  "projectFilePath": "/home/globalastral/Scrivania/Singular/Singular.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\user\\.nuget\\packages\\microsoft.netcore.app.ref\\9.0.11\\microsoft.netcore.app.ref.9.0.11.nupkg.sha512",
-    "C:\\Users\\user\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\9.0.11\\microsoft.windowsdesktop.app.ref.9.0.11.nupkg.sha512",
-    "C:\\Users\\user\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\9.0.11\\microsoft.aspnetcore.app.ref.9.0.11.nupkg.sha512",
-    "C:\\Users\\user\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\9.0.11\\microsoft.netcore.app.host.win-x64.9.0.11.nupkg.sha512"
+    "/home/globalastral/.nuget/packages/microsoft.netcore.app.ref/9.0.19/microsoft.netcore.app.ref.9.0.19.nupkg.sha512",
+    "/home/globalastral/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.19/microsoft.aspnetcore.app.ref.9.0.19.nupkg.sha512",
+    "/home/globalastral/.nuget/packages/microsoft.netcore.app.host.linux-x64/9.0.19/microsoft.netcore.app.host.linux-x64.9.0.19.nupkg.sha512"
   ],
   "logs": []
 }

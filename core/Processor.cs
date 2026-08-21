@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Lexer;
 
-public abstract class Processor<T, O>(List<T> content) where T: new() where O: new()
+public abstract class Processor<T, O>(T[] content) where T: new() where O: new()
 {
   protected int peek = 0;
   protected List<O> output = [];
@@ -11,7 +11,7 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
   [DoesNotReturn]
   protected void Error(string msg) => throw new Exception(msg);
 
-  protected bool HasPeek(int offset = 0) => (peek + offset) >= 0 && (peek + offset) < content.Count;
+  protected bool HasPeek(int offset = 0) => (peek + offset) >= 0 && (peek + offset) < content.Length;
   protected T Peek(int offset = 0) => HasPeek(offset) ? content[peek + offset] : new T();
   protected bool Peek(T check, int offset = 0)
   {
@@ -79,9 +79,9 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
     });
   }
 
-  protected void Switch(List<T> i, Action action)
+  protected void Switch(T[] i, Action action)
   {
-    List<T> prev = content;
+    T[] prev = content;
     int prev_peek = peek;
 
     content = i;
@@ -92,7 +92,7 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
     peek = prev_peek;
     content = prev;
   }
-  protected void Switch(List<T> i, Action action, T separator) => Switch(i, () => Alternate(separator, action));
+  protected void Switch(T[] i, Action action, T separator) => Switch(i, () => Alternate(separator, action));
 
   public static Processor<T, O> operator <<(Processor<T, O> processor, O other)
   {
@@ -116,5 +116,5 @@ public abstract class Processor<T, O>(List<T> content) where T: new() where O: n
     return found;
   }
 
-  public abstract List<O> Process();
+  public abstract O[] Process();
 }

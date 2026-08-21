@@ -5,42 +5,29 @@ public partial class Parser
 {
   private readonly List<Syntax> syntaxes = [];
 
-  private readonly Stack<ClassContext> currentClass = [];
-  private readonly List<ClassContext> classes = [];
-
-  private void RegisterClassSyntax()
-  {
-    syntaxes.Add(
-      new Syntax(NodeInstanceID.CLASS_DECL)
-        .CapturePre<ModifierHandler>("modifiers", () => GetModifiers(handler =>
-        {
-          if (handler.IsMutable)
-            Error("Class cannot be mutable");
-        }))
-        .Wakeup(new(Token.Type.CLASS))
-        .Capture<string>("name", () => (string)TryConsumeError(IDENTIFIER).value!)
-        .Capture<string[]>("generics", ParseGenerics)
-        .Capture<List<Token>>("body", () => (List<Token>)TryConsumeError(CURLY_BLOCK).value!)
-        .DoNotInstantiate()
-        .Finalize(instance =>
-        {
-          ModifierHandler modifiers = instance["modifiers"];
-          string name = instance["name"];
-          string[] generics = instance["generics"];
-          List<Token> body = instance["body"];
-
-          ClassContext context = new(modifiers, name, generics);
-
-          currentClass.Push(context);
-          Switch(body, () => Parse());
-          classes.Add(currentClass.Pop());
-        })
-    );
-  }
+  private readonly Stack<string> namespaces = [];
 
   private void RegisterSyntaxes()
   {
-    RegisterClassSyntax();
+    Register(
+      new Syntax(NodeInstanceID.NAMESP)
+        .Wakeup(this, new(Token.Type.NAMESPACE))
+        .Capture<string>("name", () => TryConsumeError(new(Token.Type.IDENTIFIER)).value!)
+        .Capture<Token[]>("body", () => TryConsumeError(new(Token.Type.CURLY_BLOCK)).value!)
+        .DoNotInstantiate()
+        .Finalize(instance =>
+        {
+          string name = instance["name"];
+          Token[] body = instance["body"];
+          namespaces.Push(name);
+          Switch(body, () => Parse());
+          namespaces.Pop();
+        })
+    );
+
+    
   }
+
+  private void Register(Syntax syntax) => syntaxes.Add(syntax);
 }
 

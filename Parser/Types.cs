@@ -60,18 +60,11 @@ public class FunctionType(DataType? Result, DataType[] Args) : DataType
   public DataType? Return {get;} = Result;
   public DataType[] Arguments {get;} = Args;
 }
-public class ObjectType(ClassContext @class, DataType[] generics) : DataType
-{
-  public ClassContext Class {get;} = @class;
-  public DataType[] Generics {get;} = generics;
-}
 
 public static class References {
   private static readonly List<ArrayType> ArrayCache = [];
   private static readonly List<PointerType> PointerCache = [];
   private static readonly List<FunctionType> FunctionCache = [];
-  private static readonly List<ObjectType> ObjectCache = [];
-
   public static DataType GetArrayType(DataType elements)
   {
     ArrayType? found = ArrayCache.Find(ele => ele.Elements == elements);
@@ -114,30 +107,6 @@ public static class References {
     {
       found = new FunctionType(result, args);
       FunctionCache.Add(found);
-    }
-    return found;
-  }
-
-  public static DataType GetObjectType(ClassContext @class, DataType[] generics)
-  {
-    ObjectType? found = ObjectCache.Find(ele =>
-    {
-      if (@class != ele.Class)
-        return false;
-      if (generics.Length != ele.Generics.Length)
-        return false;
-      for (int i = 0; i < generics.Length; i++)
-      {
-        if (generics[i] != ele.Generics[i])
-          return false;
-      }
-      return true;
-    });
-
-    if (found is null)
-    {
-      found = new ObjectType(@class, generics);
-      ObjectCache.Add(found);
     }
     return found;
   }

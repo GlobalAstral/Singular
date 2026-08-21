@@ -18,14 +18,15 @@ partial class Singular
     string content = File.ReadAllText(name);
 
     Lexer.Lexer lexer = new([.. content]);
-    List<Token> tokens = lexer.Process();
+    Token[] tokens = lexer.Process();
     Console.WriteLine("TOKENS:\n");
-    tokens.ForEach(token => Console.WriteLine(token));
+    foreach (Token item in tokens)
+      Console.WriteLine(item);
 
     Parser.Parser parser = new(tokens);
-    List<SyntaxInstance> statements = parser.Process();
+    SyntaxInstance[] statements = parser.Process();
     Console.WriteLine("Statements:\n");
-    statements.ForEach(statement => Console.WriteLine(statement));
-
+    foreach (SyntaxInstance item in statements)
+      Console.WriteLine(item);
   }
 }

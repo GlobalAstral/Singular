@@ -5,7 +5,7 @@ namespace Parser;
 
 public enum NodeInstanceID
 {
-  CLASS_DECL,
+  NAMESP,
   NULL
 }
 
@@ -28,14 +28,19 @@ public class SyntaxInstance(NodeInstanceID id, Dictionary<string, (Type, object)
 
 public partial class Syntax(NodeInstanceID id)
 {
-  private readonly List<SyntaxNode> PreNodes = [];
-  private Token wakeup = new(Token.Type.NULL);
+  private Func<bool> wakeup = () => false;
   private readonly List<SyntaxNode> Nodes = [];
   private Action<SyntaxInstance>? finalize = null;
   private bool DoNotInstantiate_ = false;
-  public Syntax Wakeup(Token w)
+  public Syntax Wakeup(Func<bool> w)
   {
     wakeup = w;
+    return this;
+  }
+
+  public Syntax Wakeup(Parser parser, Token w)
+  {
+    wakeup = () => parser.Wakeup(w);
     return this;
   }
 
@@ -48,18 +53,6 @@ public partial class Syntax(NodeInstanceID id)
   public Syntax Mandatory(Token token)
   {
     Nodes.Add(new Needed(token));
-    return this;
-  }
-
-  public Syntax CapturePre<T>(string name, Func<object> get)
-  {
-    PreNodes.Add(new CaptureDef(typeof(T), name, get));
-    return this;
-  }
-
-  public Syntax MandatoryPre(Token token)
-  {
-    PreNodes.Add(new Needed(token));
     return this;
   }
 
@@ -81,9 +74,7 @@ public partial class Syntax(NodeInstanceID id)
 
     parser.SavePeek();
 
-    PreNodes.ForEach(node => node.Run(parser, properties) );
-
-    if (!parser.Wakeup(wakeup))
+    if (!wakeup())
     {
       parser.RestorePeek();
       return null;

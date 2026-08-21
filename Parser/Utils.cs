@@ -1,3 +1,4 @@
+using System.Text;
 using Lexer;
 
 namespace Parser;
@@ -81,22 +82,12 @@ public partial class Parser
   protected T WithModifiers<T>(Func<ModifierHandler, T> action)
   {
     ModifierHandler handler = new();
-
-    if (TryConsume(new Token(Token.Type.PUBLIC)))
-      handler.Public();
-    else if (TryConsume(new Token(Token.Type.PROTECTED)))
-      handler.Protected();
-    else if (TryConsume(new Token(Token.Type.PRIVATE)))
-      handler.Private();
     
     if (TryConsume(new Token(Token.Type.STATIC)))
       handler.Static();
     
     if (TryConsume(new Token(Token.Type.MUTABLE)))
       handler.Mutable();
-    
-    if (TryConsume(new Token(Token.Type.READONLY)))
-      handler.Readonly();
     
     return action(handler);
   }
@@ -115,7 +106,20 @@ public partial class Parser
       return handler;
     });
   }
-
+  protected bool PeekType()
+  {
+    SavePeek();
+    try
+    {
+      ParseType();
+      RestorePeek();
+      return true;
+    } catch (Exception)
+    {
+      RestorePeek();
+      return false;
+    }
+  }
   protected DataType ParseType()
   {
     DataType? dataType = null;
@@ -167,7 +171,7 @@ public partial class Parser
 
   protected List<Variable> ParseArgs()
   {
-    List<Token> args = (List<Token>)TryConsumeError(new Token(Token.Type.PAREN_BLOCK)).value!;
+    Token[] args = (Token[])TryConsumeError(new Token(Token.Type.PAREN_BLOCK)).value!;
     List<Variable> arguments = [];
     Switch(args, () => WithModifiers(handler =>
     {
@@ -186,12 +190,43 @@ public partial class Parser
   {
     if (Peek(ANGLE_BLOCK))
     {
-      List<Token> generics_body = (List<Token>)Consume().value!;
+      Token[] generics_body = (Token[])Consume().value!;
       List<string> generics = [];
       Switch(generics_body, () => Alternate(COMMA, () => generics.Add((string) TryConsumeError(IDENTIFIER).value!) ));
       return [.. generics];
     }
     return [];
+  }
+
+  protected string MangleIdentifier()
+  {
+    StringBuilder builder = new();
+    builder.Append((string)TryConsumeError(IDENTIFIER).value!);
+
+    foreach (string namesp in namespaces.Reverse())
+      builder.Insert(0, $"{namesp}_");
+
+    return builder.ToString();
+  }
+
+  protected string ParseIdentifier()
+  {
+    StringBuilder builder = new();
+    builder.Append((string)TryConsumeError(IDENTIFIER).value!);
+
+    while (Peek(new Token(Token.Type.COLON)) && Peek(new Token(Token.Type.COLON), 1))
+    {
+      Consume(2);
+      builder.Append($"_{(string)TryConsumeError(IDENTIFIER).value!}");
+    }
+
+    return builder.ToString();
+  }
+
+  private Expression ParseExpression()
+  {
+    //TODO
+    return Expression.EMPTY;
   }
 
   public void SavePeek() => saved_peek = peek;
@@ -206,6 +241,5 @@ public partial class Parser
   private static readonly Token CURLY_BLOCK = new(Token.Type.CURLY_BLOCK);
 
   protected bool Wakeup(Token.Type token) => TryConsume(new Token(token));
-  protected string ParseIdentifier() => (string)TryConsumeError(IDENTIFIER).value!;
   protected void Semi() => TryConsumeError(SEMI);
 }

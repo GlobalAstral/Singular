@@ -4,7 +4,7 @@ namespace Parser;
 
 using Statement = SyntaxInstance;
 
-public partial class Parser(List<Token> tokens) : Processor<Token, Statement>(tokens)
+public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens)
 {
   public Token Require(Token consume) => TryConsumeError(consume);
   public bool Wakeup(Token consume) => TryConsume(consume);
@@ -22,7 +22,7 @@ public partial class Parser(List<Token> tokens) : Processor<Token, Statement>(to
     return new();
   }
 
-  public override List<Statement> Process()
+  public override Statement[] Process()
   {
     RegisterSyntaxes();
 
@@ -34,6 +34,6 @@ public partial class Parser(List<Token> tokens) : Processor<Token, Statement>(to
       _ = this << statement;
     }
     
-    return output;
+    return [.. output];
   }
 }

@@ -1,11 +1,11 @@
 
-public class Main {
-  public static fun main() : int {
+class public Main {
+  fun public static main() : int {
 
     
 
     return 0;
   }
 
-  private static int Salam = 0;
+  field private static int Salam = 0;
 }
