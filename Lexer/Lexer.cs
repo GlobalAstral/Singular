@@ -13,7 +13,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
     char ch = char.ToUpper(c);
     return ch == 'A' || ch == 'B' || ch == 'C' || ch == 'D' || ch == 'E' || ch == 'F';
   }
-  private Token Tokenize()
+  public override Token ProcessOne()
   { 
     if (TryConsume('\n'))
     {
@@ -33,7 +33,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
       List<Token> tokens = [];
       DoUntil(GetCloseBracket(open), () =>
       {
-        Token token = Tokenize();
+        Token token = ProcessOne();
         if (token.type != Token.Type.NULL)
           tokens.Add(token);
       });
@@ -97,7 +97,6 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
         "float" => new Token(Token.Type.FLOAT, line),
         "double" => new Token(Token.Type.DOUBLE, line),
         "string" => new Token(Token.Type.STRING, line),
-        "object" => new Token(Token.Type.OBJECT, line),
         "fun" => new Token(Token.Type.FUN, line),
         "namespace" => new(Token.Type.NAMESPACE, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
@@ -110,12 +109,8 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
 
   public override Token[] Process()
   {
-    while (HasPeek())
-    {
-      Token token = Tokenize();
-      if (token.type != Token.Type.NULL)
-        _ = this << token;
-    }
-    return [.. output];
+    List<Token> tokens = [.. base.Process()];
+    tokens.RemoveAll(t => t.type == Token.Type.NULL);
+    return [.. tokens];
   }
 }

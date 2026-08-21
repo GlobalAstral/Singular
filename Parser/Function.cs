@@ -1,6 +1,21 @@
 namespace Parser;
 
-public record Function(ModifierHandler Modifiers, string Name, Variable[] Arguments, DataType? ReturnType, SyntaxInstance? Body)
+public class Function(ModifierHandler modifiers, string name, Variable[] arguments, DataType? returnType, Statement? body)
 {
-  
+  public ModifierHandler Modifiers {get;} = modifiers;
+  public string Name {get;} = name;
+  public Variable[] Arguments {get;} = arguments;
+  public DataType? ReturnType {get;} = returnType;
+  public Statement? Body {get;} = body;
+
+  public override bool Equals(object? obj)
+  { 
+    if (obj == null || GetType() != obj.GetType())
+      return false;
+
+    Function f = (Function)obj;    
+    return Name == f.Name && Arguments.Length == f.Arguments.Length && Arguments.Zip(f.Arguments).All(pair => pair.First == pair.Second) && ReturnType == f.ReturnType;
+  }
+
+  public override int GetHashCode() => HashCode.Combine(Name, Arguments, ReturnType);
 }

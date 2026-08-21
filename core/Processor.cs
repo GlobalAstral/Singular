@@ -79,7 +79,7 @@ public abstract class Processor<T, O>(T[] content) where T: new() where O: new()
     });
   }
 
-  protected void Switch(T[] i, Action action)
+  protected R Switch<R>(T[] i, Func<R> action)
   {
     T[] prev = content;
     int prev_peek = peek;
@@ -87,12 +87,17 @@ public abstract class Processor<T, O>(T[] content) where T: new() where O: new()
     content = i;
     peek = 0;
 
-    action();
+    R r = action();
 
     peek = prev_peek;
     content = prev;
+    return r;
   }
-  protected void Switch(T[] i, Action action, T separator) => Switch(i, () => Alternate(separator, action));
+  protected void Switch(T[] i, Action action, T separator) => Switch(i, () =>
+  {
+    Alternate(separator, action);
+    return 0;
+  });
 
   public static Processor<T, O> operator <<(Processor<T, O> processor, O other)
   {
@@ -116,5 +121,13 @@ public abstract class Processor<T, O>(T[] content) where T: new() where O: new()
     return found;
   }
 
-  public abstract O[] Process();
+  public abstract O ProcessOne();
+
+  public virtual O[] Process()
+  {
+    List<O> ret = [];
+    while (HasPeek())
+      ret.Add(ProcessOne());
+    return [.. ret];
+  }
 }

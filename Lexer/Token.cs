@@ -7,9 +7,44 @@ public struct Token(Token.Type type, int line, object? value)
     NULL,
     MUTABLE, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE,
     COMMA, COLON, SEMI, STAR, EQUALS,
-    BYTE, CHAR, USHORT, SHORT, UINT, INT, ULONG, LONG, BOOLEAN, FLOAT, DOUBLE, STRING, OBJECT, FUN,
+    BYTE, CHAR, USHORT, SHORT, UINT, INT, ULONG, LONG, BOOLEAN, FLOAT, DOUBLE, STRING, FUN,
     LITERAL, IDENTIFIER
   }
+
+  private static readonly Dictionary<Type, Token> INSTANCES = new()
+  {
+    [Type.NULL] = new(Type.NULL),
+    [Type.MUTABLE] = new(Type.MUTABLE),
+    [Type.CURLY_BLOCK] = new(Type.CURLY_BLOCK),
+    [Type.STATIC] = new(Type.STATIC),
+    [Type.PAREN_BLOCK] = new(Type.PAREN_BLOCK),
+    [Type.RETURN] = new(Type.RETURN),
+    [Type.SQUARE_BLOCK] = new(Type.SQUARE_BLOCK),
+    [Type.ANGLE_BLOCK] = new(Type.ANGLE_BLOCK),
+    [Type.NAMESPACE] = new(Type.NAMESPACE),
+    [Type.COMMA] = new(Type.COMMA),
+    [Type.COLON] = new(Type.COLON),
+    [Type.SEMI] = new(Type.SEMI),
+    [Type.STAR] = new(Type.STAR),
+    [Type.EQUALS] = new(Type.EQUALS),
+    [Type.BYTE] = new(Type.BYTE),
+    [Type.CHAR] = new(Type.CHAR),
+    [Type.USHORT] = new(Type.USHORT),
+    [Type.SHORT] = new(Type.SHORT),
+    [Type.UINT] = new(Type.UINT),
+    [Type.INT] = new(Type.INT),
+    [Type.ULONG] = new(Type.ULONG),
+    [Type.LONG] = new(Type.LONG),
+    [Type.BOOLEAN] = new(Type.BOOLEAN),
+    [Type.FLOAT] = new(Type.FLOAT),
+    [Type.DOUBLE] = new(Type.DOUBLE),
+    [Type.STRING] = new(Type.STRING),
+    [Type.FUN] = new(Type.FUN),
+    [Type.LITERAL] = new(Type.LITERAL),
+    [Type.IDENTIFIER] = new(Type.IDENTIFIER),
+  };
+
+  public static Token Get(Type type) => INSTANCES[type];
 
   public Type type = type;
   public int line = line;

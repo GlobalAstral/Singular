@@ -48,6 +48,15 @@ public class ModifierHandler
 
   public static bool operator ==(ModifierHandler a, ModifierHandler b) => a.Equals(b);
   public static bool operator !=(ModifierHandler a, ModifierHandler b) => !a.Equals(b);
+
+  public override string ToString()
+  {
+    string s = IsStatic ? "static" : ""; 
+    string m = IsMutable ? "mutable" : ""; 
+    string r = IsReadonly ? "readonly" : "";
+    string temp = $"{s} {m} {r}".Trim();
+    return $"[{temp}]";
+  }
 }
 
 public partial class Parser
@@ -56,10 +65,10 @@ public partial class Parser
   {
     ModifierHandler handler = new();
     
-    if (TryConsume(new Token(Token.Type.STATIC)))
+    if (TryConsume(Token.Get(Token.Type.STATIC)))
       handler.Static();
     
-    if (TryConsume(new Token(Token.Type.MUTABLE)))
+    if (TryConsume(Token.Get(Token.Type.MUTABLE)))
       handler.Mutable();
     
     return action(handler);
@@ -96,35 +105,35 @@ public partial class Parser
   protected DataType ParseType()
   {
     DataType? dataType = null;
-    if (TryConsume(new Token(Token.Type.STAR)))
+    if (TryConsume(Token.Get(Token.Type.STAR)))
       dataType = References.GetPointerType(ParseType());
-    if (TryConsume(new Token(Token.Type.BYTE)))
+    if (TryConsume(Token.Get(Token.Type.BYTE)))
       dataType = ByteType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.CHAR)))
+    if (TryConsume(Token.Get(Token.Type.CHAR)))
       dataType = CharType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.USHORT)))
+    if (TryConsume(Token.Get(Token.Type.USHORT)))
       dataType = UShortType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.SHORT)))
+    if (TryConsume(Token.Get(Token.Type.SHORT)))
       dataType = ShortType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.UINT)))
+    if (TryConsume(Token.Get(Token.Type.UINT)))
       dataType = UIntType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.INT)))
+    if (TryConsume(Token.Get(Token.Type.INT)))
       dataType = IntType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.ULONG)))
+    if (TryConsume(Token.Get(Token.Type.ULONG)))
       dataType = ULongType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.LONG)))
+    if (TryConsume(Token.Get(Token.Type.LONG)))
       dataType = LongType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.BOOLEAN)))
+    if (TryConsume(Token.Get(Token.Type.BOOLEAN)))
       dataType = BooleanType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.FLOAT)))
+    if (TryConsume(Token.Get(Token.Type.FLOAT)))
       dataType = FloatType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.DOUBLE)))
+    if (TryConsume(Token.Get(Token.Type.DOUBLE)))
       dataType = DoubleType.INSTANCE;
-    if (TryConsume(new Token(Token.Type.FUN)))
+    if (TryConsume(Token.Get(Token.Type.FUN)))
     {
       DataType[] args = [.. ParseArgs().Select(v => v.Type)];
       DataType? result = null;
-      if (TryConsume(new Token(Token.Type.COLON)))
+      if (TryConsume(Token.Get(Token.Type.COLON)))
         result = ParseType();
       return References.GetFunctionType(result, args);
     }
@@ -132,7 +141,7 @@ public partial class Parser
     if (dataType == null)
       Error("Expected Type");
     
-    if (Peek(new Token(Token.Type.SQUARE_BLOCK)))
+    if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
     {
       List<Token> temp = (List<Token>)Consume().value!;
       if (temp.Count != 0)
@@ -144,7 +153,7 @@ public partial class Parser
 
   protected Variable[] ParseArgs()
   {
-    Token[] args = (Token[])TryConsumeError(new Token(Token.Type.PAREN_BLOCK)).value!;
+    Token[] args = (Token[])TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
     List<Variable> arguments = [];
     Switch(args, () => WithModifiers(handler =>
     {
@@ -158,17 +167,17 @@ public partial class Parser
       if (arguments.Any(v => v.Name == ident))
         Error($"Function type cannot have duplicate arguments");
       arguments.Add(new Variable(handler, t, ident));
-    }), new Token(Token.Type.COMMA));
+    }), Token.Get(Token.Type.COMMA));
     return [.. arguments];
   }
 
   private string[] ParseGenerics()
   {
-    if (Peek(ANGLE_BLOCK))
+    if (Peek(Token.Get(Token.Type.ANGLE_BLOCK)))
     {
       Token[] generics_body = (Token[])Consume().value!;
       List<string> generics = [];
-      Switch(generics_body, () => Alternate(COMMA, () => generics.Add((string) TryConsumeError(IDENTIFIER).value!) ));
+      Switch(generics_body, () => generics.Add((string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!), Token.Get(Token.Type.COMMA));
       return [.. generics];
     }
     return [];
@@ -177,7 +186,7 @@ public partial class Parser
   protected string MangleIdentifier()
   {
     StringBuilder builder = new();
-    builder.Append((string)TryConsumeError(IDENTIFIER).value!);
+    builder.Append((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!);
 
     foreach (string namesp in namespaces.Reverse())
       builder.Insert(0, $"{namesp}_");
@@ -188,34 +197,34 @@ public partial class Parser
   protected string ParseIdentifier()
   {
     StringBuilder builder = new();
-    builder.Append((string)TryConsumeError(IDENTIFIER).value!);
+    builder.Append((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!);
 
-    while (Peek(new Token(Token.Type.COLON)) && Peek(new Token(Token.Type.COLON), 1))
+    while (Peek(Token.Get(Token.Type.COLON)) && Peek(Token.Get(Token.Type.COLON), 1))
     {
       Consume(2);
-      builder.Append($"_{(string)TryConsumeError(IDENTIFIER).value!}");
+      builder.Append($"_{(string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!}");
     }
 
     return builder.ToString();
   }
 
-  private Expression ParseExpression()
+  private Expression? ParseExpression()
   {
     //TODO
-    return Expression.EMPTY;
+    return null;
   }
 
-  public void SavePeek() => saved_peek = peek;
-  public void RestorePeek() => peek = saved_peek;
-
-  private int saved_peek = 0;
-
-  private static readonly Token IDENTIFIER = new(Token.Type.IDENTIFIER);
-  private static readonly Token SEMI = new(Token.Type.SEMI);
-  private static readonly Token COMMA = new(Token.Type.COMMA);
-  private static readonly Token ANGLE_BLOCK = new(Token.Type.ANGLE_BLOCK);
-  private static readonly Token CURLY_BLOCK = new(Token.Type.CURLY_BLOCK);
-
-  protected bool Wakeup(Token.Type token) => TryConsume(new Token(token));
-  protected void Semi() => TryConsumeError(SEMI);
+  public void SavePeek() => saved_peek.Push(peek);
+  public void RestorePeek() => peek = saved_peek.Pop();
+  private Stack<int> saved_peek = [];
+  
+  protected Statement? Wakeup(Token.Type token, bool consume, Func<Statement?> action, Func<Statement?> else_action)
+  {
+    Token tok = Token.Get(token);
+    if ((consume && TryConsume(tok)) || (!consume && Peek(tok)))
+      return action();
+    else
+      return else_action();
+  }
+  protected void Semi() => TryConsumeError(Token.Get(Token.Type.SEMI));
 }

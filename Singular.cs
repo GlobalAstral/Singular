@@ -24,9 +24,9 @@ partial class Singular
       Console.WriteLine(item);
 
     Parser.Parser parser = new(tokens);
-    SyntaxInstance[] statements = parser.Process();
+    Statement[] statements = parser.Process();
     Console.WriteLine("Statements:\n");
-    foreach (SyntaxInstance item in statements)
+    foreach (Statement item in statements)
       Console.WriteLine(item);
   }
 }
