@@ -5,27 +5,9 @@ namespace Parser;
 
 public class ModifierHandler
 {
-  public bool IsPublic = false;
-  public bool IsProtected = false;
-  public bool IsPrivate = false;
   public bool IsStatic = false;
   public bool IsMutable = false;
   public bool IsReadonly = false;
-
-  public ModifierHandler Public() {
-    IsPublic = true;
-    return this;
-  }
-
-  public ModifierHandler Protected() {
-    IsProtected = true;
-    return this;
-  }
-
-  public ModifierHandler Private() {
-    IsPrivate = true;
-    return this;
-  }
 
   public ModifierHandler Static()
   {
@@ -49,15 +31,6 @@ public class ModifierHandler
   {
     if (obj is not ModifierHandler other)
       return false;
-
-    if (IsPublic != other.IsPublic)
-      return false;
-    
-    if (IsProtected != other.IsProtected)
-      return false;
-    
-    if (IsPrivate != other.IsPrivate)
-      return false;
     
     if (IsStatic != other.IsStatic)
       return false;
@@ -71,7 +44,7 @@ public class ModifierHandler
     return true;
   }
 
-  public override int GetHashCode() => HashCode.Combine(IsPublic, IsProtected, IsPrivate, IsStatic, IsMutable, IsReadonly);
+  public override int GetHashCode() => HashCode.Combine(IsStatic, IsMutable, IsReadonly);
 
   public static bool operator ==(ModifierHandler a, ModifierHandler b) => a.Equals(b);
   public static bool operator !=(ModifierHandler a, ModifierHandler b) => !a.Equals(b);
@@ -169,7 +142,7 @@ public partial class Parser
     return dataType;
   }
 
-  protected List<Variable> ParseArgs()
+  protected Variable[] ParseArgs()
   {
     Token[] args = (Token[])TryConsumeError(new Token(Token.Type.PAREN_BLOCK)).value!;
     List<Variable> arguments = [];
@@ -177,13 +150,16 @@ public partial class Parser
     {
       if (handler.IsReadonly)
         Error("Argument cannot be readonly");
+      if (handler.IsStatic)
+        Error("Argument cannot be static");
+
       DataType t = ParseType();
       string ident = ParseIdentifier();
       if (arguments.Any(v => v.Name == ident))
         Error($"Function type cannot have duplicate arguments");
       arguments.Add(new Variable(handler, t, ident));
     }), new Token(Token.Type.COMMA));
-    return arguments;
+    return [.. arguments];
   }
 
   private string[] ParseGenerics()

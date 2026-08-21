@@ -31,7 +31,12 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
     {
       char open = Consume();
       List<Token> tokens = [];
-      DoUntil(GetCloseBracket(open), () => tokens.Add(Tokenize()));
+      DoUntil(GetCloseBracket(open), () =>
+      {
+        Token token = Tokenize();
+        if (token.type != Token.Type.NULL)
+          tokens.Add(token);
+      });
       return new Token(GetTokenForBracket(open), line, tokens.ToArray());
     }
     

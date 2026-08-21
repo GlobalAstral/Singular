@@ -61,10 +61,17 @@ public class FunctionType(DataType? Result, DataType[] Args) : DataType
   public DataType[] Arguments {get;} = Args;
 }
 
+public class AliasType(DataType Target, string Name) : DataType
+{
+  public DataType Type {get;} = Target;
+  public string Alias {get;} = Name;
+}
+
 public static class References {
   private static readonly List<ArrayType> ArrayCache = [];
   private static readonly List<PointerType> PointerCache = [];
   private static readonly List<FunctionType> FunctionCache = [];
+  private static readonly List<AliasType> AliasCache = [];
   public static DataType GetArrayType(DataType elements)
   {
     ArrayType? found = ArrayCache.Find(ele => ele.Elements == elements);
@@ -107,6 +114,17 @@ public static class References {
     {
       found = new FunctionType(result, args);
       FunctionCache.Add(found);
+    }
+    return found;
+  }
+
+  public static DataType GetAliasType(string name, DataType target)
+  {
+    AliasType? found = AliasCache.Find(ele => ele.Alias == name && ele.Type == target);
+    if (found is null)
+    {
+      found = new AliasType(target, name);
+      AliasCache.Add(found);
     }
     return found;
   }
