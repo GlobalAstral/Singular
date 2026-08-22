@@ -208,9 +208,15 @@ public partial class Parser
     return builder.ToString();
   }
 
-  private Expression? ParseExpression()
+  private Expression ParseExpression()
   {
-    //TODO
+    if (Peek(Token.Get(Token.Type.LITERAL)))
+    {
+      string lit = (string)Consume().value!;
+      return new LiteralExpr(Literal.ParseLiteral(lit));
+    }
+
+    Error("Expected Expression");
     return null;
   }
 

@@ -1,0 +1,98 @@
+using System.Reflection.PortableExecutable;
+
+namespace Parser;
+
+public interface Literal
+{
+  public static Literal ParseLiteral(string lit)
+  {
+    if (lit == "true" || lit == "false")
+      return new BooleanLiteral(lit == "true");
+    
+    if (lit.StartsWith('\'') && lit.EndsWith('\''))
+      return new CharLiteral(lit[1..^1]);
+
+    if (lit.StartsWith('"') && lit.EndsWith('"'))
+      return new StringLiteral(lit[1..^1]);
+
+    char? suffix = null;
+    if (lit.EndsWith('l') || lit.EndsWith('f') || lit.EndsWith('h'))
+    {
+      suffix = lit.Last();
+      lit = lit[..^1];
+    }
+
+    if (lit.Contains('.'))
+    {
+      if (suffix != null && suffix != 'f')
+        throw new Exception($"Invalid literal suffix for double {suffix}. Expected 'f' or nothing");
+      if (suffix == 'f')
+        return new FloatLiteral(float.Parse(lit));
+      return new DoubleLiteral(double.Parse(lit));      
+    }
+    
+    bool hex = false;
+    if (lit.StartsWith("0x"))
+    {
+      hex = true;
+      lit = lit[2..];
+    }
+
+    if (suffix == 'l')
+      return new LongLiteral( hex ? long.Parse(lit, System.Globalization.NumberStyles.HexNumber) : long.Parse(lit) );
+    if (suffix == 'h')
+      return new ShortLiteral( hex ? short.Parse(lit, System.Globalization.NumberStyles.HexNumber) : short.Parse(lit) );
+    if (suffix == 'f')
+      return new FloatLiteral( hex ? throw new Exception("Float suffic cannot be used with HEX literals") : float.Parse(lit) );
+    return new IntLiteral(hex ? int.Parse(lit, System.Globalization.NumberStyles.HexNumber) : int.Parse(lit));
+  }
+  public DataType GetReturnType();
+}
+
+public readonly struct CharLiteral(string Char) : Literal
+{
+  public string Character {get;} = Char;
+  public readonly DataType GetReturnType() => CharType.INSTANCE;
+}
+
+public readonly struct ShortLiteral(short Short) : Literal
+{
+  public short Short {get;} = Short;
+  public readonly DataType GetReturnType() => ShortType.INSTANCE;
+}
+
+public readonly struct IntLiteral(int Int) : Literal
+{
+  public int Int {get;} = Int;
+  public readonly DataType GetReturnType() => IntType.INSTANCE;
+}
+
+public readonly struct LongLiteral(long Long) : Literal
+{
+  public long Long {get;} = Long;
+  public readonly DataType GetReturnType() => LongType.INSTANCE;
+}
+
+public readonly struct BooleanLiteral(bool Boolean) : Literal
+{
+  public bool Boolean {get;} = Boolean;
+  public readonly DataType GetReturnType() => BooleanType.INSTANCE;
+}
+
+public readonly struct FloatLiteral(float Float) : Literal
+{
+  public float Float {get;} = Float;
+  public readonly DataType GetReturnType() => FloatType.INSTANCE;
+}
+
+public readonly struct DoubleLiteral(double Double) : Literal
+{
+  public double Double {get;} = Double;
+  public readonly DataType GetReturnType() => DoubleType.INSTANCE;
+}
+
+public readonly struct StringLiteral(string String) : Literal
+{
+  public string String {get;} = String;
+  public readonly DataType GetReturnType() => References.GetPointerType(CharType.INSTANCE);
+}
