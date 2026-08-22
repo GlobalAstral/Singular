@@ -14,8 +14,8 @@ public class Function(ModifierHandler modifiers, string name, Variable[] argumen
       return false;
 
     Function f = (Function)obj;    
-    return Name == f.Name && Arguments.Length == f.Arguments.Length && Arguments.Zip(f.Arguments).All(pair => pair.First == pair.Second) && ReturnType == f.ReturnType;
+    return Name == f.Name;
   }
 
-  public override int GetHashCode() => HashCode.Combine(Name, Arguments, ReturnType);
+  public override int GetHashCode() => Name.GetHashCode();
 }
