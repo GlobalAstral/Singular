@@ -72,12 +72,15 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
           Error($"Cannot return nothing in a function returning {context.ReturnType}");
         return new Return(null);
       }
-      
+
       Expression expression = ParseExpression();
       DataType? temp = expression.GetReturnType();
 
       if (context.ReturnType != temp)
-        Error($"Cannot return {temp} in a function returning {context.ReturnType}");
+      {
+        string t = context.ReturnType == null ? "nothing" : $"{context.ReturnType}";
+        Error($"Cannot return {temp} in a function returning {t}");
+      }
 
       TryConsumeError(Token.Get(Token.Type.SEMI));
       return new Return(expression);
