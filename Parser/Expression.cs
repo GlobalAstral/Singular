@@ -11,6 +11,7 @@ public class LiteralExpr(Literal Lit) : Expression
   public Literal Lit {get;} = Lit;
 
   public DataType GetReturnType() => Lit.GetReturnType();
+  public override string ToString() => $"{Lit}";
 }
 
 public class RawExpr(DataType returnType, string generated) : Expression
@@ -18,4 +19,5 @@ public class RawExpr(DataType returnType, string generated) : Expression
   public string Generated {get;} = generated;
 
   public DataType GetReturnType() => returnType;
+  public override string ToString() => $"Raw{{\"{Generated}\"}} : {returnType}";
 }

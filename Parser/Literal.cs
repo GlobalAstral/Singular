@@ -53,46 +53,54 @@ public readonly struct CharLiteral(string Char) : Literal
 {
   public string Character {get;} = Char;
   public readonly DataType GetReturnType() => CharType.INSTANCE;
+  public override string ToString() => $"'{Character}'";
 }
 
 public readonly struct ShortLiteral(short Short) : Literal
 {
   public short Short {get;} = Short;
   public readonly DataType GetReturnType() => ShortType.INSTANCE;
+  public override string ToString() => $"{Short}h";
 }
 
 public readonly struct IntLiteral(int Int) : Literal
 {
   public int Int {get;} = Int;
   public readonly DataType GetReturnType() => IntType.INSTANCE;
+  public override string ToString() => $"{Int}";
 }
 
 public readonly struct LongLiteral(long Long) : Literal
 {
   public long Long {get;} = Long;
   public readonly DataType GetReturnType() => LongType.INSTANCE;
+  public override string ToString() => $"{Long}l";
 }
 
 public readonly struct BooleanLiteral(bool Boolean) : Literal
 {
   public bool Boolean {get;} = Boolean;
   public readonly DataType GetReturnType() => BooleanType.INSTANCE;
+  public override string ToString() => $"{Boolean}";
 }
 
 public readonly struct FloatLiteral(float Float) : Literal
 {
   public float Float {get;} = Float;
   public readonly DataType GetReturnType() => FloatType.INSTANCE;
+  public override string ToString() => $"{Float}f";
 }
 
 public readonly struct DoubleLiteral(double Double) : Literal
 {
   public double Double {get;} = Double;
   public readonly DataType GetReturnType() => DoubleType.INSTANCE;
+  public override string ToString() => $"{Double}";
 }
 
 public readonly struct StringLiteral(string String) : Literal
 {
   public string String {get;} = String;
   public readonly DataType GetReturnType() => References.GetPointerType(CharType.INSTANCE);
+  public override string ToString() => $"\"{String}\"";
 }
