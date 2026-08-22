@@ -6,6 +6,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
 {
   private readonly Stack<string> namespaces = [];
   private readonly List<Function> functions = [];
+  private readonly Stack<Context> currentContext = [];
 
   public override Statement ProcessOne()
   {
@@ -39,6 +40,9 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       string name = MangleIdentifier();
       Variable[] args = ParseArgs();
       DataType? retType = TryConsume(Token.Get(Token.Type.COLON)) ? ParseType() : null;
+      
+      currentContext.Push(new FunctionContext(retType, args));
+      
       Statement? body = TryConsume(Token.Get(Token.Type.SEMI)) ? null : ProcessOne();
       Function f = new(modifiers, name, args, retType, body);
       Function? found = functions.Find(ele => ele.Equals(f));
@@ -50,15 +54,39 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       if (found.Body == null)
         functions.Remove(found);
       functions.Add(f);
+      currentContext.Pop();
       return new FunctionDecl(f);
 
-    }, () => null)
+    }, 
+    
+    () => Wakeup(Token.Type.RETURN, true, () =>
+    {
+      if (currentContext.Count == 0 || currentContext.Peek() is not FunctionContext)
+        Error("Cannot return outside of Function Context");
+
+      FunctionContext context = (FunctionContext) currentContext.Peek();
+
+      if (TryConsume(Token.Get(Token.Type.SEMI)))
+      {
+        if (context.ReturnType != null)
+          Error($"Cannot return nothing in a function returning {context.ReturnType}");
+        return new Return(null);
+      }
+      
+      Expression expression = ParseExpression();
+      DataType? temp = expression.GetReturnType();
+
+      if (context.ReturnType != temp)
+        Error($"Cannot return {temp} in a function returning {context.ReturnType}");
+
+      TryConsumeError(Token.Get(Token.Type.SEMI));
+      return new Return(expression);
+    }, () => null))
 
     )
 
     );
     
-
     if (ret == null)
       Error("Syntax Error");
     return ret;
