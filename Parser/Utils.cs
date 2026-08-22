@@ -195,21 +195,34 @@ public partial class Parser
     return builder.ToString();
   }
 
+  private Expression ParseExpression(DataType? required)
+  {
+    typeCheckerContext.Push(required);
+    Expression ret = ParseExpression();
+    typeCheckerContext.Pop();
+    return ret;
+  }
+
   private Expression ParseExpression()
   {
+    Expression? expression = null;
     if (Peek(Token.Get(Token.Type.LITERAL)))
     {
       string lit = (string)Consume().value!;
-      return new LiteralExpr(Literal.ParseLiteral(lit));
-    }
+      expression = new LiteralExpr(Literal.ParseLiteral(lit));
+    } else
+      Error("Expected Expression");
+    
+    DataType expr_type = expression.GetReturnType();
+    if (expr_type != typeCheckerContext.Peek())
+      Error($"Expected {typeCheckerContext.Peek()} got {expr_type} instead");
 
-    Error("Expected Expression");
-    return null;
+    return expression;
   }
 
   public void SavePeek() => saved_peek.Push(peek);
   public void RestorePeek() => peek = saved_peek.Pop();
-  private Stack<int> saved_peek = [];
+  private readonly Stack<int> saved_peek = [];
   
   protected Statement? Wakeup(Token.Type token, bool consume, Func<Statement?> action, Func<Statement?> else_action)
   {

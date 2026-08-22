@@ -7,6 +7,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
   private readonly Stack<string> namespaces = [];
   private readonly List<Function> functions = [];
   private readonly Stack<Context> currentContext = [];
+  private readonly Stack<DataType?> typeCheckerContext = [];
 
   public override Statement ProcessOne()
   {
@@ -25,6 +26,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     () => Wakeup(Token.Type.CURLY_BLOCK, false, () =>
     {
       Token[] content = (Token[])Consume().value!;
+      //TODO MANAGE LOCALS
       Statement[] statements = Switch(content, Process);
       return new Scope(statements);
     },
@@ -72,10 +74,10 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
           Error($"Cannot return nothing in a function returning {context.ReturnType}");
         return new Return(null);
       }
+      
+      Expression expression = ParseExpression(context.ReturnType);
 
-      Expression expression = ParseExpression();
       DataType? temp = expression.GetReturnType();
-
       if (context.ReturnType != temp)
       {
         string t = context.ReturnType == null ? "nothing" : $"{context.ReturnType}";
