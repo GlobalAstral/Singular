@@ -119,6 +119,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
         "namespace" => new(Token.Type.NAMESPACE, line),
         "true" => new(Token.Type.LITERAL, line, "true"),
         "false" => new(Token.Type.LITERAL, line, "false"),
+        "null" => new(Token.Type.NULL, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }
