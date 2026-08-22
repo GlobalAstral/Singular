@@ -6,7 +6,7 @@ namespace Lexer;
 public class Lexer(char[] content) : Processor<char, Token>(content)
 {
   private static char GetCloseBracket(char bracket) => bracket == '(' ? ')' : bracket == '[' ? ']' : bracket == '{' ? '}' : bracket == '<' ? '>' : '\0';
-  private static Token.Type GetTokenForBracket(char bracket) => bracket == '(' ? Token.Type.PAREN_BLOCK : bracket == '[' ? Token.Type.SQUARE_BLOCK : bracket == '{' ? Token.Type.CURLY_BLOCK : bracket == '<' ? Token.Type.ANGLE_BLOCK : Token.Type.NULL;
+  private static Token.Type GetTokenForBracket(char bracket) => bracket == '(' ? Token.Type.PAREN_BLOCK : bracket == '[' ? Token.Type.SQUARE_BLOCK : bracket == '{' ? Token.Type.CURLY_BLOCK : bracket == '<' ? Token.Type.ANGLE_BLOCK : Token.Type.INVALID;
   protected int line = 1;
 
   private static bool IsCharHexLetter(char c) {
@@ -34,7 +34,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
       DoUntil(GetCloseBracket(open), () =>
       {
         Token token = ProcessOne();
-        if (token.type != Token.Type.NULL)
+        if (token.type != Token.Type.INVALID)
           tokens.Add(token);
       });
       return new Token(GetTokenForBracket(open), line, tokens.ToArray());
@@ -130,7 +130,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
   public override Token[] Process()
   {
     List<Token> tokens = [.. base.Process()];
-    tokens.RemoveAll(t => t.type == Token.Type.NULL);
+    tokens.RemoveAll(t => t.type == Token.Type.INVALID);
     return [.. tokens];
   }
 }
