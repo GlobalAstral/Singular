@@ -4,6 +4,7 @@ namespace Lexer;
 public struct Token(Token.Type type, int line, object? value)
 {
   public enum Type {
+    INVALID,
     NULL,
     MUTABLE, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE,
     COMMA, COLON, SEMI, STAR, EQUALS,
@@ -13,6 +14,7 @@ public struct Token(Token.Type type, int line, object? value)
 
   private static readonly Dictionary<Type, Token> INSTANCES = new()
   {
+    [Type.INVALID] = new(Type.INVALID),
     [Type.NULL] = new(Type.NULL),
     [Type.MUTABLE] = new(Type.MUTABLE),
     [Type.CURLY_BLOCK] = new(Type.CURLY_BLOCK),
@@ -50,7 +52,7 @@ public struct Token(Token.Type type, int line, object? value)
   public int line = line;
   public object? value = value;
 
-  public Token() : this(Type.NULL, 0, null) { }
+  public Token() : this(Type.INVALID, 0, null) { }
   public Token(Type type, int line) : this(type, line, null) { }
   public Token(Type type) : this(type, -1, null) { }
   public static bool operator ==(Token? a, Token? b) => Equals(a, b);
