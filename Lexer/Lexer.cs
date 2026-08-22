@@ -54,6 +54,24 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
     else if (TryConsume('='))
       return new Token(Token.Type.EQUALS, line);
 
+    else if (TryConsume('\''))
+    {
+      StringBuilder builder = new();
+      builder.Append('\'');
+      DoUntil('\'', () => builder.Append(Consume()));
+      builder.Append('\'');
+      return new Token(Token.Type.LITERAL, line, builder.ToString());
+    }
+
+    else if (TryConsume('"'))
+    {
+      StringBuilder builder = new();
+      builder.Append('"');
+      DoUntil('"', () => builder.Append(Consume()));
+      builder.Append('"');
+      return new Token(Token.Type.LITERAL, line, builder.ToString());
+    }
+
     else if (char.IsDigit(Peek()))
     {
       bool hex = false;
@@ -99,6 +117,8 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
         "string" => new Token(Token.Type.STRING, line),
         "fun" => new Token(Token.Type.FUN, line),
         "namespace" => new(Token.Type.NAMESPACE, line),
+        "true" => new(Token.Type.LITERAL, line, "true"),
+        "false" => new(Token.Type.LITERAL, line, "false"),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }
