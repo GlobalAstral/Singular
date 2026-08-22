@@ -88,20 +88,7 @@ public partial class Parser
       return handler;
     });
   }
-  protected bool PeekType()
-  {
-    SavePeek();
-    try
-    {
-      ParseType();
-      RestorePeek();
-      return true;
-    } catch (Exception)
-    {
-      RestorePeek();
-      return false;
-    }
-  }
+  
   protected DataType ParseType()
   {
     DataType? dataType = null;
