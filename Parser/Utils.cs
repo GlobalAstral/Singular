@@ -210,8 +210,14 @@ public partial class Parser
     {
       string lit = (string)Consume().value!;
       expression = new LiteralExpr(Literal.ParseLiteral(lit));
-    } else
-      Error("Expected Expression");
+    }
+    else if (TryConsume(Token.Get(Token.Type.NULL)))
+    {
+      if (typeCheckerContext.Count == 0) Error("Cannot infer type of null value");
+      return typeCheckerContext.Peek()!.GetNull();
+    }
+    
+    else Error("Expected Expression");
     
     DataType expr_type = expression.GetReturnType();
     if (expr_type != typeCheckerContext.Peek())
