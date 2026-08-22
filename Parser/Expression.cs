@@ -12,3 +12,10 @@ public class LiteralExpr(Literal Lit) : Expression
 
   public DataType GetReturnType() => Lit.GetReturnType();
 }
+
+public class RawExpr(DataType returnType, string generated) : Expression
+{
+  public string Generated {get;} = generated;
+
+  public DataType GetReturnType() => returnType;
+}
