@@ -360,7 +360,7 @@ public partial class Parser
     DataType expr_type = expression!.GetReturnType();
     DataType? check_type = typeCheckerContext.Peek();
     
-    if (expr_type != check_type)
+    if (check_type != null && expr_type != check_type)
       Error($"Expected {check_type} got {expr_type} instead");
 
     return expression;
