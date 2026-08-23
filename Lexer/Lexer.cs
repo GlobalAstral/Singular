@@ -120,6 +120,8 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
         "true" => new(Token.Type.LITERAL, line, "true"),
         "false" => new(Token.Type.LITERAL, line, "false"),
         "null" => new(Token.Type.NULL, line),
+        "struct" => new(Token.Type.STRUCT, line),
+        "union" => new(Token.Type.UNION, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }
