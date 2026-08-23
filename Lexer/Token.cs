@@ -45,7 +45,8 @@ public struct Token(Token.Type type, int line, object? value)
     [Type.FUN] = new(Type.FUN),
     [Type.LITERAL] = new(Type.LITERAL),
     [Type.IDENTIFIER] = new(Type.IDENTIFIER),
-    [Type.STRUCT] = new(Type.STRUCT)
+    [Type.STRUCT] = new(Type.STRUCT),
+    [Type.UNION] = new(Type.UNION),
   };
 
   public static Token Get(Type type) => INSTANCES[type];

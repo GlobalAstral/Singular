@@ -21,7 +21,12 @@ public record Return(Expression? expr) : Statement
   public override string ToString() => $"return {e}".Trim();
 }
 
-public record StructDecl(Struct Struct) : Statement
+public record StructDecl(Composite Struct) : Statement
 {
   public override string ToString() => $"{Struct}";
+}
+
+public record UnionDecl(Composite Union) : Statement
+{
+  public override string ToString() => $"{Union}";
 }
