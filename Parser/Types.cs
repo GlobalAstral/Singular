@@ -107,30 +107,38 @@ public class AliasType(DataType Target, string Name) : DataType
 }
 
 public static class References {
-  private static readonly List<ArrayType> ArrayCache = [];
-  private static readonly List<PointerType> PointerCache = [];
+  private static readonly Dictionary<DataType, ArrayType> ArrayCache = [];
+  private static readonly Dictionary<DataType, PointerType> PointerCache = [];
+  private static readonly Dictionary<string, AliasType> AliasCache = [];
   private static readonly List<FunctionType> FunctionCache = [];
-  private static readonly List<AliasType> AliasCache = [];
   public static DataType GetArrayType(DataType elements)
   {
-    ArrayType? found = ArrayCache.Find(ele => ele.Elements == elements);
-    if (found is null)
+    if (!ArrayCache.TryGetValue(elements, out var value))
     {
-      found = new ArrayType(elements);
-      ArrayCache.Add(found);
+      value = new ArrayType(elements);
+      ArrayCache[elements] = value;
     }
-    return found;
+    return value;
   }
 
   public static DataType GetPointerType(DataType target)
   {
-    PointerType? found = PointerCache.Find(ele => ele.Target == target);
-    if (found is null)
+    if (!PointerCache.TryGetValue(target, out var value))
     {
-      found = new PointerType(target);
-      PointerCache.Add(found);
+      value = new PointerType(target);
+      PointerCache[target] = value;
     }
-    return found;
+    return value;
+  }
+
+  public static DataType GetAliasType(string name, DataType target)
+  {
+    if (!AliasCache.TryGetValue(name, out var value))
+    {
+      value = new AliasType(target, name);
+      AliasCache[name] = value;
+    }
+    return value;
   }
 
   public static DataType GetFunctionType(DataType? result, DataType[] args)
@@ -153,17 +161,6 @@ public static class References {
     {
       found = new FunctionType(result, args);
       FunctionCache.Add(found);
-    }
-    return found;
-  }
-
-  public static DataType GetAliasType(string name, DataType target)
-  {
-    AliasType? found = AliasCache.Find(ele => ele.Alias == name && ele.Type == target);
-    if (found is null)
-    {
-      found = new AliasType(target, name);
-      AliasCache.Add(found);
     }
     return found;
   }
