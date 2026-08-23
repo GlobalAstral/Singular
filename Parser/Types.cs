@@ -68,14 +68,14 @@ public class BooleanType : DataType
 public class FloatType : DataType
 {
   public static readonly DataType INSTANCE = new FloatType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "0.0f");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(float)0.0");
   public override Expression GetNull() => NULL;
 
 }
 public class DoubleType : DataType
 {
   public static readonly DataType INSTANCE = new DoubleType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "0.0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(double)0.0");
   public override Expression GetNull() => NULL;
 
 }
