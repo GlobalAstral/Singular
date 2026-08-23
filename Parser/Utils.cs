@@ -195,6 +195,20 @@ public partial class Parser
     return builder.ToString();
   }
 
+  protected Variable? SearchVariable(string name)
+  {
+    Variable? found = locals.Find(v => v.Name == name);
+    if (found != null)
+      return found;
+    if (currentContext.Count > 0 && currentContext.Peek() is FunctionContext context)
+    {
+      found = context.Arguments.ToList().Find(v => v.Name == name);
+      if (found != null)
+        return found;
+    }
+    return null;
+  }
+
   private Expression ParseExpression(DataType? required)
   {
     typeCheckerContext.Push(required);
@@ -227,9 +241,11 @@ public partial class Parser
     
     else Error("Expected Expression");
     
-    DataType expr_type = expression.GetReturnType();
-    if (expr_type != typeCheckerContext.Peek())
-      Error($"Expected {typeCheckerContext.Peek()} got {expr_type} instead");
+    DataType expr_type = expression!.GetReturnType();
+    DataType? check_type = typeCheckerContext.Peek();
+    
+    if (expr_type != check_type)
+      Error($"Expected {check_type} got {expr_type} instead");
 
     return expression;
   }
