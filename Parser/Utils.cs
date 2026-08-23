@@ -178,11 +178,29 @@ public partial class Parser
 
   protected string MangleIdentifier()
   {
+    string ident = (string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+
     StringBuilder builder = new();
-    builder.Append((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!);
+
+    if (Peek(Token.Get(Token.Type.COLON)) && Peek(Token.Get(Token.Type.COLON)))
+    {
+      builder.Append(ident);
+      while (Peek(Token.Get(Token.Type.COLON)) && Peek(Token.Get(Token.Type.COLON)))
+      {
+        Consume(2);
+        builder.Append($"_{(string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!}");
+      }
+      return builder.ToString();
+    }
+
+    if (currentContext.Count != 0 && currentContext.Peek() is StructContext context)
+      return $"{context.Struct.Name}_{ident}";
+
 
     foreach (string namesp in namespaces.Reverse())
-      builder.Insert(0, $"{namesp}_");
+      builder.Append($"{namesp}_");
+
+    builder.Append(ident);
 
     return builder.ToString();
   }
