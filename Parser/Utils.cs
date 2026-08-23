@@ -136,8 +136,8 @@ public partial class Parser
     
     if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
     {
-      List<Token> temp = (List<Token>)Consume().value!;
-      if (temp.Count != 0)
+      Token[] temp = (Token[])Consume().value!;
+      if (temp.Length != 0)
         Error("Invalid Array Type");
       dataType = References.GetArrayType(dataType);
     }
