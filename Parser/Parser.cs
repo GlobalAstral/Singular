@@ -35,40 +35,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       return new Scope(statements);
     },
       
-    () => Wakeup(Token.Type.FUN, true, () =>
-    {
-      ModifierHandler modifiers = GetModifiers(handler =>
-      {
-        if (handler.IsMutable) Error("Function cannot be mutable");
-        if (handler.IsReadonly) Error("Function cannot be readonly");
-      });
-
-      string name = MangleIdentifier();
-      Variable[] args = ParseArgs();
-      DataType? retType = TryConsume(Token.Get(Token.Type.COLON)) ? ParseType() : null;
-      
-      currentContext.Push(new FunctionContext(retType, args));
-      
-      Statement? body = TryConsume(Token.Get(Token.Type.SEMI)) ? null : ProcessOne();
-      
-      currentContext.Pop();
-      
-      Function f = new(modifiers, name, args, retType, body);
-      Function? found = functions.Find(ele => ele.Equals(f));
-      
-      if (found == null)
-      {
-        functions.Add(f);
-        return new FunctionDecl(f);
-      }
-      if (found.Body == null)
-      {
-        found.Body = f.Body;
-        return new FunctionDecl(found);
-      }
-      Error($"Function {name} already exists");
-      return null;
-    },
+    () => Wakeup(Token.Type.FUN, true, ParseFunction,
     
     () => Wakeup(Token.Type.RETURN, true, () =>
     {
