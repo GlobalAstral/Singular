@@ -20,3 +20,8 @@ public record Return(Expression? expr) : Statement
   readonly string e = expr != null ? $"{expr}" : "";
   public override string ToString() => $"return {e}".Trim();
 }
+
+public record StructDecl(Struct Struct) : Statement
+{
+  public override string ToString() => $"{Struct}";
+}

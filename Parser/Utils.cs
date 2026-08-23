@@ -124,6 +124,12 @@ public partial class Parser
         result = ParseType();
       return References.GetFunctionType(result, args);
     }
+    else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
+    {
+      string ident = ParseIdentifier();
+      if (structs.TryGetValue(ident, out var value))
+        dataType = References.GetStructType(ident, value);
+    }
     
     if (dataType == null)
       Error("Expected Type");

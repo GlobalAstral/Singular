@@ -106,10 +106,17 @@ public class AliasType(DataType Target, string Name) : DataType
   public override Expression GetNull() => Type.GetNull();
 }
 
+public class StructType(Struct @struct) : DataType
+{
+  public Struct Struct {get;} = @struct;
+  public override Expression GetNull() => new RawExpr(this, "{0}");
+}
+
 public static class References {
   private static readonly Dictionary<DataType, ArrayType> ArrayCache = [];
   private static readonly Dictionary<DataType, PointerType> PointerCache = [];
   private static readonly Dictionary<string, AliasType> AliasCache = [];
+  private static readonly Dictionary<string, StructType> StructCache = [];
   private static readonly List<FunctionType> FunctionCache = [];
   public static DataType GetArrayType(DataType elements)
   {
@@ -137,6 +144,16 @@ public static class References {
     {
       value = new AliasType(target, name);
       AliasCache[name] = value;
+    }
+    return value;
+  }
+
+  public static DataType GetStructType(string name, Struct @struct)
+  {
+    if (!StructCache.TryGetValue(name, out var value))
+    {
+      value = new StructType(@struct);
+      StructCache[name] = value;
     }
     return value;
   }
