@@ -6,7 +6,7 @@ public class Function(ModifierHandler modifiers, string name, Variable[] argumen
   public string Name {get;} = name;
   public Variable[] Arguments {get;} = arguments;
   public DataType? ReturnType {get;} = returnType;
-  public Statement? Body {get;} = body;
+  public Statement? Body {get; set;} = body;
 
   public override bool Equals(object? obj)
   { 
