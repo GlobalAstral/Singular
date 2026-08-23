@@ -354,6 +354,22 @@ public partial class Parser
         Error($"Variable {name} does not exist");
       expression = new IdentifierExpression(variable);
     }
+    else if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
+    {
+      Token[] body = (Token[]) Consume().value!;
+      List<Expression> expressions = [];
+      DataType? locked_type = typeCheckerContext.Peek();
+      if (locked_type is not ArrayType) Error("Cannot initialize a non-array type to an array literal value");
+      locked_type = ((ArrayType) locked_type).Elements;
+      Switch(body, () =>
+      {
+        Expression e = ParseExpression(locked_type);
+        locked_type ??= e.GetReturnType();
+        expressions.Add(e);
+      }, Token.Get(Token.Type.COMMA));
+      if (locked_type == null) Error("Cannot infer type from Array Literal");
+      expression = new ArrayLiteral(locked_type!, [.. expressions]);
+    }
     
     else Error("Expected Expression");
     

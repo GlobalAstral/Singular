@@ -28,3 +28,10 @@ public class IdentifierExpression(Variable Variable) : Expression
   public DataType GetReturnType() => Variable.Type;
   public override string ToString() => $"{Variable}";
 }
+
+public class ArrayLiteral(DataType type, Expression[] Expressions) : Expression
+{
+  public Expression[] Expressions {get;} = Expressions;
+
+  public DataType GetReturnType() => References.GetArrayType(type);
+}
