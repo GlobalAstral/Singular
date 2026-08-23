@@ -106,9 +106,9 @@ public class AliasType(DataType Target, string Name) : DataType
   public override Expression GetNull() => Type.GetNull();
 }
 
-public class StructType(Struct @struct) : DataType
+public class StructType(Composite @struct) : DataType
 {
-  public Struct Struct {get;} = @struct;
+  public Composite Struct {get;} = @struct;
   public override Expression GetNull() => new RawExpr(this, "{0}");
 }
 
@@ -148,7 +148,7 @@ public static class References {
     return value;
   }
 
-  public static DataType GetStructType(string name, Struct @struct)
+  public static DataType GetCompositeType(string name, Composite @struct)
   {
     if (!StructCache.TryGetValue(name, out var value))
     {

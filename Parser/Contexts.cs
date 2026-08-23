@@ -8,7 +8,7 @@ public class FunctionContext(DataType? retType, Variable[] arguments) : Context
   public Variable[] Arguments {get;} = arguments;
 }
 
-public class StructContext(Struct @struct) : Context
+public class CompositeContext(Composite Comp) : Context
 {
-  public Struct Struct {get;} = @struct;
+  public Composite Comp {get;} = Comp;
 }

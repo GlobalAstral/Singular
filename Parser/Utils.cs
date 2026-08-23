@@ -127,8 +127,8 @@ public partial class Parser
     else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
     {
       string ident = ParseIdentifier();
-      if (structs.TryGetValue(ident, out var value))
-        dataType = References.GetStructType(ident, value);
+      if (composites.TryGetValue(ident, out var value))
+        dataType = References.GetCompositeType(ident, value);
     }
     
     if (dataType == null)
@@ -193,8 +193,8 @@ public partial class Parser
       return builder.ToString();
     }
 
-    if (currentContext.Count != 0 && currentContext.Peek() is StructContext context)
-      return $"{context.Struct.Name}_{ident}";
+    if (currentContext.Count != 0 && currentContext.Peek() is CompositeContext context)
+      return $"{context.Comp.Name}_{ident}";
 
 
     foreach (string namesp in namespaces.Reverse())
@@ -266,6 +266,64 @@ public partial class Parser
     Error($"Function {name} already exists");
     return null;
   }
+
+  private Statement ParseComposite(Composite.Type kind, Func<Composite, Statement> factory) {
+      string ident = MangleIdentifier();
+      Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
+      List<Statement> group = [];
+      Composite s = Switch(body, () =>
+      {
+        Composite s = new(ident, [], [], kind);
+        Context ctx = new CompositeContext(s);
+        composites[ident] = s;
+        while (HasPeek())
+        {
+          if (TryConsume(Token.Get(Token.Type.FUN)))
+          {
+            currentContext.Push(ctx);
+            Statement func = ParseFunction();
+            currentContext.Pop();
+            group.Add(func);
+          }
+          else
+          {
+            ModifierHandler modifiers = GetModifiers(handler =>
+            {
+              if (handler.IsReadonly) Error($"{kind} Field cannot be readonly");
+              if (!handler.IsStatic)
+                handler.Mutable();
+            });
+
+            DataType type = ParseType();
+            string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+            
+            bool isStatic = modifiers.IsStatic;
+
+            Variable variable = new(modifiers, type, name);
+            if (isStatic)
+            {
+              if (s.Statics.Keys.Any(v => v.Name == variable.Name))
+                Error($"{kind} static field {variable.Name} already exists");
+
+              Expression? val = null;
+              if (TryConsume(Token.Get(Token.Type.EQUALS)))
+                val = ParseExpression(variable.Type);
+              s.Statics[variable] = val;
+            }
+            else
+            {
+              if (s.Fields.Any(v => v.Name == variable.Name))
+                Error($"{kind} non-static field {variable.Name} already exists");
+              s.Fields.Add(variable);
+            }
+            TryConsumeError(Token.Get(Token.Type.SEMI));
+          }
+        }
+        return s; 
+      });
+      group.Insert(0, factory(s));
+      return new Group([.. group]);
+    }
 
   private Expression ParseExpression(DataType? required)
   {

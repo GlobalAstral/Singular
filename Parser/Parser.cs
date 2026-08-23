@@ -10,7 +10,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
   private readonly Stack<Context> currentContext = [];
   private readonly Stack<DataType?> typeCheckerContext = [];
   private readonly List<Variable> locals = [];
-  private readonly Dictionary<string, Struct> structs = [];
+  private readonly Dictionary<string, Composite> composites = [];
 
   public override Statement ProcessOne()
   {
@@ -66,68 +66,13 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       return new Return(expression);
     },
 
-    () => Wakeup(Token.Type.STRUCT, true, () =>
-    {
-      string ident = MangleIdentifier();
-      Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
-      List<Statement> group = [];
-      Struct s = Switch(body, () =>
-      {
-        Struct s = new(ident, [], []);
-        Context ctx = new StructContext(s);
-        structs[ident] = s;
-        while (HasPeek())
-        {
-          if (TryConsume(Token.Get(Token.Type.FUN)))
-          {
-            currentContext.Push(ctx);
-            Statement func = ParseFunction();
-            currentContext.Pop();
-            group.Add(func);
-          }
-          else
-          {
-            ModifierHandler modifiers = GetModifiers(handler =>
-            {
-              if (handler.IsReadonly) Error("Struct Field cannot be readonly");
-              if (!handler.IsStatic)
-                handler.Mutable();
-            });
-
-            DataType type = ParseType();
-            string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
-            
-            bool isStatic = modifiers.IsStatic;
-
-            Variable variable = new(modifiers, type, name);
-            if (isStatic)
-            {
-              if (s.Statics.Keys.Any(v => v.Name == variable.Name))
-                Error($"Struct static field {variable.Name} already exists");
-
-              Expression? val = null;
-              if (TryConsume(Token.Get(Token.Type.EQUALS)))
-                val = ParseExpression(variable.Type);
-              s.Statics[variable] = val;
-            }
-            else
-            {
-              if (s.Fields.Any(v => v.Name == variable.Name))
-                Error($"Struct non-static field {variable.Name} already exists");
-              s.Fields.Add(variable);
-            }
-            TryConsumeError(Token.Get(Token.Type.SEMI));
-          }
-        }
-        return s; 
-      });
-      group.Insert(0, new StructDecl(s));
-      return new Group([.. group]);
-    },
+    () => Wakeup(Token.Type.STRUCT, true, () => ParseComposite(Composite.Type.STRUCT, s => new StructDecl(s)),
+    
+    () => Wakeup(Token.Type.UNION, true, () => ParseComposite(Composite.Type.UNION, s => new UnionDecl(s)),
     
     () => null
-    
-    )))));
+
+    ))))));
     
     if (ret == null)
       Error("Syntax Error");
