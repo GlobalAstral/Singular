@@ -94,29 +94,29 @@ public partial class Parser
     DataType? dataType = null;
     if (TryConsume(Token.Get(Token.Type.STAR)))
       dataType = References.GetPointerType(ParseType());
-    if (TryConsume(Token.Get(Token.Type.BYTE)))
+    else if (TryConsume(Token.Get(Token.Type.BYTE)))
       dataType = ByteType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.CHAR)))
+    else if (TryConsume(Token.Get(Token.Type.CHAR)))
       dataType = CharType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.USHORT)))
+    else if (TryConsume(Token.Get(Token.Type.USHORT)))
       dataType = UShortType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.SHORT)))
+    else if (TryConsume(Token.Get(Token.Type.SHORT)))
       dataType = ShortType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.UINT)))
+    else if (TryConsume(Token.Get(Token.Type.UINT)))
       dataType = UIntType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.INT)))
+    else if (TryConsume(Token.Get(Token.Type.INT)))
       dataType = IntType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.ULONG)))
+    else if (TryConsume(Token.Get(Token.Type.ULONG)))
       dataType = ULongType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.LONG)))
+    else if (TryConsume(Token.Get(Token.Type.LONG)))
       dataType = LongType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.BOOLEAN)))
+    else if (TryConsume(Token.Get(Token.Type.BOOLEAN)))
       dataType = BooleanType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.FLOAT)))
+    else if (TryConsume(Token.Get(Token.Type.FLOAT)))
       dataType = FloatType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.DOUBLE)))
+    else if (TryConsume(Token.Get(Token.Type.DOUBLE)))
       dataType = DoubleType.INSTANCE;
-    if (TryConsume(Token.Get(Token.Type.FUN)))
+    else if (TryConsume(Token.Get(Token.Type.FUN)))
     {
       DataType[] args = [.. ParseArgs().Select(v => v.Type)];
       DataType? result = null;
