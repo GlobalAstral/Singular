@@ -214,7 +214,15 @@ public partial class Parser
     else if (TryConsume(Token.Get(Token.Type.NULL)))
     {
       if (typeCheckerContext.Count == 0) Error("Cannot infer type of null value");
-      return typeCheckerContext.Peek()!.GetNull();
+      expression = typeCheckerContext.Peek()!.GetNull();
+    }
+    else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
+    {
+      string name = ParseIdentifier();
+      Variable? variable = SearchVariable(name);
+      if (variable == null)
+        Error($"Variable {name} does not exist");
+      expression = new IdentifierExpression(variable);
     }
     
     else Error("Expected Expression");

@@ -8,6 +8,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
   private readonly List<Function> functions = [];
   private readonly Stack<Context> currentContext = [];
   private readonly Stack<DataType?> typeCheckerContext = [];
+  private readonly List<Variable> locals = [];
 
   public override Statement ProcessOne()
   {
@@ -26,8 +27,11 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     () => Wakeup(Token.Type.CURLY_BLOCK, false, () =>
     {
       Token[] content = (Token[])Consume().value!;
-      //TODO MANAGE LOCALS
+      
+      int saved = locals.Count;
       Statement[] statements = Switch(content, Process);
+      locals.RemoveRange(saved, locals.Count - saved);
+
       return new Scope(statements);
     },
       
@@ -46,20 +50,25 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       currentContext.Push(new FunctionContext(retType, args));
       
       Statement? body = TryConsume(Token.Get(Token.Type.SEMI)) ? null : ProcessOne();
+      
+      currentContext.Pop();
+      
       Function f = new(modifiers, name, args, retType, body);
       Function? found = functions.Find(ele => ele.Equals(f));
+      
       if (found == null)
       {
         functions.Add(f);
         return new FunctionDecl(f);
       }
       if (found.Body == null)
-        functions.Remove(found);
-      functions.Add(f);
-      currentContext.Pop();
-      return new FunctionDecl(f);
-
-    }, 
+      {
+        found.Body = f.Body;
+        return new FunctionDecl(found);
+      }
+      Error($"Function {name} already exists");
+      return null;
+    },
     
     () => Wakeup(Token.Type.RETURN, true, () =>
     {

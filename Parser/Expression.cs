@@ -21,3 +21,10 @@ public class RawExpr(DataType returnType, string generated) : Expression
   public DataType GetReturnType() => returnType;
   public override string ToString() => $"Raw{{\"{Generated}\"}} : {returnType}";
 }
+
+public class IdentifierExpression(Variable Variable) : Expression
+{
+  public Variable Variable {get;} = Variable;
+  public DataType GetReturnType() => Variable.Type;
+  public override string ToString() => $"{Variable}";
+}
