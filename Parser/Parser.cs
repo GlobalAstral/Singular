@@ -70,9 +70,23 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     
     () => Wakeup(Token.Type.UNION, true, () => ParseComposite(Composite.Type.UNION, s => new UnionDecl(s)),
     
-    () => null
-
-    ))))));
+    () => Wakeup(Token.Type.VAR, true, () =>
+    {
+      ModifierHandler modifiers = GetModifiers(handler => {});
+      DataType type = ParseType();
+      string name = MangleIdentifier();
+      Expression? val = null;
+      if (TryConsume(Token.Get(Token.Type.EQUALS)))
+        val = ParseExpression(type);
+      TryConsumeError(Token.Get(Token.Type.SEMI));
+      if (locals.Any(v => v.Name == name))
+        Error($"Variable {name} already exists");
+      Variable variable = new(modifiers, type, name);
+      locals.Add(variable);
+      return new VariableDecl(variable, val);
+    }, () => null
+    
+    )))))));
     
     if (ret == null)
       Error("Syntax Error");

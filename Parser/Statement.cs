@@ -30,3 +30,8 @@ public record UnionDecl(Composite Union) : Statement
 {
   public override string ToString() => $"{Union}";
 }
+
+public record VariableDecl(Variable Variable, Expression? Expression) : Statement
+{
+  public override string ToString() => $"var {Variable} = {Expression}";
+}

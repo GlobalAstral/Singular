@@ -122,6 +122,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
         "null" => new(Token.Type.NULL, line),
         "struct" => new(Token.Type.STRUCT, line),
         "union" => new(Token.Type.UNION, line),
+        "var" => new(Token.Type.VAR, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }
