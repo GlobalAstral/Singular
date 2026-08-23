@@ -7,8 +7,6 @@ public class ModifierHandler
 {
   public bool IsStatic = false;
   public bool IsMutable = false;
-  public bool IsReadonly = false;
-
   public ModifierHandler Static()
   {
     IsStatic = true;
@@ -18,12 +16,6 @@ public class ModifierHandler
   public ModifierHandler Mutable()
   {
     IsMutable = true;
-    return this;
-  }
-
-  public ModifierHandler Readonly()
-  {
-    IsReadonly = true;
     return this;
   }
 
@@ -38,13 +30,10 @@ public class ModifierHandler
     if (IsMutable != other.IsMutable)
       return false;
     
-    if (IsReadonly != other.IsReadonly)
-      return false;
-    
     return true;
   }
 
-  public override int GetHashCode() => HashCode.Combine(IsStatic, IsMutable, IsReadonly);
+  public override int GetHashCode() => HashCode.Combine(IsStatic, IsMutable);
 
   public static bool operator ==(ModifierHandler a, ModifierHandler b) => a.Equals(b);
   public static bool operator !=(ModifierHandler a, ModifierHandler b) => !a.Equals(b);
@@ -53,8 +42,7 @@ public class ModifierHandler
   {
     string s = IsStatic ? "static" : ""; 
     string m = IsMutable ? "mutable" : ""; 
-    string r = IsReadonly ? "readonly" : "";
-    string temp = $"{s} {m} {r}".Trim();
+    string temp = $"{s} {m}".Trim();
     return $"[{temp}]";
   }
 }
@@ -150,8 +138,6 @@ public partial class Parser
     List<Variable> arguments = [];
     Switch(args, () => WithModifiers(handler =>
     {
-      if (handler.IsReadonly)
-        Error("Argument cannot be readonly");
       if (handler.IsStatic)
         Error("Argument cannot be static");
 
@@ -234,11 +220,7 @@ public partial class Parser
   }
 
   private Statement ParseFunction() {
-    ModifierHandler modifiers = GetModifiers(handler =>
-    {
-      if (handler.IsMutable) Error("Function cannot be mutable");
-      if (handler.IsReadonly) Error("Function cannot be readonly");
-    });
+    ModifierHandler modifiers = GetModifiers(handler => { if (handler.IsMutable) Error("Function cannot be mutable"); });
 
     string name = MangleIdentifier();
     Variable[] args = ParseArgs();
@@ -287,12 +269,7 @@ public partial class Parser
           }
           else
           {
-            ModifierHandler modifiers = GetModifiers(handler =>
-            {
-              if (handler.IsReadonly) Error($"{kind} Field cannot be readonly");
-              if (!handler.IsStatic)
-                handler.Mutable();
-            });
+            ModifierHandler modifiers = GetModifiers(handler => { if (!handler.IsStatic) handler.Mutable(); });
 
             DataType type = ParseType();
             string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
