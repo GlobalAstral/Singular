@@ -392,6 +392,15 @@ public partial class Parser
 
       expression = new CompositeLiteral(composite, keyValues);
     }
+    else if (TryConsume(Token.Get(Token.Type.FUN)))
+    {
+      Variable[] arguments = ParseArgs();
+      DataType? retType = null;
+      if (TryConsume(Token.Get(Token.Type.COLON)))
+        retType = ParseType();
+      Statement body = ProcessOne();
+      expression = new Lambda(arguments, retType, body);
+    }
     else Error("Expected Expression");
     
     DataType expr_type = expression!.GetReturnType();
