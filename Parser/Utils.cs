@@ -347,7 +347,42 @@ public partial class Parser
       if (locked_type == null) Error("Cannot infer type from Array Literal");
       expression = new ArrayLiteral(locked_type!, [.. expressions]);
     }
-    
+    else if (Peek(Token.Get(Token.Type.CURLY_BLOCK)))
+    {
+      Token[] body = (Token[]) Consume().value!;
+      DataType? required = typeCheckerContext.Peek();
+      if (required is not CompositeType) Error($"Cannot initialize a non-composite type to a composite literal value");
+
+      CompositeType composite = (CompositeType) required;
+      
+      bool named = false;
+      int field_index = 0;
+      Dictionary<string, Expression> keyValues = [];
+      
+      Switch(body, () =>
+      {
+        if (TryConsume(Token.Get(Token.Type.DOT)))
+        {
+          named = true;
+          string ident = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+          TryConsumeError(Token.Get(Token.Type.EQUALS));
+          Variable? found = composite.Comp.Fields.Find(v => v.Name == ident);
+          if (found == null) Error($"Type {composite} has no field named {ident}");
+          Expression e = ParseExpression(found.Type);
+          keyValues[ident] = e;
+        }
+        else
+        {
+          if (named) Error("Cannot mix named and unnamed initialization");
+          if (field_index >= composite.Comp.Fields.Count) Error("Too many values for initialization");
+          Variable variable = composite.Comp.Fields[field_index++];
+          Expression e = ParseExpression(variable.Type);
+          keyValues[variable.Name] = e;
+        }
+      }, Token.Get(Token.Type.COMMA));
+
+      expression = new CompositeLiteral(composite, keyValues);
+    }
     else Error("Expected Expression");
     
     DataType expr_type = expression!.GetReturnType();

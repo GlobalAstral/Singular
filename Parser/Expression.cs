@@ -35,3 +35,10 @@ public class ArrayLiteral(DataType type, Expression[] Expressions) : Expression
 
   public DataType GetReturnType() => References.GetArrayType(type);
 }
+
+public class CompositeLiteral(DataType type, Dictionary<string, Expression> expressions) : Expression
+{
+  public DataType Type {get;} = type;
+  public Dictionary<string, Expression> Expressions {get;} = expressions;
+  public DataType GetReturnType() => Type;
+}
