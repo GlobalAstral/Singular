@@ -53,6 +53,8 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
       return new Token(Token.Type.STAR, line);
     else if (TryConsume('='))
       return new Token(Token.Type.EQUALS, line);
+    else if (TryConsume('.'))
+      return new Token(Token.Type.DOT, line);
 
     else if (TryConsume('\''))
     {
