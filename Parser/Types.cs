@@ -106,9 +106,9 @@ public class AliasType(DataType Target, string Name) : DataType
   public override Expression GetNull() => Type.GetNull();
 }
 
-public class StructType(Composite @struct) : DataType
+public class CompositeType(Composite Comp) : DataType
 {
-  public Composite Struct {get;} = @struct;
+  public Composite Comp {get;} = Comp;
   public override Expression GetNull() => new RawExpr(this, "{0}");
 }
 
@@ -116,7 +116,7 @@ public static class References {
   private static readonly Dictionary<DataType, ArrayType> ArrayCache = [];
   private static readonly Dictionary<DataType, PointerType> PointerCache = [];
   private static readonly Dictionary<string, AliasType> AliasCache = [];
-  private static readonly Dictionary<string, StructType> StructCache = [];
+  private static readonly Dictionary<string, CompositeType> StructCache = [];
   private static readonly List<FunctionType> FunctionCache = [];
   public static DataType GetArrayType(DataType elements)
   {
@@ -152,7 +152,7 @@ public static class References {
   {
     if (!StructCache.TryGetValue(name, out var value))
     {
-      value = new StructType(@struct);
+      value = new CompositeType(@struct);
       StructCache[name] = value;
     }
     return value;
