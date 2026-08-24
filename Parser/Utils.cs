@@ -329,9 +329,7 @@ public partial class Parser
       Function? fn = functions.Find(f => f.Name == name);
 
       if (fn != null)
-      {
         expression = new FunctionPointer(fn);
-      }
       else
       {
         Variable? variable = SearchVariable(name);
