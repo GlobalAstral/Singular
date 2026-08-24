@@ -42,3 +42,9 @@ public class CompositeLiteral(DataType type, Dictionary<string, Expression> expr
   public Dictionary<string, Expression> Expressions {get;} = expressions;
   public DataType GetReturnType() => Type;
 }
+
+public class FunctionPointer(Function func) : Expression
+{
+  public Function Function {get;} = func;
+  public DataType GetReturnType() => References.GetFunctionType(Function.ReturnType, [.. Function.Arguments.Select(a => a.Type)]);
+}

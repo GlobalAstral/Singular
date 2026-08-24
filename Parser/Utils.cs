@@ -326,10 +326,19 @@ public partial class Parser
     else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
     {
       string name = ParseIdentifier();
-      Variable? variable = SearchVariable(name);
-      if (variable == null)
-        Error($"Variable {name} does not exist");
-      expression = new IdentifierExpression(variable);
+      Function? fn = functions.Find(f => f.Name == name);
+
+      if (fn != null)
+      {
+        expression = new FunctionPointer(fn);
+      }
+      else
+      {
+        Variable? variable = SearchVariable(name);
+        if (variable == null)
+          Error($"Variable {name} does not exist");
+        expression = new IdentifierExpression(variable);
+      }
     }
     else if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
     {
