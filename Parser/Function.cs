@@ -18,4 +18,5 @@ public class Function(ModifierHandler modifiers, string name, Variable[] argumen
   }
 
   public override int GetHashCode() => Name.GetHashCode();
+  public override string ToString() => $"{Modifiers} {Name}({string.Join(", ", Arguments)}) : {ReturnType} {Body}";
 }
