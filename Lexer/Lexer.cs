@@ -55,6 +55,16 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
       return new Token(Token.Type.EQUALS, line);
     else if (TryConsume('.'))
       return new Token(Token.Type.DOT, line);
+    else if (TryConsume('+'))
+      return new Token(Token.Type.PLUS, line);
+    else if (TryConsume('-'))
+      return new Token(Token.Type.MINUS, line);
+    else if (TryConsume('!'))
+      return new Token(Token.Type.EXCLAMATION, line);
+    else if (TryConsume('~'))
+      return new Token(Token.Type.TILDE, line);
+    else if (TryConsume('&'))
+      return new Token(Token.Type.AMPER, line);
 
     else if (TryConsume('\''))
     {
@@ -125,6 +135,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
         "struct" => new(Token.Type.STRUCT, line),
         "union" => new(Token.Type.UNION, line),
         "var" => new(Token.Type.VAR, line),
+        "sizeof" => new(Token.Type.SIZEOF, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }

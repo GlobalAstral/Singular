@@ -3,6 +3,15 @@ namespace Parser;
 public abstract class DataType
 {
   public abstract Expression GetNull();
+  public static bool IsNumeric(DataType type) => (type is AliasType alias && IsNumeric(alias.Type)) || type is ByteType || type is CharType || 
+    type is UShortType || type is ShortType || type is UIntType || type is IntType || type is ULongType || type is LongType || type is FloatType || 
+    type is DoubleType;
+
+  public static bool IsUnsigned(DataType type) => (type is AliasType alias && IsUnsigned(alias.Type)) || type is ByteType || type is UShortType || 
+    type is UIntType || type is ULongType;
+  
+  public static bool IsSigned(DataType type) => (type is AliasType alias && IsSigned(alias.Type)) || type is CharType || type is ShortType || 
+    type is IntType || type is LongType || type is FloatType || type is DoubleType;
 }
 
 public class ByteType : DataType

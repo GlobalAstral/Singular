@@ -85,3 +85,53 @@ public class Lambda(Variable[] arguments, DataType? retType, Statement body) : E
   public DataType GetReturnType() => References.GetFunctionType(ReturnType, [ .. Arguments.Select(a => a.Type) ]);
   public override string ToString() => $"({string.Join(", ", Arguments)}) : {ReturnType} {Body}";
 }
+
+public class UnaryExpression(Expression expr, UnaryExpression.UnaryOperator op) : Expression
+{
+  public enum UnaryOperator
+  {
+    Minus, Not, BitNot, PreInc, PreDec, Deref, Ref, Sizeof
+  }
+
+  public Expression Base {get;} = expr;
+  public UnaryOperator Operator {get;} = op;
+
+  private DataType Deref()
+  {
+    DataType temp = Base.GetReturnType();
+    if (temp is not PointerType)
+      throw new Exception("Cannot dereference a non-pointer type");
+    PointerType type = (PointerType)temp;
+    return type.Target;
+  }
+
+  private DataType Numeric()
+  {
+    DataType temp = Base.GetReturnType();
+    if (!DataType.IsNumeric(temp))
+      throw new Exception("Cannot use a numeric operator on a non-numeric type");
+    return temp;
+  }
+
+  private DataType Signed()
+  {
+    DataType temp = Base.GetReturnType();
+    if (DataType.IsUnsigned(temp))
+      throw new Exception("Cannot use a signed numeric operator on a non-signed numeric type");
+    return temp;
+  }
+
+  public DataType GetReturnType() => Operator switch
+  {
+    UnaryOperator.Minus => Signed(),
+    UnaryOperator.Not => BooleanType.INSTANCE,
+    UnaryOperator.BitNot => Numeric(),
+    UnaryOperator.PreInc => Numeric(),
+    UnaryOperator.PreDec => Numeric(),
+    UnaryOperator.Deref => Deref(),
+    UnaryOperator.Ref => References.GetPointerType(Base.GetReturnType()),
+    UnaryOperator.Sizeof => ULongType.INSTANCE,
+
+    _ => throw new ArgumentOutOfRangeException(nameof(Operator)),
+  };
+}
