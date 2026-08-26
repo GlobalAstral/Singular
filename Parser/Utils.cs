@@ -351,7 +351,9 @@ public partial class Parser
   private Expression ParseExpression()
   {
     Expression? expression = null;
-    if (PeekUnary())
+    if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
+      expression = Switch((Token[])Consume().value!, ParseExpression);
+    else if (PeekUnary())
       expression = ParseUnary();
     else if (Peek(Token.Get(Token.Type.LITERAL)))
     {
