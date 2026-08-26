@@ -11,6 +11,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
   private readonly Stack<DataType?> typeCheckerContext = [];
   private readonly List<Variable> locals = [];
   private readonly Dictionary<string, Composite> composites = [];
+  private readonly Dictionary<string, DataType> aliases = [];
   private uint IgnoringExpression = 0;
 
   public override Statement ProcessOne()
@@ -85,9 +86,21 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       Variable variable = new(modifiers, type, name);
       locals.Add(variable);
       return new VariableDecl(variable, val);
-    }, () => null
+    },
     
-    )))))));
+    () => Wakeup(Token.Type.TYPE, true, () =>
+    {
+      string name = MangleIdentifier();
+      TryConsumeError(Token.Get(Token.Type.EQUALS));
+      DataType type = ParseType();
+      TryConsumeError(Token.Get(Token.Type.SEMI));
+      aliases[name] = type;
+      return new TypeDefinition(name, type);
+    },
+    
+    () => null
+    
+    ))))))));
     
     if (ret == null)
       Error("Syntax Error");

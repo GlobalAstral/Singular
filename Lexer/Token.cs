@@ -6,7 +6,7 @@ public struct Token(Token.Type type, int line, object? value)
   public enum Type {
     INVALID,
     NULL,
-    MUTABLE, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR,
+    MUTABLE, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR, TYPE,
     COMMA, COLON, SEMI, STAR, EQUALS, DOT, AS, BITCAST,
     PLUS, MINUS, EXCLAMATION, TILDE, AMPER, SIZEOF, QUESTION,
     STRUCT, UNION,
@@ -60,6 +60,7 @@ public struct Token(Token.Type type, int line, object? value)
     [Type.BITCAST] = new(Type.BITCAST),
     [Type.QUESTION] = new(Type.QUESTION),
     [Type.DYNAMIC] = new(Type.DYNAMIC),
+    [Type.TYPE] = new(Type.TYPE),
   };
 
   public static Token Get(Type type) => INSTANCES[type];

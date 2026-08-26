@@ -141,6 +141,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
         "as" => new(Token.Type.AS, line),
         "bitcast" => new(Token.Type.BITCAST, line),
         "dynamic" => new(Token.Type.DYNAMIC, line),
+        "type" => new(Token.Type.TYPE, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }

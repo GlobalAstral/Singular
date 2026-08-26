@@ -35,3 +35,8 @@ public record VariableDecl(Variable Variable, Expression? Expression) : Statemen
 {
   public override string ToString() => $"var {Variable} = {Expression}";
 }
+
+public record TypeDefinition(string Name, DataType Type) : Statement
+{
+  public override string ToString() => $"type {Name} = {Type}";
+}

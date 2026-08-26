@@ -118,8 +118,10 @@ public partial class Parser
     else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
     {
       string ident = ParseIdentifier();
-      if (composites.TryGetValue(ident, out var value))
-        dataType = References.GetCompositeType(ident, value);
+      if (aliases.TryGetValue(ident, out var value))
+        dataType = References.GetAliasType(ident, value);
+      else if (composites.TryGetValue(ident, out var val))
+        dataType = References.GetCompositeType(ident, val);
     }
     
     if (dataType == null)
