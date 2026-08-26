@@ -9,6 +9,14 @@ public abstract class DataType
     return value is not null;
   }
   public bool Matches<T>() where T : DataType => Matches<T>(out _);
+  public virtual bool CanAccept(DataType other)
+  {
+    if (ReferenceEquals(this, other))
+      return true;
+    if (other.Matches<AliasType>(out var alias))
+      return this == other || CanAccept(alias!.Type);
+    return this == other;
+  }
   public static bool IsNumeric(DataType type) => (type.Matches<AliasType>(out var alias)  && IsNumeric(alias!.Type)) || type.Matches<ByteType>() || type.Matches<CharType>() || 
     type.Matches<UShortType>() || type.Matches<ShortType>() || type.Matches<UIntType>() || type.Matches<IntType>() || type.Matches<ULongType>() || 
     type.Matches<LongType>() || type.Matches<FloatType>() || type.Matches<DoubleType>();
@@ -93,6 +101,16 @@ public class DynamicType : DataType
   public static readonly DataType INSTANCE = new DynamicType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "NULL");
   public override Expression GetNull() => NULL;
+  public override bool CanAccept(DataType other)
+  {
+    if (ReferenceEquals(this, other))
+      return true;
+
+    if (other.Matches<ArrayType>() || other.Matches<PointerType>() || other.Matches<FunctionType>())
+      return true;
+    
+    return base.CanAccept(other);
+  }
 }
 
 public class ArrayType(DataType elements, Expression size) : DataType
@@ -105,6 +123,14 @@ public class PointerType(DataType target) : DataType
 {
   public DataType Target {get;} = target;
   public override Expression GetNull() => new RawExpr(this, "NULL");
+  public override bool CanAccept(DataType other)
+  {
+    if (ReferenceEquals(this, other))
+      return true;
+    if (other.Matches<ArrayType>() || other.Matches<PointerType>() || other.Matches<FunctionType>() || other.Matches<DynamicType>())
+      return true;
+    return base.CanAccept(other);
+  }
 }
 public class FunctionType(DataType? Result, DataType[] Args) : DataType
 {
@@ -127,6 +153,7 @@ public class AliasType(DataType Target, string Name) : DataType
     }
     return Type.Matches(out value);
   }
+  public override bool CanAccept(DataType other) => base.CanAccept(other) || Type.CanAccept(other);
 }
 
 public class CompositeType(Composite Comp) : DataType
