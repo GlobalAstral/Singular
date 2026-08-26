@@ -89,9 +89,10 @@ public class DoubleType : DataType
 
 }
 
-public class ArrayType(DataType elements) : DataType
+public class ArrayType(DataType elements, Expression size) : DataType
 {
   public DataType Elements {get;} = elements;
+  public Expression Size {get;} = size;
 
   public override Expression GetNull() => new RawExpr(this, "{0}");
 }
@@ -127,11 +128,11 @@ public static class References {
   private static readonly Dictionary<string, AliasType> AliasCache = [];
   private static readonly Dictionary<string, CompositeType> StructCache = [];
   private static readonly List<FunctionType> FunctionCache = [];
-  public static DataType GetArrayType(DataType elements)
+  public static DataType GetArrayType(DataType elements, Expression size)
   {
     if (!ArrayCache.TryGetValue(elements, out var value))
     {
-      value = new ArrayType(elements);
+      value = new ArrayType(elements, size);
       ArrayCache[elements] = value;
     }
     return value;

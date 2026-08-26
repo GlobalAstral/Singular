@@ -127,7 +127,8 @@ public partial class Parser
       Token[] temp = (Token[])Consume().value!;
       if (temp.Length != 0)
         Error("Invalid Array Type");
-      dataType = References.GetArrayType(dataType);
+      Expression size = Switch(temp, () => ParseExpression(ULongType.INSTANCE));
+      dataType = References.GetArrayType(dataType, size);
     }
     return dataType;
   }
