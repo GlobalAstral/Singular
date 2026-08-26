@@ -184,3 +184,11 @@ public class TernaryOperator(Expression condition, Expression result, Expression
 
   public DataType GetReturnType() => Success.GetReturnType();
 }
+
+public class PostIncrement(Expression @base, int direction) : Expression
+{
+  public Expression Base {get;} = @base;
+  public int Direction {get;} = direction;
+
+  public DataType GetReturnType() => Base.GetReturnType();
+}

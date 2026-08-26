@@ -426,6 +426,18 @@ public partial class Parser
       return new TernaryOperator(@base, success, fail);
     }
 
+    if (Peek(Token.Get(Token.Type.PLUS)) && Peek(Token.Get(Token.Type.PLUS), 1)) {
+      if (!DataType.IsNumeric(baseType))
+        Error("Cannot use a numeric operator on a non-numeric type");
+      return new PostIncrement(@base, 1);
+    }
+
+    if (Peek(Token.Get(Token.Type.MINUS)) && Peek(Token.Get(Token.Type.MINUS), 1)) {
+      if (!DataType.IsNumeric(baseType))
+        Error("Cannot use a numeric operator on a non-numeric type");
+      return new PostIncrement(@base, -1);
+    }
+
     //TODO Binary Expressions
 
     return null;
