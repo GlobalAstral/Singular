@@ -99,7 +99,7 @@ public class UnaryExpression(Expression expr, UnaryExpression.UnaryOperator op) 
   private DataType Deref()
   {
     DataType temp = Base.GetReturnType();
-    if (temp is not PointerType)
+    if (!temp.Matches<PointerType>())
       throw new Exception("Cannot dereference a non-pointer type");
     PointerType type = (PointerType)temp;
     return type.Target;

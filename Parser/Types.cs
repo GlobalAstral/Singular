@@ -3,15 +3,21 @@ namespace Parser;
 public abstract class DataType
 {
   public abstract Expression GetNull();
-  public static bool IsNumeric(DataType type) => (type is AliasType alias && IsNumeric(alias.Type)) || type is ByteType || type is CharType || 
-    type is UShortType || type is ShortType || type is UIntType || type is IntType || type is ULongType || type is LongType || type is FloatType || 
-    type is DoubleType;
+  public virtual bool Matches<T>(out T? value) where T : DataType
+  {
+    value = this as T;
+    return value is not null;
+  }
+  public bool Matches<T>() where T : DataType => Matches<T>(out _);
+  public static bool IsNumeric(DataType type) => (type.Matches<AliasType>(out var alias)  && IsNumeric(alias!.Type)) || type.Matches<ByteType>() || type.Matches<CharType>() || 
+    type.Matches<UShortType>() || type.Matches<ShortType>() || type.Matches<UIntType>() || type.Matches<IntType>() || type.Matches<ULongType>() || 
+    type.Matches<LongType>() || type.Matches<FloatType>() || type.Matches<DoubleType>();
 
-  public static bool IsUnsigned(DataType type) => (type is AliasType alias && IsUnsigned(alias.Type)) || type is ByteType || type is UShortType || 
-    type is UIntType || type is ULongType;
+  public static bool IsUnsigned(DataType type) => (type.Matches<AliasType>(out var alias) && IsUnsigned(alias!.Type)) || type.Matches<ByteType>() || 
+    type.Matches<UShortType>() || type.Matches<UIntType>() || type.Matches<ULongType>();
   
-  public static bool IsSigned(DataType type) => (type is AliasType alias && IsSigned(alias.Type)) || type is CharType || type is ShortType || 
-    type is IntType || type is LongType || type is FloatType || type is DoubleType;
+  public static bool IsSigned(DataType type) => (type.Matches<AliasType>(out var alias) && IsSigned(alias!.Type)) || type.Matches<CharType>() || 
+    type.Matches<ShortType>() || type.Matches<IntType>() || type.Matches<LongType>() || type.Matches<FloatType>() || type.Matches<DoubleType>();
 }
 
 public class ByteType : DataType
@@ -44,49 +50,42 @@ public class UIntType : DataType
   public static readonly DataType INSTANCE = new UIntType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned int)0");
   public override Expression GetNull() => NULL;
-
 }
 public class IntType : DataType
 {
   public static readonly DataType INSTANCE = new IntType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(int)0");
   public override Expression GetNull() => NULL;
-
 }
 public class ULongType : DataType
 {
   public static readonly DataType INSTANCE = new ULongType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned long long)0");
   public override Expression GetNull() => NULL;
-
 }
 public class LongType : DataType
 {
   public static readonly DataType INSTANCE = new LongType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(long long)0");
   public override Expression GetNull() => NULL;
-
 }
 public class BooleanType : DataType
 {
   public static readonly DataType INSTANCE = new BooleanType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "false");
   public override Expression GetNull() => NULL;
-
 }
 public class FloatType : DataType
 {
   public static readonly DataType INSTANCE = new FloatType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(float)0.0");
   public override Expression GetNull() => NULL;
-
 }
 public class DoubleType : DataType
 {
   public static readonly DataType INSTANCE = new DoubleType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(double)0.0");
   public override Expression GetNull() => NULL;
-
 }
 
 public class DynamicType : DataType
@@ -100,7 +99,6 @@ public class ArrayType(DataType elements, Expression size) : DataType
 {
   public DataType Elements {get;} = elements;
   public Expression Size {get;} = size;
-
   public override Expression GetNull() => new RawExpr(this, "{0}");
 }
 public class PointerType(DataType target) : DataType
@@ -113,7 +111,6 @@ public class FunctionType(DataType? Result, DataType[] Args) : DataType
   public DataType? Return {get;} = Result;
   public DataType[] Arguments {get;} = Args;
   public override Expression GetNull() => new RawExpr(this, "NULL");
-  
 }
 
 public class AliasType(DataType Target, string Name) : DataType
@@ -121,6 +118,15 @@ public class AliasType(DataType Target, string Name) : DataType
   public DataType Type {get;} = Target;
   public string Alias {get;} = Name;
   public override Expression GetNull() => Type.GetNull();
+  public override bool Matches<T>(out T? value) where T : class
+  {
+    if (this is T cast)
+    {
+      value = cast;
+      return true;
+    }
+    return Type.Matches(out value);
+  }
 }
 
 public class CompositeType(Composite Comp) : DataType

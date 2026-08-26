@@ -1,4 +1,4 @@
-using System.Runtime.Serialization;
+using System.Diagnostics;
 using System.Text;
 using Lexer;
 
@@ -357,7 +357,7 @@ public partial class Parser
 
     if (TryConsume(Token.Get(Token.Type.DOT)))
     {
-      if (baseType is not CompositeType) Error("Cannot access member of non-composite type");
+      if (!baseType.Matches<CompositeType>()) Error("Cannot access member of non-composite type");
       CompositeType type = (CompositeType) baseType;
       string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
       Variable? field = type.Comp.Fields.Find(f => f.Name == name);
@@ -367,9 +367,16 @@ public partial class Parser
 
     if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
     {
-      if (baseType is not ArrayType && baseType is not PointerType)
+      DataType target;
+      if (baseType.Matches<ArrayType>(out var arr))
+        target = arr!.Elements;
+      else if (baseType.Matches<PointerType>(out var ptr))
+        target = ptr!.Target;
+      else
+      {
         Error("Cannot index non-array type or non-pointer type");
-      DataType target = baseType is ArrayType type ? type.Elements : ((PointerType) baseType).Target;
+        throw new UnreachableException();
+      }
       Token[] body = (Token[]) Consume().value!;
       Expression index = Switch(body, () => ParseExpression(ULongType.INSTANCE));
       return new IndexExpr(@base, index, target);
@@ -377,7 +384,7 @@ public partial class Parser
 
     if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
     {
-      if (baseType is not FunctionType)
+      if (!baseType.Matches<FunctionType>())
         Error("Cannot call a non-function type");
       FunctionType functionType = (FunctionType) baseType;
       Token[] body = (Token[]) Consume().value!;
@@ -412,7 +419,7 @@ public partial class Parser
 
     if (TryConsume(Token.Get(Token.Type.QUESTION)))
     {
-      if (baseType is not BooleanType) Error("Condition cannot be a non-boolean type");
+      if (!baseType.Matches<BooleanType>()) Error("Condition cannot be a non-boolean type");
       Expression success = ParseExpression(null);
       TryConsumeError(Token.Get(Token.Type.COLON));
       Expression fail = ParseExpression(success.GetReturnType());
@@ -461,7 +468,7 @@ public partial class Parser
       Token[] body = (Token[]) Consume().value!;
       List<Expression> expressions = [];
       DataType? locked_type = typeCheckerContext.Peek();
-      if (locked_type is not ArrayType) Error("Cannot initialize a non-array type to an array literal value");
+      if (locked_type == null || !locked_type.Matches<ArrayType>()) Error("Cannot initialize a non-array type to an array literal value");
       locked_type = ((ArrayType) locked_type).Elements;
       Switch(body, () =>
       {
@@ -476,7 +483,7 @@ public partial class Parser
     {
       Token[] body = (Token[]) Consume().value!;
       DataType? required = typeCheckerContext.Peek();
-      if (required is not CompositeType) Error($"Cannot initialize a non-composite type to a composite literal value");
+      if (required == null || !required.Matches<CompositeType>()) Error($"Cannot initialize a non-composite type to a composite literal value");
 
       CompositeType composite = (CompositeType) required;
       
