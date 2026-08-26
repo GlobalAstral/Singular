@@ -136,6 +136,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
         "union" => new(Token.Type.UNION, line),
         "var" => new(Token.Type.VAR, line),
         "sizeof" => new(Token.Type.SIZEOF, line),
+        "as" => new(Token.Type.AS, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }

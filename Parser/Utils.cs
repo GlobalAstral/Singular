@@ -396,6 +396,12 @@ public partial class Parser
       return new FunctionCall(@base, [.. values], functionType.Return!);
     }
 
+    if (TryConsume(Token.Get(Token.Type.AS)))
+    {
+      DataType type = ParseType();
+      return new Cast(@base, type);
+    }
+
     return null;
   }
 

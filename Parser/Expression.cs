@@ -159,3 +159,11 @@ public class FunctionCall(Expression @base, Expression[] args, DataType ReturnTy
 
   public DataType GetReturnType() => ReturnType;
 }
+
+public class Cast(Expression @base, DataType type) : Expression
+{
+  public Expression Base {get;} = @base;
+  public DataType Type {get;} = type;
+
+  public DataType GetReturnType() => Type;
+}
