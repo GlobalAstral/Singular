@@ -65,6 +65,8 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
       return new Token(Token.Type.TILDE, line);
     else if (TryConsume('&'))
       return new Token(Token.Type.AMPER, line);
+    else if (TryConsume('?'))
+      return new Token(Token.Type.QUESTION, line);
 
     else if (TryConsume('\''))
     {

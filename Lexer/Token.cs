@@ -8,7 +8,7 @@ public struct Token(Token.Type type, int line, object? value)
     NULL,
     MUTABLE, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR,
     COMMA, COLON, SEMI, STAR, EQUALS, DOT, AS, BITCAST,
-    PLUS, MINUS, EXCLAMATION, TILDE, AMPER, SIZEOF,
+    PLUS, MINUS, EXCLAMATION, TILDE, AMPER, SIZEOF, QUESTION,
     STRUCT, UNION,
     BYTE, CHAR, USHORT, SHORT, UINT, INT, ULONG, LONG, BOOLEAN, FLOAT, DOUBLE, STRING, FUN,
     LITERAL, IDENTIFIER
@@ -58,6 +58,7 @@ public struct Token(Token.Type type, int line, object? value)
     [Type.SIZEOF] = new(Type.SIZEOF),
     [Type.AS] = new(Type.AS),
     [Type.BITCAST] = new(Type.BITCAST),
+    [Type.QUESTION] = new(Type.QUESTION),
   };
 
   public static Token Get(Type type) => INSTANCES[type];

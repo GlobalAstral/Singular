@@ -175,3 +175,12 @@ public class BitCast(Expression @base, DataType type) : Expression
 
   public DataType GetReturnType() => Type;
 }
+
+public class TernaryOperator(Expression condition, Expression result, Expression fail) : Expression
+{
+  public Expression Condition {get;} = condition;
+  public Expression Success {get;} = result;
+  public Expression Fail {get;} = fail;
+
+  public DataType GetReturnType() => Success.GetReturnType();
+}

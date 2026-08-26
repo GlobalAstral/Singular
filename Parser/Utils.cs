@@ -408,6 +408,17 @@ public partial class Parser
       return new BitCast(@base, type);
     }
 
+    if (TryConsume(Token.Get(Token.Type.QUESTION)))
+    {
+      if (baseType is not BooleanType) Error("Condition cannot be a non-boolean type");
+      Expression success = ParseExpression(null);
+      TryConsumeError(Token.Get(Token.Type.COLON));
+      Expression fail = ParseExpression(success.GetReturnType());
+      return new TernaryOperator(@base, success, fail);
+    }
+
+    //TODO Binary Expressions
+
     return null;
   }
 
