@@ -402,6 +402,12 @@ public partial class Parser
       return new Cast(@base, type);
     }
 
+    if (TryConsume(Token.Get(Token.Type.BITCAST)))
+    {
+      DataType type = ParseType();
+      return new BitCast(@base, type);
+    }
+
     return null;
   }
 

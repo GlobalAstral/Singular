@@ -167,3 +167,11 @@ public class Cast(Expression @base, DataType type) : Expression
 
   public DataType GetReturnType() => Type;
 }
+
+public class BitCast(Expression @base, DataType type) : Expression
+{
+  public Expression Base {get;} = @base;
+  public DataType Type {get;} = type;
+
+  public DataType GetReturnType() => Type;
+}
