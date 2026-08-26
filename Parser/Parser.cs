@@ -11,6 +11,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
   private readonly Stack<DataType?> typeCheckerContext = [];
   private readonly List<Variable> locals = [];
   private readonly Dictionary<string, Composite> composites = [];
+  private uint IgnoringExpression = 0;
 
   public override Statement ProcessOne()
   {

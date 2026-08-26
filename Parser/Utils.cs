@@ -1,3 +1,4 @@
+using System.Runtime.Serialization;
 using System.Text;
 using Lexer;
 
@@ -350,15 +351,49 @@ public partial class Parser
 
   private Expression? ParsePostExpression(Expression @base)
   {
+    DataType baseType = @base.GetReturnType();
+
     if (TryConsume(Token.Get(Token.Type.DOT)))
     {
-      DataType baseType = @base.GetReturnType();
       if (baseType is not CompositeType) Error("Cannot access member of non-composite type");
       CompositeType type = (CompositeType) baseType;
       string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
       Variable? field = type.Comp.Fields.Find(f => f.Name == name);
       if (field == null) Error($"{type.Comp.Name} does not have a member named {name}");
       return new MemberAccess(@base, field);
+    }
+
+    if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
+    {
+      if (baseType is not ArrayType && baseType is not PointerType)
+        Error("Cannot index non-array type or non-pointer type");
+      DataType target = baseType is ArrayType type ? type.Elements : ((PointerType) baseType).Target;
+      Token[] body = (Token[]) Consume().value!;
+      Expression index = Switch(body, () => ParseExpression(ULongType.INSTANCE));
+      return new IndexExpr(@base, index, target);
+    }
+
+    if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
+    {
+      if (baseType is not FunctionType)
+        Error("Cannot call a non-function type");
+      FunctionType functionType = (FunctionType) baseType;
+      Token[] body = (Token[]) Consume().value!;
+
+      List<Expression> values = [];
+
+      Switch(body, () => values.Add(ParseExpression()), Token.Get(Token.Type.COMMA));
+
+      if (values.Count != functionType.Arguments.Length)
+        Error($"Invalid function arguments. Provided {values.Count} Expected {functionType.Arguments.Length}");
+
+      if (!values.Zip(functionType.Arguments).All(pair => pair.First.GetReturnType() == pair.Second))
+        Error("Invalid types for function arguments");
+      
+      if (functionType.Return == null && IgnoringExpression == 0)
+        Error("Not returned value not ignored as it ought to be");
+      
+      return new FunctionCall(@base, [.. values], functionType.Return!);
     }
 
     return null;

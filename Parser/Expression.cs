@@ -143,3 +143,19 @@ public class MemberAccess(Expression expression, Variable field) : Expression
   public DataType GetReturnType() => Field.Type;
   public override string ToString() => $"{Expression}.{Field.Name}";
 }
+
+public class IndexExpr(Expression @base, Expression index, DataType ReturnType) : Expression
+{
+  public Expression Base {get;} = @base;
+  public Expression Index {get;} = index;
+
+  public DataType GetReturnType() => ReturnType;
+}
+
+public class FunctionCall(Expression @base, Expression[] args, DataType ReturnType) : Expression
+{
+  public Expression Base {get;} = @base;
+  public Expression[] Args {get;} = args;
+
+  public DataType GetReturnType() => ReturnType;
+}
