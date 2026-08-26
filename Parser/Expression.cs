@@ -135,3 +135,11 @@ public class UnaryExpression(Expression expr, UnaryExpression.UnaryOperator op) 
     _ => throw new ArgumentOutOfRangeException(nameof(Operator)),
   };
 }
+
+public class MemberAccess(Expression expression, Variable field) : Expression
+{
+  public Expression Expression {get;} = expression;
+  public Variable Field {get;} = field;
+  public DataType GetReturnType() => Field.Type;
+  public override string ToString() => $"{Expression}.{Field.Name}";
+}

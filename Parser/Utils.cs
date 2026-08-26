@@ -348,6 +348,22 @@ public partial class Parser
     return ret;
   }
 
+  private Expression? ParsePostExpression(Expression @base)
+  {
+    if (TryConsume(Token.Get(Token.Type.DOT)))
+    {
+      DataType baseType = @base.GetReturnType();
+      if (baseType is not CompositeType) Error("Cannot access member of non-composite type");
+      CompositeType type = (CompositeType) baseType;
+      string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+      Variable? field = type.Comp.Fields.Find(f => f.Name == name);
+      if (field == null) Error($"{type.Comp.Name} does not have a member named {name}");
+      return new MemberAccess(@base, field);
+    }
+
+    return null;
+  }
+
   private Expression ParseExpression()
   {
     Expression? expression = null;
@@ -442,6 +458,13 @@ public partial class Parser
       expression = new Lambda(arguments, retType, body);
     }
     else Error("Expected Expression");
+
+    Expression? result = ParsePostExpression(expression);
+    while (result != null)
+    {
+      expression = result;
+      result = ParsePostExpression(expression);
+    }
     
     DataType expr_type = expression!.GetReturnType();
     DataType? check_type = typeCheckerContext.Peek();
