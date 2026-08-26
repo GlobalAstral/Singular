@@ -125,7 +125,7 @@ public partial class Parser
     if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
     {
       Token[] temp = (Token[])Consume().value!;
-      if (temp.Length != 0)
+      if (temp.Length == 0)
         Error("Invalid Array Type");
       Expression size = Switch(temp, () => ParseExpression(ULongType.INSTANCE));
       dataType = References.GetArrayType(dataType, size);
