@@ -105,6 +105,8 @@ public partial class Parser
       dataType = FloatType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.DOUBLE)))
       dataType = DoubleType.INSTANCE;
+    else if (TryConsume(Token.Get(Token.Type.DYNAMIC)))
+      dataType = DynamicType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.FUN)))
     {
       DataType[] args = [.. ParseArgs().Select(v => v.Type)];

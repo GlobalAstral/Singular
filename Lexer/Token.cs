@@ -10,7 +10,7 @@ public struct Token(Token.Type type, int line, object? value)
     COMMA, COLON, SEMI, STAR, EQUALS, DOT, AS, BITCAST,
     PLUS, MINUS, EXCLAMATION, TILDE, AMPER, SIZEOF, QUESTION,
     STRUCT, UNION,
-    BYTE, CHAR, USHORT, SHORT, UINT, INT, ULONG, LONG, BOOLEAN, FLOAT, DOUBLE, STRING, FUN,
+    BYTE, CHAR, USHORT, SHORT, UINT, INT, ULONG, LONG, BOOLEAN, FLOAT, DOUBLE, STRING, FUN, DYNAMIC,
     LITERAL, IDENTIFIER
   }
 
@@ -59,6 +59,7 @@ public struct Token(Token.Type type, int line, object? value)
     [Type.AS] = new(Type.AS),
     [Type.BITCAST] = new(Type.BITCAST),
     [Type.QUESTION] = new(Type.QUESTION),
+    [Type.DYNAMIC] = new(Type.DYNAMIC),
   };
 
   public static Token Get(Type type) => INSTANCES[type];

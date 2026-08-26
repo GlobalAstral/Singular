@@ -89,6 +89,13 @@ public class DoubleType : DataType
 
 }
 
+public class DynamicType : DataType
+{
+  public static readonly DataType INSTANCE = new DynamicType();
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "NULL");
+  public override Expression GetNull() => NULL;
+}
+
 public class ArrayType(DataType elements, Expression size) : DataType
 {
   public DataType Elements {get;} = elements;
