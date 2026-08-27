@@ -341,7 +341,6 @@ public partial class Parser
     
     Expression e = ParseExpression(null);
     UnaryExpression r = new(e, (UnaryExpression.UnaryOperator)op);
-    r.GetReturnType();
     return r;
   }
 
@@ -440,8 +439,94 @@ public partial class Parser
       return new PostIncrement(@base, -1);
     }
 
-    //TODO Binary Expressions
+    BinaryExpr.BinaryOp? op = PeekBinary();
+    if (op != null)
+      return ParseBinary(@base, (BinaryExpr.BinaryOp) op);
 
+    return null;
+  }
+
+  private static bool IsRightAssociative(BinaryExpr.BinaryOp op) => op == BinaryExpr.BinaryOp.Assign;
+  private static bool ShouldRotate(BinaryExpr.BinaryOp current, BinaryExpr.BinaryOp right)
+  {
+      uint cp = BinaryExpr.Precedence(current);
+      uint rp = BinaryExpr.Precedence(right);
+
+      if (cp > rp)
+        return true;
+
+      if (cp < rp)
+        return false;
+
+      return !IsRightAssociative(current);
+  }
+
+  private Expression ParseBinary(Expression left, BinaryExpr.BinaryOp op)
+  {
+    //TODO COMPOUND ASSIGNMENTS
+    Expression right = ParseExpression(null);
+    if (right is BinaryExpr rbin && ShouldRotate(op, rbin.Operator))
+    {
+      Expression l = new BinaryExpr(left, rbin.Left, op);
+      return new BinaryExpr(l, rbin.Right, rbin.Operator);
+    }
+    return new BinaryExpr(left, right, op);
+  }
+
+  private BinaryExpr.BinaryOp? PeekBinary()
+  {
+    if (TryConsume(Token.Get(Token.Type.PLUS)))
+      return BinaryExpr.BinaryOp.Add;
+    if (TryConsume(Token.Get(Token.Type.MINUS)))
+      return BinaryExpr.BinaryOp.Sub;
+    if (TryConsume(Token.Get(Token.Type.STAR)))
+      return BinaryExpr.BinaryOp.Mul;
+    if (TryConsume(Token.Get(Token.Type.SLASH)))
+      return BinaryExpr.BinaryOp.Div;
+    if (TryConsume(Token.Get(Token.Type.PERCENT)))
+      return BinaryExpr.BinaryOp.Mod;
+    if (TryConsume(Token.Get(Token.Type.AMPER)))
+    {
+      if (TryConsume(Token.Get(Token.Type.AMPER)))
+        return BinaryExpr.BinaryOp.And;
+      return BinaryExpr.BinaryOp.BitAnd;
+    }
+    if (TryConsume(Token.Get(Token.Type.PIPE)))
+    {
+      if (TryConsume(Token.Get(Token.Type.PIPE)))
+        return BinaryExpr.BinaryOp.Or;
+      return BinaryExpr.BinaryOp.BitOr;
+    }
+    if (TryConsume(Token.Get(Token.Type.CARET)))
+      return BinaryExpr.BinaryOp.BitXor;
+    if (TryConsume(Token.Get(Token.Type.LANGLE)))
+    {
+      if (TryConsume(Token.Get(Token.Type.EQUALS)))
+        return BinaryExpr.BinaryOp.LessEqual;
+      if (TryConsume(Token.Get(Token.Type.LANGLE)))
+        return BinaryExpr.BinaryOp.Shl;
+      return BinaryExpr.BinaryOp.Less;
+    }
+    if (TryConsume(Token.Get(Token.Type.RANGLE)))
+    {
+      if (TryConsume(Token.Get(Token.Type.EQUALS)))
+        return BinaryExpr.BinaryOp.GreaterEqual;
+      if (TryConsume(Token.Get(Token.Type.RANGLE)))
+        return BinaryExpr.BinaryOp.Shr;
+      return BinaryExpr.BinaryOp.Greater;
+    }
+    if (TryConsume(Token.Get(Token.Type.EQUALS)))
+    {
+      if (TryConsume(Token.Get(Token.Type.EQUALS)))
+        return BinaryExpr.BinaryOp.Equals;
+      return BinaryExpr.BinaryOp.Assign;
+    }
+    if (Peek(Token.Get(Token.Type.EXCLAMATION)) && Peek(Token.Get(Token.Type.EQUALS), 1))
+    {
+      Consume(2);
+      return BinaryExpr.BinaryOp.NotEquals;
+    }
+    
     return null;
   }
 

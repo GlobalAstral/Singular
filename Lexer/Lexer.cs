@@ -1,4 +1,3 @@
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace Lexer;
@@ -67,6 +66,16 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
       return new Token(Token.Type.AMPER, line);
     else if (TryConsume('?'))
       return new Token(Token.Type.QUESTION, line);
+    else if (TryConsume('/'))
+      return new Token(Token.Type.SLASH, line);
+    else if (TryConsume('%'))
+      return new Token(Token.Type.PERCENT, line);
+    else if (TryConsume('^'))
+      return new Token(Token.Type.CARET, line);
+    else if (TryConsume('<'))
+      return new Token(Token.Type.LANGLE, line);
+    else if (TryConsume('>'))
+      return new Token(Token.Type.RANGLE, line);
 
     else if (TryConsume('\''))
     {

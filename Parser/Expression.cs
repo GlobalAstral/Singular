@@ -86,15 +86,21 @@ public class Lambda(Variable[] arguments, DataType? retType, Statement body) : E
   public override string ToString() => $"({string.Join(", ", Arguments)}) : {ReturnType} {Body}";
 }
 
-public class UnaryExpression(Expression expr, UnaryExpression.UnaryOperator op) : Expression
+public class UnaryExpression : Expression
 {
+  public UnaryExpression(Expression expr, UnaryOperator op)
+  {
+    Base = expr;
+    Operator = op;
+    GetReturnType();
+  }
   public enum UnaryOperator
   {
     Minus, Not, BitNot, PreInc, PreDec, Deref, Ref, Sizeof
   }
 
-  public Expression Base {get;} = expr;
-  public UnaryOperator Operator {get;} = op;
+  public Expression Base {get;}
+  public UnaryOperator Operator {get;}
 
   private DataType Deref()
   {
@@ -191,4 +197,116 @@ public class PostIncrement(Expression @base, int direction) : Expression
   public int Direction {get;} = direction;
 
   public DataType GetReturnType() => Base.GetReturnType();
+}
+
+public class BinaryExpr : Expression
+{
+  public static uint Precedence(BinaryOp op) => op switch {
+    BinaryOp.Mul
+    or BinaryOp.Div
+    or BinaryOp.Mod
+      => 11,
+
+    BinaryOp.Add
+    or BinaryOp.Sub
+      => 10,
+
+    BinaryOp.Shl
+    or BinaryOp.Shr
+      => 9,
+
+    BinaryOp.Greater
+    or BinaryOp.Less
+    or BinaryOp.GreaterEqual
+    or BinaryOp.LessEqual
+      => 8,
+
+    BinaryOp.Equals
+    or BinaryOp.NotEquals
+      => 7,
+
+    BinaryOp.BitAnd => 6,
+    BinaryOp.BitXor => 5,
+    BinaryOp.BitOr => 4,
+    BinaryOp.And => 3,
+    BinaryOp.Or => 2,
+    BinaryOp.Assign => 1,
+
+    _ => throw new ArgumentOutOfRangeException(nameof(op))
+  };
+
+  public BinaryExpr(Expression left, Expression right, BinaryExpr.BinaryOp op)
+  {
+    Left = left;
+    Right = right;
+    Operator = op;
+    GetReturnType();
+  }
+  public Expression Left {get;}
+  public Expression Right {get;}
+  public BinaryOp Operator {get;}
+  private DataType Arith()
+  {
+    DataType LeftType = Left.GetReturnType();
+    DataType RightType = Right.GetReturnType();
+    if ((!DataType.IsNumeric(LeftType) && !LeftType.Matches<PointerType>()) || (!DataType.IsNumeric(RightType) && !RightType.Matches<PointerType>()))
+      throw new Exception("Cannot do arithmetics with non-numeric types and non-pointer types");
+    if (!LeftType.CanAccept(RightType))
+      throw new Exception("Cannot do arithmetics with non-compatible types");
+    return LeftType;
+  }
+
+  private DataType Modulus()
+  {
+    DataType LeftType = Left.GetReturnType();
+    DataType RightType = Right.GetReturnType();
+
+    if (!DataType.IsNumeric(LeftType) || !DataType.IsNumeric(RightType))
+      throw new Exception("Cannot do modulus with non-numeric types");
+    if (LeftType.Matches<FloatType>() || LeftType.Matches<DoubleType>() || RightType.Matches<FloatType>() || RightType.Matches<DoubleType>())
+      throw new Exception("Cannot do modulus with floating-point types");
+    if (!LeftType.CanAccept(RightType))
+      throw new Exception("Cannot do modulus with incompatible types");
+    
+    return LeftType;
+  }
+
+  private DataType Assign()
+  {
+    if (Left is not IdentifierExpression && Left is not IndexExpr && Left is not MemberAccess && !(Left is UnaryExpression u
+      && u.Operator == UnaryExpression.UnaryOperator.Deref))
+      throw new Exception($"{Left} is not a modifiable lvalue");
+
+    if (Left is IdentifierExpression ident && !ident.Variable.Modifiers.IsMutable)
+      throw new Exception($"{ident.Variable} is a constant");
+    
+    if (Left is MemberAccess memberAccess && !memberAccess.Field.Modifiers.IsMutable)
+      throw new Exception($"{memberAccess.Field} is a constant");
+
+    //TODO Think about whether to give pointer types ability to be const or mutable (C const madness) or make a separate keyword for pointers with constant target
+
+    return Right.GetReturnType();
+  }
+  
+  public enum BinaryOp
+  {
+    Add, Sub, Mul, Div, Mod,
+    BitAnd, BitOr, BitXor, Shl, Shr,
+    Equals, NotEquals, Greater, Less, GreaterEqual, LessEqual, And, Or, 
+    Assign
+  }
+
+  public DataType GetReturnType() => Operator switch
+  {
+    BinaryOp.Add or BinaryOp.Sub or BinaryOp.Mul or BinaryOp.Div or BinaryOp.BitAnd or BinaryOp.BitOr or BinaryOp.BitXor or BinaryOp.Shl or
+      BinaryOp.Shr => Arith(),
+
+    BinaryOp.Equals or BinaryOp.NotEquals or BinaryOp.Greater or BinaryOp.Less or BinaryOp.GreaterEqual or BinaryOp.LessEqual or BinaryOp.And or
+      BinaryOp.Or => BooleanType.INSTANCE,
+
+    BinaryOp.Assign => Assign(),
+    BinaryOp.Mod => Modulus(),
+
+    _ => throw new ArgumentOutOfRangeException(nameof(Operator)),
+  };
 }
