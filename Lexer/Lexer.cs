@@ -76,6 +76,8 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
       return new Token(Token.Type.LANGLE, line);
     else if (TryConsume('>'))
       return new Token(Token.Type.RANGLE, line);
+    else if (TryConsume('|'))
+      return new Token(Token.Type.PIPE, line);
 
     else if (TryConsume('\''))
     {
