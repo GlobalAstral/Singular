@@ -463,14 +463,29 @@ public partial class Parser
 
   private Expression ParseBinary(Expression left, BinaryExpr.BinaryOp op)
   {
-    //TODO COMPOUND ASSIGNMENTS
+    bool compound = false;
+    if (TryConsume(Token.Get(Token.Type.EQUALS)))
+    {
+      if (!BinaryExpr.IsBinaryOpAssignable(op)) Error($"Cannot compound operator {op} into an assignment");
+      compound = true;
+    }
+
     Expression right = ParseExpression(null);
+    Expression result = new BinaryExpr(left, right, op);
+
     if (right is BinaryExpr rbin && ShouldRotate(op, rbin.Operator))
     {
       Expression l = new BinaryExpr(left, rbin.Left, op);
-      return new BinaryExpr(l, rbin.Right, rbin.Operator);
+      result = new BinaryExpr(l, rbin.Right, rbin.Operator);
     }
-    return new BinaryExpr(left, right, op);
+
+    if (compound && BinaryExpr.IsNotLValue(left))
+      Error($"{left} is not a modifiable lvalue");
+
+    if (compound)
+      result = new BinaryExpr(left, result, BinaryExpr.BinaryOp.Assign);
+
+    return result;
   }
 
   private BinaryExpr.BinaryOp? PeekBinary()

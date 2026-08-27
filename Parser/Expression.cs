@@ -235,6 +235,24 @@ public class BinaryExpr : Expression
     _ => throw new ArgumentOutOfRangeException(nameof(op))
   };
 
+  public static bool IsBinaryOpAssignable(BinaryOp op) => op switch
+  {
+    BinaryOp.Mul
+    or BinaryOp.Div
+    or BinaryOp.Mod
+    or BinaryOp.Add
+    or BinaryOp.Sub
+    or BinaryOp.Shl
+    or BinaryOp.Shr
+    or BinaryOp.BitAnd
+    or BinaryOp.BitXor
+    or BinaryOp.BitOr
+    or BinaryOp.And
+    or BinaryOp.Or
+      => true,
+    _ => false
+  };  
+
   public BinaryExpr(Expression left, Expression right, BinaryExpr.BinaryOp op)
   {
     Left = left;
@@ -270,11 +288,10 @@ public class BinaryExpr : Expression
     
     return LeftType;
   }
-
+  public static bool IsNotLValue(Expression expr) => expr is not IdentifierExpression && expr is not IndexExpr && expr is not MemberAccess && !(expr is UnaryExpression u && u.Operator == UnaryExpression.UnaryOperator.Deref);
   private DataType Assign()
   {
-    if (Left is not IdentifierExpression && Left is not IndexExpr && Left is not MemberAccess && !(Left is UnaryExpression u
-      && u.Operator == UnaryExpression.UnaryOperator.Deref))
+    if (IsNotLValue(Left))
       throw new Exception($"{Left} is not a modifiable lvalue");
 
     if (Left is IdentifierExpression ident && !ident.Variable.Modifiers.IsMutable)
