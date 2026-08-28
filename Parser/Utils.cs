@@ -214,18 +214,70 @@ public partial class Parser
     return builder.ToString();
   }
 
+  protected bool InFunction(out FunctionContext? context)
+  {
+    Context current = currentContext.Peek();
+    if (currentContext.Count > 0 && current is ScopeContext ctx && ctx.FunctionContext != null)
+    {
+      context = current as FunctionContext;
+      return true;
+    }
+    context = null;
+    return false;
+  }
+
+  protected bool InFunction() => InFunction(out var _);
+
+  protected bool InScope(out ScopeContext? context)
+  {
+    Context current = currentContext.Peek();
+    if (currentContext.Count > 0 && current is ScopeContext ctx)
+    {
+      context = ctx;
+      return true;
+    }
+    context = null;
+    return false;
+  }
+
+  protected bool InScope() => InScope(out var _);
+
   protected Variable? SearchVariable(string name)
   {
-    Variable? found = locals.Find(v => v.Name == name);
-    if (found != null)
-      return found;
-    if (currentContext.Count > 0 && currentContext.Peek() is FunctionContext context)
+    Variable? found;
+    if (InScope(out var scope))
     {
-      found = context.Arguments.ToList().Find(v => v.Name == name);
+      found = scope!.Locals.Find(v => v.Name == name);
       if (found != null)
         return found;
+
+      if (scope.FunctionContext != null)
+      {
+        found = scope.FunctionContext.Arguments.ToList().Find(v => v.Name == name);
+        if (found != null)
+          return found;
+      }
     }
+
+    found = globals.Find(v => v.Name == name);
+    if (found != null)
+      return found;
+
     return null;
+  }
+
+  protected void AddVariable(Variable variable)
+  {
+    if (SearchVariable(variable.Name) != null)
+      Error($"Variable {variable.Name} already exists");
+    
+    if (InScope(out var scope))
+    {
+      scope!.Locals.Add(variable);
+      return;
+    }
+
+    globals.Add(variable);
   }
 
   private Statement ParseFunction() {
@@ -679,16 +731,4 @@ public partial class Parser
       return else_action();
   }
   protected void Semi() => TryConsumeError(Token.Get(Token.Type.SEMI));
-
-  private void SaveSnapshot() => LocalsSnapshots.Push(locals.Count);
-  private Statement ResolveDefers(Statement? appended = null)
-  {
-    throw new NotImplementedException();
-  }
-  private void RestoreSnapshot()
-  {
-    ResolveDefers();
-    int saved = LocalsSnapshots.Pop();
-    locals.RemoveRange(saved, locals.Count - saved);
-  }
 }

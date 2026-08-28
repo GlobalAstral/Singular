@@ -1,15 +1,14 @@
-using System.Runtime.InteropServices;
 using Lexer;
 
 namespace Parser;
 
-public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens)
+public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens, s => s is Nop)
 {
   private readonly Stack<string> namespaces = [];
   private readonly List<Function> functions = [];
   private readonly Stack<Context> currentContext = [];
   private readonly Stack<DataType?> typeCheckerContext = [];
-  private readonly List<Variable> locals = [];
+  private readonly List<Variable> globals = [];
   private readonly Dictionary<string, Composite> composites = [];
   private readonly Dictionary<string, DataType> aliases = [];
   private uint IgnoringExpression = 0;
@@ -34,26 +33,39 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     {
       Token[] content = (Token[])Consume().value!;
       
-      SaveSnapshot();
-      Statement[] statements = Switch(content, Process);
-      RestoreSnapshot();
-      return new Scope(statements);
+      Context? current = currentContext.Peek();
+
+      ScopeContext context = new(current is FunctionContext ctx ? ctx : null);
+      currentContext.Push(context);
+
+      List<Statement> statements = [.. Switch(content, Process)];
+
+      Statement toadd = context.ResolveDefers();
+
+      if (!(toadd is Group group && group.Content.Length == 0))
+        statements.Add(toadd);
+
+      currentContext.Pop();
+
+      return new Scope([.. statements]);
     },
       
     () => Wakeup(Token.Type.FUN, true, ParseFunction,
     
     () => Wakeup(Token.Type.RETURN, true, () =>
     {
-      if (currentContext.Count == 0 || currentContext.Peek() is not FunctionContext)
+      Context? current = currentContext.Peek();
+      if (!InFunction())
         Error("Cannot return outside of Function Context");
 
-      FunctionContext context = (FunctionContext) currentContext.Peek();
+      ScopeContext scopeContext = (ScopeContext)current;
+      FunctionContext context = scopeContext.FunctionContext!;
 
       if (TryConsume(Token.Get(Token.Type.SEMI)))
       {
         if (context.ReturnType != null)
           Error($"Cannot return nothing in a function returning {context.ReturnType}");
-        return new Return(null);
+        return scopeContext.ResolveDefers(new Return(null));
       }
       
       Expression expression = ParseExpression(context.ReturnType);
@@ -65,7 +77,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
         Error($"Cannot return {temp} in a function returning {t}");
       }
       TryConsumeError(Token.Get(Token.Type.SEMI));
-      return ResolveDefers(new Return(expression));
+      return scopeContext.ResolveDefers(new Return(expression));
     },
 
     () => Wakeup(Token.Type.STRUCT, true, () => ParseComposite(Composite.Type.STRUCT, s => new StructDecl(s)),
@@ -81,10 +93,8 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       if (TryConsume(Token.Get(Token.Type.EQUALS)))
         val = ParseExpression(type);
       TryConsumeError(Token.Get(Token.Type.SEMI));
-      if (locals.Any(v => v.Name == name))
-        Error($"Variable {name} already exists");
       Variable variable = new(modifiers, type, name);
-      locals.Add(variable);
+      AddVariable(variable);
       return new VariableDecl(variable, val);
     },
     
@@ -98,9 +108,17 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       return new TypeDefinition(name, type);
     },
     
+    () => Wakeup(Token.Type.DEFER, true, () =>
+    {
+      if (!InScope(out var scope))
+        Error("Cannot defer outside of a scope");
+      scope!.Defers.Push(ProcessOne());
+      return new Nop();
+    },
+    
     () => null
     
-    ))))))));
+    )))))))));
     
     if (ret == null)
     {

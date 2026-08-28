@@ -45,3 +45,5 @@ public record IgnoredExpr(Expression Expression) : Statement
 {
   public override string ToString() => $"{Expression}";
 }
+
+public record Nop() : Statement;

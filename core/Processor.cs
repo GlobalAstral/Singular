@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Lexer;
 
-public abstract class Processor<T, O>(T[] content) where T: new() where O: new()
+public abstract class Processor<T, O>(T[] content, Func<O, bool>? Skip = null) where T: new() where O: new()
 {
   protected int peek = 0;
   protected List<O> output = [];
@@ -127,7 +127,11 @@ public abstract class Processor<T, O>(T[] content) where T: new() where O: new()
   {
     List<O> ret = [];
     while (HasPeek())
-      ret.Add(ProcessOne());
+    {
+      O temp = ProcessOne();
+      if (Skip == null || !Skip(temp) )
+        ret.Add(temp);
+    }
     return [.. ret];
   }
 }

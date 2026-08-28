@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Lexer;
 
-public class Lexer(char[] content) : Processor<char, Token>(content)
+public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type == Token.Type.INVALID)
 {
   private static char GetCloseBracket(char bracket) => bracket == '(' ? ')' : bracket == '[' ? ']' : bracket == '{' ? '}' : bracket == '<' ? '>' : '\0';
   private static Token.Type GetTokenForBracket(char bracket) => bracket == '(' ? Token.Type.PAREN_BLOCK : bracket == '[' ? Token.Type.SQUARE_BLOCK : bracket == '{' ? Token.Type.CURLY_BLOCK : bracket == '<' ? Token.Type.ANGLE_BLOCK : Token.Type.INVALID;
@@ -154,18 +154,12 @@ public class Lexer(char[] content) : Processor<char, Token>(content)
         "dynamic" => new(Token.Type.DYNAMIC, line),
         "type" => new(Token.Type.TYPE, line),
         "mut" => new(Token.Type.MUTABLE, line),
+        "defer" => new(Token.Type.DEFER, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }
     
     Error("Invalid Token");
     return new Token();
-  }
-
-  public override Token[] Process()
-  {
-    List<Token> tokens = [.. base.Process()];
-    tokens.RemoveAll(t => t.type == Token.Type.INVALID);
-    return [.. tokens];
   }
 }
