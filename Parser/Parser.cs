@@ -13,6 +13,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
   private readonly Dictionary<string, Composite> composites = [];
   private readonly Dictionary<string, DataType> aliases = [];
   private uint IgnoringExpression = 0;
+  private bool extendedExpr = true;
 
   public override Statement ProcessOne()
   {

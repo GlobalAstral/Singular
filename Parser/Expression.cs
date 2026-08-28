@@ -96,7 +96,7 @@ public class UnaryExpression : Expression
   }
   public enum UnaryOperator
   {
-    Minus, Not, BitNot, PreInc, PreDec, Deref, Ref, Sizeof
+    Minus, Not, BitNot, PreInc, PreDec, Deref, Ref, MutRef, Sizeof
   }
 
   public Expression Base {get;}
@@ -127,6 +127,15 @@ public class UnaryExpression : Expression
     return temp;
   }
 
+  private DataType MutRef()
+  {
+    if (BinaryExpr.IsNotLValue(Base))
+      throw new Exception($"{Base} is not a modifiable lvalue");
+    if (Base is IdentifierExpression expr && !expr.Variable.Modifiers.IsMutable)
+      throw new Exception($"Variable {expr.Variable} is not mutable and cannot be a mutable pointee");
+    return References.GetPointerType(Base.GetReturnType(), true);
+  }
+
   public DataType GetReturnType() => Operator switch
   {
     UnaryOperator.Minus => Signed(),
@@ -135,7 +144,8 @@ public class UnaryExpression : Expression
     UnaryOperator.PreInc => Numeric(),
     UnaryOperator.PreDec => Numeric(),
     UnaryOperator.Deref => Deref(),
-    UnaryOperator.Ref => References.GetPointerType(Base.GetReturnType()),
+    UnaryOperator.Ref => References.GetPointerType(Base.GetReturnType(), false),
+    UnaryOperator.MutRef => MutRef(),
     UnaryOperator.Sizeof => ULongType.INSTANCE,
 
     _ => throw new ArgumentOutOfRangeException(nameof(Operator)),
@@ -300,7 +310,12 @@ public class BinaryExpr : Expression
     if (Left is MemberAccess memberAccess && !memberAccess.Field.Modifiers.IsMutable)
       throw new Exception($"{memberAccess.Field} is a constant");
 
-    //TODO Think about whether to give pointer types ability to be const or mutable (C const madness) or make a separate keyword for pointers with constant target
+    if (Left is UnaryExpression unary)
+    {
+      PointerType pointer = (unary.Base.GetReturnType() as PointerType)!;
+      if (!pointer.Mutable)
+        throw new Exception($"{unary.Base} returns a pointer to a constant pointee");
+    }
 
     return Right.GetReturnType();
   }

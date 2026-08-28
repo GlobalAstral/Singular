@@ -101,6 +101,6 @@ public readonly struct DoubleLiteral(double Double) : Literal
 public readonly struct StringLiteral(string String) : Literal
 {
   public string String {get;} = String;
-  public readonly DataType GetReturnType() => References.GetPointerType(CharType.INSTANCE);
+  public readonly DataType GetReturnType() => References.GetPointerType(CharType.INSTANCE, false);
   public override string ToString() => $"\"{String}\"";
 }

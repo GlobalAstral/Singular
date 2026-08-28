@@ -82,7 +82,10 @@ public partial class Parser
   {
     DataType? dataType = null;
     if (TryConsume(Token.Get(Token.Type.STAR)))
-      dataType = References.GetPointerType(ParseType());
+    {
+      bool mutable = TryConsume(Token.Get(Token.Type.MUTABLE));
+      dataType = References.GetPointerType(ParseType(), mutable);
+    }
     else if (TryConsume(Token.Get(Token.Type.BYTE)))
       dataType = ByteType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.CHAR)))
@@ -333,12 +336,13 @@ public partial class Parser
     else if (TryConsume(Token.Get(Token.Type.STAR)))
       op = UnaryExpression.UnaryOperator.Deref;
     else if (TryConsume(Token.Get(Token.Type.AMPER)))
-      op = UnaryExpression.UnaryOperator.Ref;
+      op = TryConsume(Token.Get(Token.Type.MUTABLE)) ? UnaryExpression.UnaryOperator.MutRef : UnaryExpression.UnaryOperator.Ref;
     else if (TryConsume(Token.Get(Token.Type.SIZEOF)))
       op = UnaryExpression.UnaryOperator.Sizeof;
     if (op == null)
       throw new Exception("Expected Unary Operator");
     
+    extendedExpr = false;
     Expression e = ParseExpression(null);
     UnaryExpression r = new(e, (UnaryExpression.UnaryOperator)op);
     return r;
@@ -354,6 +358,12 @@ public partial class Parser
 
   private Expression? ParsePostExpression(Expression @base)
   {
+    if (!extendedExpr)
+    {
+      extendedExpr = true;
+      return null;
+    }
+
     DataType baseType = @base.GetReturnType();
 
     if (TryConsume(Token.Get(Token.Type.DOT)))
