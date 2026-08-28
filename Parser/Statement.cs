@@ -40,3 +40,8 @@ public record TypeDefinition(string Name, DataType Type) : Statement
 {
   public override string ToString() => $"type {Name} = {Type}";
 }
+
+public record IgnoredExpr(Expression Expression) : Statement
+{
+  public override string ToString() => $"{Expression}";
+}

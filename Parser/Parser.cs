@@ -104,7 +104,13 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     ))))))));
     
     if (ret == null)
-      Error("Syntax Error");
+    {
+      IgnoringExpression++;
+      Expression expression = ParseExpression(null);
+      IgnoringExpression--;
+      TryConsumeError(Token.Get(Token.Type.SEMI));
+      ret = new IgnoredExpr(expression);
+    }
     return ret;
   }
 }
