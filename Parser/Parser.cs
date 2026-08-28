@@ -14,6 +14,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
   private readonly Dictionary<string, DataType> aliases = [];
   private uint IgnoringExpression = 0;
   private bool extendedExpr = true;
+  private readonly Stack<int> LocalsSnapshots = [];
 
   public override Statement ProcessOne()
   {
@@ -33,10 +34,9 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     {
       Token[] content = (Token[])Consume().value!;
       
-      int saved = locals.Count;
+      SaveSnapshot();
       Statement[] statements = Switch(content, Process);
-      locals.RemoveRange(saved, locals.Count - saved);
-
+      RestoreSnapshot();
       return new Scope(statements);
     },
       
@@ -64,9 +64,8 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
         string t = context.ReturnType == null ? "nothing" : $"{context.ReturnType}";
         Error($"Cannot return {temp} in a function returning {t}");
       }
-
       TryConsumeError(Token.Get(Token.Type.SEMI));
-      return new Return(expression);
+      return ResolveDefers(new Return(expression));
     },
 
     () => Wakeup(Token.Type.STRUCT, true, () => ParseComposite(Composite.Type.STRUCT, s => new StructDecl(s)),

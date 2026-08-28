@@ -679,4 +679,16 @@ public partial class Parser
       return else_action();
   }
   protected void Semi() => TryConsumeError(Token.Get(Token.Type.SEMI));
+
+  private void SaveSnapshot() => LocalsSnapshots.Push(locals.Count);
+  private Statement ResolveDefers(Statement? appended = null)
+  {
+    throw new NotImplementedException();
+  }
+  private void RestoreSnapshot()
+  {
+    ResolveDefers();
+    int saved = LocalsSnapshots.Pop();
+    locals.RemoveRange(saved, locals.Count - saved);
+  }
 }
