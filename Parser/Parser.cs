@@ -116,9 +116,18 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       return new Nop();
     },
     
+    () => Wakeup(Token.Type.IF, true, () =>
+    {
+      Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      Expression cond = Switch(condition, () => ParseExpression(BooleanType.INSTANCE));
+      Statement body = ProcessOne();
+      Statement? other = TryConsume(Token.Get(Token.Type.ELSE)) ? ProcessOne() : null;
+      return new IfStatement(cond, body, other);
+    },
+    
     () => null
     
-    )))))))));
+    ))))))))));
     
     if (ret == null)
     {

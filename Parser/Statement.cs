@@ -46,4 +46,16 @@ public record IgnoredExpr(Expression Expression) : Statement
   public override string ToString() => $"{Expression}";
 }
 
-public record Nop() : Statement;
+public record IfStatement(Expression Expression, Statement Statement, Statement? Else) : Statement
+{
+  public override string ToString()
+  {
+    string s = Else != null ? $" else {Else}" : "";
+    return $"if ({Expression}) {Statement}{s}";
+  }
+}
+
+public record Nop() : Statement
+{
+  public override string ToString() => $"nop";
+};

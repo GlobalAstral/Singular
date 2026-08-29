@@ -155,6 +155,8 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
         "type" => new(Token.Type.TYPE, line),
         "mut" => new(Token.Type.MUTABLE, line),
         "defer" => new(Token.Type.DEFER, line),
+        "if" => new(Token.Type.IF, line),
+        "else" => new(Token.Type.ELSE, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }
