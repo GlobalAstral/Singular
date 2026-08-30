@@ -13,9 +13,10 @@ public class CompositeContext(Composite Comp) : Context
   public Composite Comp {get;} = Comp;
 }
 
-public class ScopeContext(FunctionContext? context = null) : Context
+public class ScopeContext(FunctionContext? f = null, ScopeContext? s = null) : Context
 {
-  public FunctionContext? FunctionContext {get;} = context;
+  public FunctionContext? FunctionContext {get;} = f;
+  public ScopeContext? PreviousScope {get;} = s;
   public List<Variable> Locals {get;} = [];
   public Stack<Statement> Defers {get;} = [];
 

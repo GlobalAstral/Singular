@@ -35,7 +35,9 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       
       Context? current = currentContext.Peek();
 
-      ScopeContext context = new(current is FunctionContext ctx ? ctx : null);
+      FunctionContext? fctx = current is FunctionContext ctx ? ctx : null;
+      ScopeContext? sctx = current is ScopeContext c ? c : null;
+      ScopeContext context = new(fctx, sctx);
       currentContext.Push(context);
 
       List<Statement> statements = [.. Switch(content, Process)];

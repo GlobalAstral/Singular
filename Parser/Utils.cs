@@ -257,6 +257,14 @@ public partial class Parser
         if (found != null)
           return found;
       }
+      else if (scope.PreviousScope != null)
+      {
+        currentContext.Push(scope.PreviousScope);
+        found = SearchVariable(name);
+        currentContext.Pop();
+        if (found != null)
+          return found;
+      }
     }
 
     found = globals.Find(v => v.Name == name);
