@@ -34,3 +34,8 @@ public class LoopContext() : Context
 {
   
 }
+
+public class SwitchContext() : Context
+{
+  
+}

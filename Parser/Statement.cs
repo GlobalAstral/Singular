@@ -70,6 +70,16 @@ public record ForStmt(Statement Init, Expression Condition, Statement Update, St
   public override string ToString() => $"for ({Init}; {Condition}; {Update}) {Body}";
 }
 
+public record BreakStmt() : Statement
+{
+  public override string ToString() => $"break";
+}
+
+public record ContinueStmt() : Statement
+{
+  public override string ToString() => $"continue";
+}
+
 public record Nop() : Statement
 {
   public override string ToString() => $"nop";

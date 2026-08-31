@@ -176,6 +176,8 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       
       int saved = InScope(out var scope) ? scope!.Locals.Count : globals.Count;
 
+      currentContext.Push(new LoopContext());
+
       (Statement Init, Expression cond, Statement update, Variable var) = Switch(condition, () =>
       {
         Variable variable = new(new ModifierHandler().Mutable(), ParseType(), ParseIdentifier());
@@ -203,6 +205,8 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       
       Statement body = ProcessOne();
 
+      currentContext.Pop();
+
       if (InScope(out var s))
         s!.Locals.RemoveAll(v => v.Name == var.Name);
       else
@@ -211,16 +215,28 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       return new ForStmt(Init, cond, update, body);
     },
     
+    () => Wakeup(Token.Type.BREAK, true, () =>
+    {
+      Context? current = currentContext.Peek();
+      if (current is not LoopContext && current is not SwitchContext)
+        Error("Cannot break outside of loop or switch statement");
+      return new BreakStmt();
+    },
+    
+    () => Wakeup(Token.Type.CONTINUE, true, () =>
+    {
+      if (currentContext.Peek() is not LoopContext)
+        Error("Cannot continue outside of loop");
+      return new ContinueStmt();
+    },
+    
     () => null
 
-    //TODO Break (Switch and Loops)
-    //TODO Continue (Loops)
     //TODO Switch
-    //TODO Switch Expression (IDK)
     //TODO Raw C code (Easy)
     //TODO extern (Not too hard, tedious)
     
-    )))))))))))))));
+    )))))))))))))))));
     
     if (ret == null)
     {
