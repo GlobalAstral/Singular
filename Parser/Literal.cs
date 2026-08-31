@@ -47,6 +47,21 @@ public interface Literal
       lit = lit[2..];
     }
 
+    bool bin = false;
+    if (lit.StartsWith("0b"))
+    {
+      bin = true;
+      lit = lit[2..];
+    }
+
+    if (bin)
+    {
+      if (suffix != null)
+        throw new Exception($"Invalid literal suffix for byte literals {suffix}. Expected nothing");
+      if (unsigned)
+        throw new Exception($"Byte literals cannot be unsigned");
+      return new ByteLiteral( hex ? byte.Parse(lit, System.Globalization.NumberStyles.HexNumber) : byte.Parse(lit) );
+    }
     if (suffix == 'l')
     {
       if (unsigned)
@@ -77,6 +92,13 @@ public readonly struct CharLiteral(string Char) : Literal
   public string Character {get;} = Char;
   public readonly DataType GetReturnType() => CharType.INSTANCE;
   public override string ToString() => $"'{Character}'";
+}
+
+public readonly struct ByteLiteral(byte Byte) : Literal
+{
+  public byte Byte {get;} = Byte;
+  public readonly DataType GetReturnType() => ByteType.INSTANCE;
+  public override string ToString() => $"{Byte}";
 }
 
 public readonly struct ShortLiteral(short Short) : Literal

@@ -104,7 +104,14 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
     else if (char.IsDigit(Peek()))
     {
       bool hex = false;
+      bool bin = false;
       StringBuilder builder = new();
+      if (Peek('0') && Peek('b', 1))
+      {
+        Consume(2);
+        builder.Append("0b");
+        bin = true;
+      }
       if (Peek('0') && Peek('x', 1))
       {
         Consume(2);
