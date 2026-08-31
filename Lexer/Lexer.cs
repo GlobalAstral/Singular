@@ -88,11 +88,15 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
       return new Token(Token.Type.LITERAL, line, builder.ToString());
     }
 
-    else if (TryConsume('"'))
+    else if (Peek('"'))
     {
       StringBuilder builder = new();
       builder.Append('"');
-      DoUntil('"', () => builder.Append(Consume()));
+      while (TryConsume('"'))
+      {
+        DoUntil('"', () => builder.Append(Consume()));
+        while (char.IsWhiteSpace(Peek())) Consume();
+      }
       builder.Append('"');
       return new Token(Token.Type.LITERAL, line, builder.ToString());
     }
