@@ -212,6 +212,13 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     },
     
     () => null
+
+    //TODO Break (Switch and Loops)
+    //TODO Continue (Loops)
+    //TODO Switch
+    //TODO Switch Expression (IDK)
+    //TODO Raw C code (Easy)
+    //TODO extern (Not too hard, tedious)
     
     )))))))))))))));
     
