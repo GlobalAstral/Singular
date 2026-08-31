@@ -22,10 +22,19 @@ public interface Literal
       lit = lit[..^1];
     }
 
+    bool unsigned = false;
+    if (lit.EndsWith('u'))
+    {
+      unsigned = true;
+      lit = lit[..^1];
+    }
+
     if (lit.Contains('.'))
     {
       if (suffix != null && suffix != 'f')
         throw new Exception($"Invalid literal suffix for double {suffix}. Expected 'f' or nothing");
+      if (unsigned)
+        throw new Exception("Floating point literal cannot be unsigned");
       if (suffix == 'f')
         return new FloatLiteral(float.Parse(lit));
       return new DoubleLiteral(double.Parse(lit));      
@@ -39,11 +48,25 @@ public interface Literal
     }
 
     if (suffix == 'l')
+    {
+      if (unsigned)
+        return new ULongLiteral(hex ? ulong.Parse(lit, System.Globalization.NumberStyles.HexNumber) : ulong.Parse(lit));
       return new LongLiteral( hex ? long.Parse(lit, System.Globalization.NumberStyles.HexNumber) : long.Parse(lit) );
+    }
     if (suffix == 'h')
+    {
+      if (unsigned)
+        return new UShortLiteral(hex ? ushort.Parse(lit, System.Globalization.NumberStyles.HexNumber) : ushort.Parse(lit));
       return new ShortLiteral( hex ? short.Parse(lit, System.Globalization.NumberStyles.HexNumber) : short.Parse(lit) );
+    }
     if (suffix == 'f')
+    {
+      if (unsigned)
+        throw new Exception("Floating point literal cannot be unsigned");
       return new FloatLiteral( hex ? throw new Exception("Float suffic cannot be used with HEX literals") : float.Parse(lit) );
+    }
+    if (unsigned)
+      return new UIntLiteral( hex ? uint.Parse(lit, System.Globalization.NumberStyles.HexNumber) : uint.Parse(lit) );
     return new IntLiteral(hex ? int.Parse(lit, System.Globalization.NumberStyles.HexNumber) : int.Parse(lit));
   }
   public DataType GetReturnType();
@@ -75,6 +98,27 @@ public readonly struct LongLiteral(long Long) : Literal
   public long Long {get;} = Long;
   public readonly DataType GetReturnType() => LongType.INSTANCE;
   public override string ToString() => $"{Long}l";
+}
+
+public readonly struct UShortLiteral(ushort UShort) : Literal
+{
+  public ushort UShort {get;} = UShort;
+  public readonly DataType GetReturnType() => UShortType.INSTANCE;
+  public override string ToString() => $"{UShort}h";
+}
+
+public readonly struct UIntLiteral(uint UInt) : Literal
+{
+  public uint UInt {get;} = UInt;
+  public readonly DataType GetReturnType() => UIntType.INSTANCE;
+  public override string ToString() => $"{UInt}";
+}
+
+public readonly struct ULongLiteral(ulong ULong) : Literal
+{
+  public ulong ULong {get;} = ULong;
+  public readonly DataType GetReturnType() => ULongType.INSTANCE;
+  public override string ToString() => $"{ULong}l";
 }
 
 public readonly struct BooleanLiteral(bool Boolean) : Literal
