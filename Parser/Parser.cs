@@ -170,9 +170,50 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     
     () => Wakeup(Token.Type.SEMI, true, () => new Nop(),
     
+    () => Wakeup(Token.Type.FOR, true, () =>
+    {
+      Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      
+      int saved = InScope(out var scope) ? scope!.Locals.Count : globals.Count;
+
+      (Statement Init, Expression cond, Statement update, Variable var) = Switch(condition, () =>
+      {
+        Variable variable = new(new ModifierHandler().Mutable(), ParseType(), ParseIdentifier());
+        TryConsumeError(Token.Get(Token.Type.IN));
+        bool reverse = TryConsume(Token.Get(Token.Type.EXCLAMATION));
+        Expression start = ParseExpression(variable.Type);
+
+        Statement init = new VariableDecl(variable, start);
+        AddVariable(variable);
+
+        TryConsumeError(Token.Get(Token.Type.COMMA));
+        bool inclusive = TryConsume(Token.Get(Token.Type.EQUALS));
+        Expression end = ParseExpression(variable.Type);
+
+        BinaryExpr.BinaryOp op = reverse ? (inclusive ? BinaryExpr.BinaryOp.GreaterEqual : BinaryExpr.BinaryOp.Greater) : (inclusive ? BinaryExpr.BinaryOp.LessEqual : BinaryExpr.BinaryOp.Less);
+
+        Expression condition = new BinaryExpr(new IdentifierExpression(variable), end, op);
+
+        Expression inc = TryConsume(Token.Get(Token.Type.COMMA)) ? ParseExpression(variable.Type) : new PostIncrement(new IdentifierExpression(variable), 1);
+
+        Statement update = new IgnoredExpr(inc);
+
+        return (init, condition, update, variable);
+      });
+      
+      Statement body = ProcessOne();
+
+      if (InScope(out var s))
+        s!.Locals.RemoveAll(v => v.Name == var.Name);
+      else
+        globals.RemoveAll(v => v.Name == var.Name);
+
+      return new ForStmt(Init, cond, update, body);
+    },
+    
     () => null
     
-    ))))))))))))));
+    )))))))))))))));
     
     if (ret == null)
     {

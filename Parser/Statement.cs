@@ -65,6 +65,11 @@ public record DoWhileStmt(Expression Expression, Statement Body) : Statement
   public override string ToString() => $"do {Body} while ({Expression});";
 }
 
+public record ForStmt(Statement Init, Expression Condition, Statement Update, Statement Body) : Statement
+{
+  public override string ToString() => $"for ({Init}; {Condition}; {Update}) {Body}";
+}
+
 public record Nop() : Statement
 {
   public override string ToString() => $"nop";
