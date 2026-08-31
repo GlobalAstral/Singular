@@ -80,6 +80,11 @@ public record ContinueStmt() : Statement
   public override string ToString() => $"continue";
 }
 
+public record SwitchStmt(Expression Expression, (Expression, Statement)[] Cases, Statement? Default) : Statement
+{
+  public override string ToString() => $"switch ({Expression}) {{{Cases}\n{Default}}}";
+}
+
 public record Nop() : Statement
 {
   public override string ToString() => $"nop";

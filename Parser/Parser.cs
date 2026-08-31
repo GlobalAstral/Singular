@@ -220,6 +220,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       Context? current = currentContext.Peek();
       if (current is not LoopContext && current is not SwitchContext)
         Error("Cannot break outside of loop or switch statement");
+      TryConsumeError(Token.Get(Token.Type.SEMI));
       return new BreakStmt();
     },
     
@@ -227,16 +228,51 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     {
       if (currentContext.Peek() is not LoopContext)
         Error("Cannot continue outside of loop");
+      TryConsumeError(Token.Get(Token.Type.SEMI));
       return new ContinueStmt();
+    },
+    
+    () => Wakeup(Token.Type.SWITCH, true, () =>
+    {
+      Expression expression = Switch((Token[])TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!, () => ParseExpression(null));
+      DataType caseType = expression.GetReturnType();
+      currentContext.Push(new SwitchContext());
+
+      ((Expression, Statement)[], Statement?) Cases = Switch((Token[])TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!, () =>
+      {
+        List<(Expression, Statement)> cases = [];
+        Statement? Default = null;
+        while (HasPeek())
+        {
+          if (TryConsume(Token.Get(Token.Type.CASE)))
+          {
+            Expression c = ParseExpression(caseType);
+            TryConsumeError(Token.Get(Token.Type.COLON));
+            Statement statement = ProcessOne();
+            cases.Add((c, statement));
+          }
+          else if (TryConsume(Token.Get(Token.Type.DEFAULT)))
+          {
+            TryConsumeError(Token.Get(Token.Type.COLON));
+            Statement statement = ProcessOne();
+            Default = statement;
+          }
+          else
+            Error("Invalid Switch case or default");
+        }
+        return (cases.ToArray(), Default);
+      });
+
+      currentContext.Pop();
+      return new SwitchStmt(expression, Cases.Item1, Cases.Item2);
     },
     
     () => null
 
-    //TODO Switch
     //TODO Raw C code (Easy)
     //TODO extern (Not too hard, tedious)
     
-    )))))))))))))))));
+    ))))))))))))))))));
     
     if (ret == null)
     {

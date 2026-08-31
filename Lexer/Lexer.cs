@@ -165,6 +165,9 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
         "in" => new(Token.Type.IN, line),
         "break" => new(Token.Type.BREAK, line),
         "continue" => new(Token.Type.CONTINUE, line),
+        "switch" => new(Token.Type.SWITCH, line),
+        "case" => new(Token.Type.CASE, line),
+        "default" => new(Token.Type.DEFAULT, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }
