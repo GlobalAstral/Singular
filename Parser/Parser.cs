@@ -89,13 +89,19 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     () => Wakeup(Token.Type.VAR, true, () =>
     {
       ModifierHandler modifiers = GetModifiers(handler => {});
-      DataType type = ParseType();
+      DataType? type = null;
+      
+      if (!TryConsume(Token.Get(Token.Type.INFER)))
+        type = ParseType();
+
       string name = MangleIdentifier();
       Expression? val = null;
       if (TryConsume(Token.Get(Token.Type.EQUALS)))
         val = ParseExpression(type);
+      if (type == null && val == null)
+        Error($"Cannot infer type of uninitialized variable {name}");
       TryConsumeError(Token.Get(Token.Type.SEMI));
-      Variable variable = new(modifiers, type, name);
+      Variable variable = new(modifiers, type ?? val!.GetReturnType(), name);
       AddVariable(variable);
       return new VariableDecl(variable, val);
     },
