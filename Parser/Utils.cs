@@ -652,8 +652,6 @@ public partial class Parser
       Token[] body = (Token[]) Consume().value!;
       List<Expression> expressions = [];
       DataType? locked_type = typeCheckerContext.Peek();
-      if (locked_type == null || !locked_type.Matches<ArrayType>()) Error("Cannot initialize a non-array type to an array literal value");
-      locked_type = ((ArrayType) locked_type).Elements;
       Switch(body, () =>
       {
         Expression e = ParseExpression(locked_type);
