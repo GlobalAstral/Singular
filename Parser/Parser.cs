@@ -7,6 +7,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
   private readonly Stack<string> namespaces = [];
   private readonly List<Function> functions = [];
   private readonly Stack<Context> currentContext = [];
+  private readonly Stack<ScopeContext> activeScopes = [];
   private readonly Stack<DataType?> typeCheckerContext = [];
   private readonly List<Variable> globals = [];
   private readonly Dictionary<string, Composite> composites = [];
@@ -36,9 +37,9 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       Context? current = currentContext.Peek();
 
       FunctionContext? fctx = current is FunctionContext ctx ? ctx : null;
-      ScopeContext? sctx = current is ScopeContext c ? c : null;
-      ScopeContext context = new(fctx, sctx);
+      ScopeContext context = new(fctx);
       currentContext.Push(context);
+      activeScopes.Push(context);
 
       List<Statement> statements = [.. Switch(content, Process)];
 
@@ -47,6 +48,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       if (!(toadd is Group group && group.Content.Length == 0))
         statements.Add(toadd);
 
+      activeScopes.Pop();
       currentContext.Pop();
 
       return new Scope([.. statements]);
@@ -162,7 +164,7 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       currentContext.Push(new LoopContext());
       Statement body = ProcessOne();
       currentContext.Pop();
-      
+
       return new WhileStmt(new LiteralExpr(new BooleanLiteral(true)), body);
     },
     

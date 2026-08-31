@@ -245,7 +245,7 @@ public partial class Parser
   protected Variable? SearchVariable(string name)
   {
     Variable? found;
-    if (InScope(out var scope))
+    foreach (ScopeContext scope in activeScopes)
     {
       found = scope!.Locals.Find(v => v.Name == name);
       if (found != null)
@@ -254,14 +254,6 @@ public partial class Parser
       if (scope.FunctionContext != null)
       {
         found = scope.FunctionContext.Arguments.ToList().Find(v => v.Name == name);
-        if (found != null)
-          return found;
-      }
-      else if (scope.PreviousScope != null)
-      {
-        currentContext.Push(scope.PreviousScope);
-        found = SearchVariable(name);
-        currentContext.Pop();
         if (found != null)
           return found;
       }
