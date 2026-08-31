@@ -158,6 +158,9 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
         "if" => new(Token.Type.IF, line),
         "else" => new(Token.Type.ELSE, line),
         "infer" => new(Token.Type.INFER, line),
+        "while" => new(Token.Type.WHILE, line),
+        "do" => new(Token.Type.DO, line),
+        "loop" => new(Token.Type.LOOP, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }

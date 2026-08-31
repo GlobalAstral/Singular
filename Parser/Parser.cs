@@ -133,9 +133,34 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       return new IfStatement(cond, body, other);
     },
     
+    () => Wakeup(Token.Type.WHILE, true, () =>
+    {
+      Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      Expression cond = Switch(condition, () => ParseExpression(BooleanType.INSTANCE));
+      Statement body = ProcessOne();
+      return new WhileStmt(cond, body);
+    },
+    
+    () => Wakeup(Token.Type.DO, true, () =>
+    {
+      Statement body = ProcessOne();
+      TryConsumeError(Token.Get(Token.Type.WHILE));
+      Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      Expression cond = Switch(condition, () => ParseExpression(BooleanType.INSTANCE));
+      return new DoWhileStmt(cond, body);
+    },
+    
+    () => Wakeup(Token.Type.LOOP, true, () =>
+    {
+      Statement body = ProcessOne();
+      return new WhileStmt(new LiteralExpr(new BooleanLiteral(true)), body);
+    },
+    
+    () => Wakeup(Token.Type.SEMI, true, () => new Nop(),
+    
     () => null
     
-    ))))))))));
+    ))))))))))))));
     
     if (ret == null)
     {

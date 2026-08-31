@@ -55,6 +55,16 @@ public record IfStatement(Expression Expression, Statement Statement, Statement?
   }
 }
 
+public record WhileStmt(Expression Expression, Statement Body) : Statement
+{
+  public override string ToString() => $"while ({Expression}) {Body}";
+}
+
+public record DoWhileStmt(Expression Expression, Statement Body) : Statement
+{
+  public override string ToString() => $"do {Body} while ({Expression});";
+}
+
 public record Nop() : Statement
 {
   public override string ToString() => $"nop";
