@@ -490,12 +490,14 @@ public partial class Parser
     }
 
     if (Peek(Token.Get(Token.Type.PLUS)) && Peek(Token.Get(Token.Type.PLUS), 1)) {
+      Consume(2);
       if (!DataType.IsNumeric(baseType))
         Error("Cannot use a numeric operator on a non-numeric type");
       return new PostIncrement(@base, 1);
     }
 
     if (Peek(Token.Get(Token.Type.MINUS)) && Peek(Token.Get(Token.Type.MINUS), 1)) {
+      Consume(2);
       if (!DataType.IsNumeric(baseType))
         Error("Cannot use a numeric operator on a non-numeric type");
       return new PostIncrement(@base, -1);
