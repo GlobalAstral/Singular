@@ -119,7 +119,10 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
         hex = true;
       }
 
-      while (char.IsDigit(Peek()) || (Peek('.') && !hex) || (hex && IsCharHexLetter(Peek())))
+      while (char.IsDigit(Peek()) || (Peek('.') && !hex && !bin) || (hex && IsCharHexLetter(Peek())))
+        builder.Append(Consume());
+
+      if (Peek('u'))
         builder.Append(Consume());
 
       if (Peek('h') || Peek('l') || Peek('f'))
