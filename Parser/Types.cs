@@ -106,11 +106,18 @@ public class DynamicType : DataType
     if (ReferenceEquals(this, other))
       return true;
 
-    if (other.Matches<ArrayType>() || other.Matches<PointerType>() || other.Matches<FunctionType>())
+    if (other.Matches<ArrayType>() || other.Matches<PointerType>() || other.Matches<FunctionType>() || other.Matches<StringType>())
       return true;
     
     return base.CanAccept(other);
   }
+}
+
+public class StringType : DataType
+{
+  public static readonly DataType INSTANCE = new StringType();
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "NULL");
+  public override Expression GetNull() => NULL;
 }
 
 public class ArrayType(DataType elements, Expression size) : DataType
@@ -128,7 +135,7 @@ public class PointerType(DataType target, bool mutable) : DataType
   {
     if (ReferenceEquals(this, other))
       return true;
-    if (other.Matches<ArrayType>() || other.Matches<PointerType>() || other.Matches<FunctionType>() || other.Matches<DynamicType>())
+    if (other.Matches<ArrayType>() || other.Matches<PointerType>() || other.Matches<FunctionType>() || other.Matches<DynamicType>() || other.Matches<StringType>())
       return true;
     return base.CanAccept(other);
   }

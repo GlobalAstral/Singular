@@ -110,6 +110,8 @@ public partial class Parser
       dataType = DoubleType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.DYNAMIC)))
       dataType = DynamicType.INSTANCE;
+    else if (TryConsume(Token.Get(Token.Type.STRING)))
+      dataType = StringType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.FUN)))
     {
       DataType[] args = [.. ParseArgs().Select(v => v.Type)];
@@ -157,18 +159,6 @@ public partial class Parser
       arguments.Add(new Variable(handler, t, ident));
     }), Token.Get(Token.Type.COMMA));
     return [.. arguments];
-  }
-
-  private string[] ParseGenerics()
-  {
-    if (Peek(Token.Get(Token.Type.ANGLE_BLOCK)))
-    {
-      Token[] generics_body = (Token[])Consume().value!;
-      List<string> generics = [];
-      Switch(generics_body, () => generics.Add((string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!), Token.Get(Token.Type.COMMA));
-      return [.. generics];
-    }
-    return [];
   }
 
   protected string MangleIdentifier()
@@ -435,9 +425,11 @@ public partial class Parser
         target = arr!.Elements;
       else if (baseType.Matches<PointerType>(out var ptr))
         target = ptr!.Target;
+      else if (baseType.Matches<StringType>())
+        target = CharType.INSTANCE;
       else
       {
-        Error("Cannot index non-array type or non-pointer type");
+        Error("Cannot index non-array type or non-pointer type or non-string type");
         throw new UnreachableException();
       }
       Token[] body = (Token[]) Consume().value!;
