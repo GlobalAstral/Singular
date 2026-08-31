@@ -137,13 +137,20 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     {
       Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
       Expression cond = Switch(condition, () => ParseExpression(BooleanType.INSTANCE));
+      
+      currentContext.Push(new LoopContext());
       Statement body = ProcessOne();
+      currentContext.Pop();
+
       return new WhileStmt(cond, body);
     },
     
     () => Wakeup(Token.Type.DO, true, () =>
     {
+      currentContext.Push(new LoopContext());
       Statement body = ProcessOne();
+      currentContext.Pop();
+
       TryConsumeError(Token.Get(Token.Type.WHILE));
       Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
       Expression cond = Switch(condition, () => ParseExpression(BooleanType.INSTANCE));
@@ -152,7 +159,10 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
     
     () => Wakeup(Token.Type.LOOP, true, () =>
     {
+      currentContext.Push(new LoopContext());
       Statement body = ProcessOne();
+      currentContext.Pop();
+      
       return new WhileStmt(new LiteralExpr(new BooleanLiteral(true)), body);
     },
     

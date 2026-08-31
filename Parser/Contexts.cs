@@ -30,3 +30,8 @@ public class ScopeContext(FunctionContext? f = null, ScopeContext? s = null) : C
     return statements.Count != 1 ? new Group([.. statements]) : statements.First();
   }
 }
+
+public class LoopContext() : Context
+{
+  
+}
