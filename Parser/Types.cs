@@ -140,10 +140,11 @@ public class PointerType(DataType target, bool mutable) : DataType
     return base.CanAccept(other);
   }
 }
-public class FunctionType(DataType? Result, DataType[] Args) : DataType
+public class FunctionType(DataType? Result, DataType[] Args, bool Variadic) : DataType
 {
   public DataType? Return {get;} = Result;
   public DataType[] Arguments {get;} = Args;
+  public bool Variadic {get;} = Variadic;
   public override Expression GetNull() => new RawExpr(this, "NULL");
 }
 
@@ -217,7 +218,7 @@ public static class References {
     return value;
   }
 
-  public static DataType GetFunctionType(DataType? result, DataType[] args)
+  public static DataType GetFunctionType(DataType? result, DataType[] args, bool variadic)
   {
     FunctionType? found = FunctionCache.Find(ele =>
     {
@@ -235,7 +236,7 @@ public static class References {
 
     if (found is null)
     {
-      found = new FunctionType(result, args);
+      found = new FunctionType(result, args, variadic);
       FunctionCache.Add(found);
     }
     return found;

@@ -114,11 +114,12 @@ public partial class Parser
       dataType = StringType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.FUN)))
     {
-      DataType[] args = [.. ParseArgs().Select(v => v.Type)];
+      (Variable[] arguments, bool variadic) = ParseArgs();
+      DataType[] args = [.. arguments.Select(v => v .Type)];
       DataType? result = null;
       if (TryConsume(Token.Get(Token.Type.COLON)))
         result = ParseType();
-      return References.GetFunctionType(result, args);
+      return References.GetFunctionType(result, args, variadic);
     }
     else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
     {
@@ -143,12 +144,19 @@ public partial class Parser
     return dataType;
   }
 
-  protected Variable[] ParseArgs()
+  protected (Variable[] args, bool variadic) ParseArgs()
   {
     Token[] args = (Token[])TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
     List<Variable> arguments = [];
+    bool variadic = false;
     Switch(args, () => WithModifiers(handler =>
     {
+      if (Peek(Token.Get(Token.Type.DOT)) && Peek(Token.Get(Token.Type.DOT), 1) && Peek(Token.Get(Token.Type.DOT), 2))
+      {
+        Consume(3);
+        variadic = true;
+        return;
+      }
       if (handler.IsStatic)
         Error("Argument cannot be static");
 
@@ -158,7 +166,7 @@ public partial class Parser
         Error($"Function type cannot have duplicate arguments");
       arguments.Add(new Variable(handler, t, ident));
     }), Token.Get(Token.Type.COMMA));
-    return [.. arguments];
+    return ([.. arguments], variadic);
   }
 
   protected string MangleIdentifier()
@@ -272,7 +280,7 @@ public partial class Parser
     ModifierHandler modifiers = GetModifiers(handler => { if (handler.IsMutable) Error("Function cannot be mutable"); });
 
     string name = namingConvention();
-    Variable[] args = ParseArgs();
+    (Variable[] args, bool variadic) = ParseArgs();
     DataType? retType = TryConsume(Token.Get(Token.Type.COLON)) ? ParseType() : null;
     
     currentContext.Push(new FunctionContext(retType, args));
@@ -281,7 +289,7 @@ public partial class Parser
     
     currentContext.Pop();
     
-    Function f = new(modifiers, name, args, retType, body);
+    Function f = new(modifiers, name, args, retType, body, variadic);
     Function? found = functions.Find(ele => ele.Equals(f));
     
     if (found == null)
@@ -448,7 +456,7 @@ public partial class Parser
 
       Switch(body, () => values.Add(ParseExpression()), Token.Get(Token.Type.COMMA));
 
-      if (values.Count != functionType.Arguments.Length)
+      if (!functionType.Variadic && values.Count != functionType.Arguments.Length)
         Error($"Invalid function arguments. Provided {values.Count} Expected {functionType.Arguments.Length}");
 
       if (!values.Zip(functionType.Arguments).All(pair => pair.First.GetReturnType() == pair.Second))
@@ -685,12 +693,12 @@ public partial class Parser
     }
     else if (TryConsume(Token.Get(Token.Type.FUN)))
     {
-      Variable[] arguments = ParseArgs();
+      (Variable[] arguments, bool variadic) = ParseArgs();
       DataType? retType = null;
       if (TryConsume(Token.Get(Token.Type.COLON)))
         retType = ParseType();
       Statement body = ProcessOne();
-      expression = new Lambda(arguments, retType, body);
+      expression = new Lambda(arguments, retType, body, variadic);
     }
     else if (Peek(Token.Get(Token.Type.RAWC)))
     {

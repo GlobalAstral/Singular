@@ -1,12 +1,13 @@
 namespace Parser;
 
-public class Function(ModifierHandler modifiers, string name, Variable[] arguments, DataType? returnType, Statement? body)
+public class Function(ModifierHandler modifiers, string name, Variable[] arguments, DataType? returnType, Statement? body, bool variadic)
 {
   public ModifierHandler Modifiers {get;} = modifiers;
   public string Name {get;} = name;
   public Variable[] Arguments {get;} = arguments;
   public DataType? ReturnType {get;} = returnType;
   public Statement? Body {get; set;} = body;
+  public bool Variadic {get;} = variadic;
 
   public override bool Equals(object? obj)
   { 

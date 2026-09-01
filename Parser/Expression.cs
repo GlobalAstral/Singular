@@ -73,16 +73,17 @@ public class CompositeLiteral(DataType type, Dictionary<string, Expression> expr
 public class FunctionPointer(Function func) : Expression
 {
   public Function Function {get;} = func;
-  public DataType GetReturnType() => References.GetFunctionType(Function.ReturnType, [.. Function.Arguments.Select(a => a.Type)]);
+  public DataType GetReturnType() => References.GetFunctionType(Function.ReturnType, [.. Function.Arguments.Select(a => a.Type)], Function.Variadic);
   public override string ToString() => $"{Function}";
 }
 
-public class Lambda(Variable[] arguments, DataType? retType, Statement body) : Expression
+public class Lambda(Variable[] arguments, DataType? retType, Statement body, bool variadic) : Expression
 {
   public Variable[] Arguments {get;} = arguments;
   public DataType? ReturnType {get;} = retType;
   public Statement Body {get;} = body;
-  public DataType GetReturnType() => References.GetFunctionType(ReturnType, [ .. Arguments.Select(a => a.Type) ]);
+  public bool Variadic {get;} = variadic;
+  public DataType GetReturnType() => References.GetFunctionType(ReturnType, [ .. Arguments.Select(a => a.Type) ], Variadic);
   public override string ToString() => $"({string.Join(", ", Arguments)}) : {ReturnType} {Body}";
 }
 
