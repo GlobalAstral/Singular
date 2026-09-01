@@ -692,6 +692,14 @@ public partial class Parser
       Statement body = ProcessOne();
       expression = new Lambda(arguments, retType, body);
     }
+    else if (Peek(Token.Get(Token.Type.RAWC)))
+    {
+      string code = (string) Consume().value!;
+      DataType? retType = typeCheckerContext.Peek();
+      if ((typeCheckerContext.Count == 0 || retType == null) && IgnoringExpression == 0)
+        Error("Expression is not ignored as it ought to be");
+      return new RawExpr(retType!, code);
+    }
     else Error("Expected Expression");
 
     Expression? result = ParsePostExpression(expression);

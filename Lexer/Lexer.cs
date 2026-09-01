@@ -95,7 +95,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
       while (TryConsume('"'))
       {
         DoUntil('"', () => builder.Append(Consume()));
-        while (char.IsWhiteSpace(Peek())) Consume();
+        ProcessWhiteSpace();
       }
       builder.Append('"');
       return new Token(Token.Type.LITERAL, line, builder.ToString());
@@ -182,11 +182,35 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
         "switch" => new(Token.Type.SWITCH, line),
         "case" => new(Token.Type.CASE, line),
         "default" => new(Token.Type.DEFAULT, line),
+        "rawc" => ParseRawC(),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }
     
     Error("Invalid Token");
     return new Token();
+  }
+
+  private void ProcessWhiteSpace()
+  {
+    while (char.IsWhiteSpace(Peek()))
+    {
+      if (Peek('\n'))
+      {
+        line++;
+        Consume();
+        continue;
+      }
+      Consume();
+    }
+  }
+
+  private Token ParseRawC()
+  {
+    ProcessWhiteSpace();
+    TryConsumeError('{');
+    StringBuilder code = new();
+    DoUntil('}', () => code.Append(Consume()));
+    return new(Token.Type.RAWC, line, code.ToString().Trim());
   }
 }
