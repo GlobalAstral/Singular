@@ -206,10 +206,9 @@ public partial class Parser
 
   protected bool InFunction(out FunctionContext? context)
   {
-    Context current = currentContext.Peek();
-    if (currentContext.Count > 0 && current is ScopeContext ctx && ctx.FunctionContext != null)
+    if (currentContext.Count > 0 && currentContext.Peek() is ScopeContext ctx && ctx.FunctionContext != null)
     {
-      context = current as FunctionContext;
+      context = ctx.FunctionContext;
       return true;
     }
     context = null;
@@ -220,8 +219,7 @@ public partial class Parser
 
   protected bool InScope(out ScopeContext? context)
   {
-    Context current = currentContext.Peek();
-    if (currentContext.Count > 0 && current is ScopeContext ctx)
+    if (currentContext.Count > 0 && currentContext.Peek() is ScopeContext ctx)
     {
       context = ctx;
       return true;
@@ -270,10 +268,10 @@ public partial class Parser
     globals.Add(variable);
   }
 
-  private Statement ParseFunction() {
+  private Statement ParseFunction(Func<string> namingConvention) {
     ModifierHandler modifiers = GetModifiers(handler => { if (handler.IsMutable) Error("Function cannot be mutable"); });
 
-    string name = MangleIdentifier();
+    string name = namingConvention();
     Variable[] args = ParseArgs();
     DataType? retType = TryConsume(Token.Get(Token.Type.COLON)) ? ParseType() : null;
     
@@ -299,6 +297,8 @@ public partial class Parser
     Error($"Function {name} already exists");
     throw new UnreachableException();
   }
+
+  private Statement ParseFunction() => ParseFunction(MangleIdentifier);
 
   private Statement ParseComposite(Composite.Type kind, Func<Composite, Statement> factory) {
     string ident = MangleIdentifier();
@@ -718,9 +718,41 @@ public partial class Parser
     return expression;
   }
 
-  public void SavePeek() => saved_peek.Push(peek);
-  public void RestorePeek() => peek = saved_peek.Pop();
-  private readonly Stack<int> saved_peek = [];
+  protected Statement ParseExtern(Func<string> namingConvention)
+  {
+    if (TryConsume(Token.Get(Token.Type.VAR)))
+    {
+      ModifierHandler modifiers = GetModifiers(handler =>
+      {
+        if (handler.IsStatic)
+          Error("Extern variable cannot be static");
+      });
+      DataType type = ParseType();
+      string name = namingConvention();
+      Variable variable = new(modifiers, type, name);
+      AddVariable(variable);
+      return new ExternVariable(variable);
+    }
+    else if (TryConsume(Token.Get(Token.Type.FUN)))
+    {
+      FunctionDecl s = (ParseFunction(namingConvention) as FunctionDecl)!;
+      Function func = s.Func;
+      if (func.Body != null)
+        Error("Extern function cannot have a body");
+      if (func.Modifiers.IsStatic)
+        Error("Extern function cannot be static");
+      return new ExternFunction(func);
+    }
+    Error($"Extern only accepts functions and variables");
+    throw new UnreachableException();
+  }
+
+  protected Statement ParseABI(string abi) => abi switch
+  {
+    "C" => ParseExtern(() => (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!),
+
+    _ => throw new Exception($"Unsupported ABI {abi}"),
+  };
   
   protected Statement? Wakeup(Token.Type token, bool consume, Func<Statement?> action, Func<Statement?> else_action)
   {
