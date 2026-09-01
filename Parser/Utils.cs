@@ -310,6 +310,14 @@ public partial class Parser
 
   private Statement ParseComposite(Composite.Type kind, Func<Composite, Statement> factory) {
     string ident = MangleIdentifier();
+    
+    if (TryConsume(Token.Get(Token.Type.SEMI)))
+    {
+      Composite ret = new(ident, [], [], kind);
+      composites[ident] = ret;
+      return factory(ret);
+    }
+
     Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
     List<Statement> group = [];
     Composite s = Switch(body, () =>
