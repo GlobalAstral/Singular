@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lexer;
 
 namespace Parser;
@@ -267,11 +268,38 @@ public partial class Parser(Token[] tokens) : Processor<Token, Statement>(tokens
       return new SwitchStmt(expression, Cases.Item1, Cases.Item2);
     },
     
+    () => Wakeup(Token.Type.EXTERN, true, () =>
+    {
+      if (TryConsume(Token.Get(Token.Type.VAR)))
+      {
+        ModifierHandler modifiers = GetModifiers(handler =>
+        {
+          if (handler.IsStatic)
+            Error("Extern variable cannot be static");
+        });
+        DataType type = ParseType();
+        string name = MangleIdentifier();
+        Variable variable = new(modifiers, type, name);
+        AddVariable(variable);
+        return new ExternVariable(variable);
+      }
+      else if (TryConsume(Token.Get(Token.Type.FUN)))
+      {
+        FunctionDecl s = (ParseFunction() as FunctionDecl)!;
+        Function func = s.Func;
+        if (func.Body != null)
+          Error("Extern function cannot have a body");
+        if (func.Modifiers.IsStatic)
+          Error("Extern function cannot be static");
+        return new ExternFunction(func);
+      }
+      Error($"Extern only accepts functions and variables");
+      throw new UnreachableException();
+    },
+
     () => null
 
-    //TODO extern (Not too hard, tedious)
-    
-    ))))))))))))))))));
+    )))))))))))))))))));
     
     if (ret == null)
     {

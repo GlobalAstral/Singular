@@ -297,7 +297,7 @@ public partial class Parser
       return new FunctionDecl(found);
     }
     Error($"Function {name} already exists");
-    return null;
+    throw new UnreachableException();
   }
 
   private Statement ParseComposite(Composite.Type kind, Func<Composite, Statement> factory) {

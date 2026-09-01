@@ -89,3 +89,13 @@ public record Nop() : Statement
 {
   public override string ToString() => $"nop";
 };
+
+public record ExternVariable(Variable Variable) : Statement
+{
+  public override string ToString() => $"extern var {Variable};";
+}
+
+public record ExternFunction(Function Function) : Statement
+{
+  public override string ToString() => $"extern fun {Function};";
+}
