@@ -238,6 +238,8 @@ public partial class Parser
 
   protected bool InScope() => InScope(out var _);
 
+  protected bool InGlobalScope() => currentContext.Count == 0 || currentContext.Peek() == null;
+
   protected Variable? SearchVariable(string name)
   {
     Variable? found;
@@ -277,6 +279,8 @@ public partial class Parser
   }
 
   private Statement ParseFunction(Func<string> namingConvention) {
+    if (!InGlobalScope())
+      Error("Functions cannot be outside of global scope");
     ModifierHandler modifiers = GetModifiers(handler => { if (handler.IsMutable) Error("Function cannot be mutable"); });
 
     string name = namingConvention();
@@ -309,6 +313,8 @@ public partial class Parser
   private Statement ParseFunction() => ParseFunction(MangleIdentifier);
 
   private Statement ParseComposite(Composite.Type kind, Func<Composite, Statement> factory) {
+    if (!InGlobalScope())
+      Error($"{kind} cannot be outside of global scope");
     string ident = MangleIdentifier();
     
     if (TryConsume(Token.Get(Token.Type.SEMI)))

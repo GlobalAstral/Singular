@@ -10,6 +10,8 @@ public partial class Parser
   {
     Wakeup(Token.Type.NAMESPACE, true, () =>
     {
+      if (!InGlobalScope())
+        Error("Namespaces cannot be outside of global scope");
       string name = (string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
       namespaces.Push(name);
       Token[] content = (Token[])TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
@@ -98,6 +100,8 @@ public partial class Parser
 
     Wakeup(Token.Type.TYPE, true, () =>
     {
+      if (!InGlobalScope())
+        Error("Type declarations cannot be outside of global scope");
       string name = MangleIdentifier();
       TryConsumeError(Token.Get(Token.Type.EQUALS));
       DataType type = ParseType();
@@ -257,6 +261,8 @@ public partial class Parser
 
     Wakeup(Token.Type.EXTERN, true, () =>
     {
+      if (!InGlobalScope())
+        Error("Extern cannot be outside of global scope");
       if (Peek(Token.Get(Token.Type.LITERAL)))
       {
         Literal lit = Literal.ParseLiteral((string) Consume().value!);
