@@ -770,13 +770,9 @@ public partial class Parser
     _ => throw new Exception($"Unsupported ABI {abi}"),
   };
   
-  protected Statement? Wakeup(Token.Type token, bool consume, Func<Statement?> action, Func<Statement?> else_action)
+  protected void Wakeup(Token.Type token, bool consume, Func<Statement> action)
   {
-    Token tok = Token.Get(token);
-    if ((consume && TryConsume(tok)) || (!consume && Peek(tok)))
-      return action();
-    else
-      return else_action();
+    processes.Add(new ParsingProcess(token, consume, action));
   }
   protected void Semi() => TryConsumeError(Token.Get(Token.Type.SEMI));
 }
