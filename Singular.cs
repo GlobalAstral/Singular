@@ -28,5 +28,13 @@ partial class Singular
     Console.WriteLine("Statements:\n");
     foreach (Statement item in statements)
       Console.WriteLine(item);
+    
+    Generator.Generator generator = new(statements, parser.GetHashCode());
+    Console.WriteLine("Compiling...");
+    string output = string.Join("\n", generator.Process());
+    Console.WriteLine(output);
+    StreamWriter f = File.CreateText("test.c");
+    f.Write(output);
+    f.Close();
   }
 }
