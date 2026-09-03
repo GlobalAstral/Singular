@@ -162,77 +162,77 @@ public readonly struct CharLiteral(string Char) : Literal
 {
   public string Character {get;} = Char;
   public readonly DataType GetReturnType() => CharType.INSTANCE;
-  public override string ToString() => $"'{Character}'";
+  public override string ToString() => $"(char){{'{Character}'}}";
 }
 
 public readonly struct ByteLiteral(byte Byte) : Literal
 {
   public byte Byte {get;} = Byte;
   public readonly DataType GetReturnType() => ByteType.INSTANCE;
-  public override string ToString() => $"{Byte}";
+  public override string ToString() => $"(unsigned char){{{Byte}}}";
 }
 
 public readonly struct ShortLiteral(short Short) : Literal
 {
   public short Short {get;} = Short;
   public readonly DataType GetReturnType() => ShortType.INSTANCE;
-  public override string ToString() => $"{Short}h";
+  public override string ToString() => $"(short){{{Short}}}";
 }
 
 public readonly struct IntLiteral(int Int) : Literal
 {
   public int Int {get;} = Int;
   public readonly DataType GetReturnType() => IntType.INSTANCE;
-  public override string ToString() => $"{Int}";
+  public override string ToString() => $"(int){{{Int}}}";
 }
 
 public readonly struct LongLiteral(long Long) : Literal
 {
   public long Long {get;} = Long;
   public readonly DataType GetReturnType() => LongType.INSTANCE;
-  public override string ToString() => $"{Long}l";
+  public override string ToString() => $"(long long){{{Long}}}";
 }
 
 public readonly struct UShortLiteral(ushort UShort) : Literal
 {
   public ushort UShort {get;} = UShort;
   public readonly DataType GetReturnType() => UShortType.INSTANCE;
-  public override string ToString() => $"{UShort}h";
+  public override string ToString() => $"(unsigned short){{{UShort}}}";
 }
 
 public readonly struct UIntLiteral(uint UInt) : Literal
 {
   public uint UInt {get;} = UInt;
   public readonly DataType GetReturnType() => UIntType.INSTANCE;
-  public override string ToString() => $"{UInt}";
+  public override string ToString() => $"(unsigned int){{{UInt}}}";
 }
 
 public readonly struct ULongLiteral(ulong ULong) : Literal
 {
   public ulong ULong {get;} = ULong;
   public readonly DataType GetReturnType() => ULongType.INSTANCE;
-  public override string ToString() => $"{ULong}l";
+  public override string ToString() => $"(unsigned long long){{{ULong}}}";
 }
 
 public readonly struct BooleanLiteral(bool Boolean) : Literal
 {
   public bool Boolean {get;} = Boolean;
   public readonly DataType GetReturnType() => BooleanType.INSTANCE;
-  public override string ToString() => $"{Boolean}";
+  public override string ToString() => $"(bool){{{Boolean}}}";
 }
 
 public readonly struct FloatLiteral(float Float) : Literal
 {
   public float Float {get;} = Float;
   public readonly DataType GetReturnType() => FloatType.INSTANCE;
-  public override string ToString() => $"{Float}f";
+  public override string ToString() => $"(float){{{Float}}}";
 }
 
 public readonly struct DoubleLiteral(double Double) : Literal
 {
   public double Double {get;} = Double;
   public readonly DataType GetReturnType() => DoubleType.INSTANCE;
-  public override string ToString() => $"{Double}";
+  public override string ToString() => $"(double){{{Double}}}";
 }
 
 public readonly struct StringLiteral(string String) : Literal
