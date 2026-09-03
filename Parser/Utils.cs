@@ -432,8 +432,8 @@ public partial class Parser
 
     if (TryConsume(Token.Get(Token.Type.DOT)))
     {
-      if (!baseType.Matches<CompositeType>()) Error("Cannot access member of non-composite type");
-      CompositeType type = (CompositeType) baseType;
+      if (!baseType.Matches<CompositeType>() && !(baseType.Matches<PointerType>(out var ptr) && ptr!.Target.Matches<CompositeType>())) Error("Cannot access member of non composite or composite pointer type");
+      CompositeType type = baseType.Matches<PointerType>(out var p) ? (CompositeType) p!.Target : (CompositeType) baseType;
       string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
       Variable? field = type.Comp.Fields.Find(f => f.Name == name);
       if (field == null) Error($"{type.Comp.Name} does not have a member named {name}");
