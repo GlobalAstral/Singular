@@ -288,26 +288,30 @@ public partial class Parser
     DataType? retType = TryConsume(Token.Get(Token.Type.COLON)) ? ParseType() : null;
     
     currentContext.Push(new FunctionContext(retType, args));
+
+    Function f = new(modifiers, name, args, retType, null, variadic);
+    Function? found = functions.Find(ele => ele.Equals(f));
+
+    if (found != null && found.Body != null)
+      Error($"Function {name} already exists");
+
+    if (found == null)
+      functions.Add(f);
     
     Statement? body = TryConsume(Token.Get(Token.Type.SEMI)) ? null : ProcessOne();
-    
     currentContext.Pop();
-    
-    Function f = new(modifiers, name, args, retType, body, variadic);
-    Function? found = functions.Find(ele => ele.Equals(f));
-    
-    if (found == null)
+
+    if (found != null && found.Body == null)
     {
-      functions.Add(f);
-      return new FunctionDecl(f);
-    }
-    if (found.Body == null)
-    {
-      found.Body = f.Body;
+      if (body == null)
+        Error("Cannot declare a function more than once");
+      found.Body = body;
       return new FunctionDecl(found);
     }
-    Error($"Function {name} already exists");
-    throw new UnreachableException();
+    
+    if (body != null)
+      f.Body = body;
+    return new FunctionDecl(f);
   }
 
   private Statement ParseFunction() => ParseFunction(MangleIdentifier);
