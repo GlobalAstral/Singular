@@ -273,5 +273,66 @@ public partial class Parser
       }
       return ParseExtern(MangleIdentifier);
     });
+
+    Wakeup(Token.Type.ENUM, true, () =>
+    {
+      if (!InGlobalScope())
+        Error("Enum cannot be outside of global scope");
+      
+      string name = MangleIdentifier();
+
+      Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
+
+      long count = 0;
+      Dictionary<string, long> entries = [];
+
+      Switch(body, () =>
+      {
+        string entry = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+        if (TryConsume(Token.Get(Token.Type.EQUALS)))
+        {
+          Expression expression = ParseExpression(null);
+          long val = ParseEnumConstant(expression, entries);
+          count = val;
+        }
+        entries[entry] = count++;
+      }, Token.Get(Token.Type.COMMA));
+
+      long max = entries.Values.Max();
+      long min = entries.Values.Min();
+
+      (DataType dataType, Func<long, Literal> factory) = (min, max) switch
+      {
+        (>= byte.MinValue, <= byte.MaxValue)     => (ByteType.INSTANCE, ByteType.Factory),
+        (>= sbyte.MinValue, <= sbyte.MaxValue)   => (CharType.INSTANCE, CharType.Factory),
+        (>= ushort.MinValue, <= ushort.MaxValue) => (UShortType.INSTANCE, UShortType.Factory),
+        (>= short.MinValue, <= short.MaxValue)   => (ShortType.INSTANCE, ShortType.Factory),
+        (>= uint.MinValue, <= uint.MaxValue)     => (UIntType.INSTANCE, UIntType.Factory),
+        (>= int.MinValue, <= int.MaxValue)       => (IntType.INSTANCE, IntType.Factory),
+        (>= 0, _)                                => (ULongType.INSTANCE, ULongType.Factory),
+        _                                        => (LongType.INSTANCE, LongType.Factory)
+      };
+
+      if (aliases.ContainsKey(name))
+        Error($"Type {name} already exists");
+      
+      List<Statement> statements = [];
+
+      statements.Add(new TypeDefinition(name, dataType));
+      aliases[name] = dataType;
+
+      DataType varType = References.GetAliasType(name, dataType);
+
+      namespaces.Push(name);
+      foreach (var pair in entries)
+      {
+        Variable var = new(new ModifierHandler().Static(), varType, MangleIdentifier(pair.Key));
+        AddVariable(var);
+        Expression expr = new LiteralExpr(factory(pair.Value));
+        statements.Add(new VariableDecl(var, expr));
+      }
+      namespaces.Pop();
+      return new Group([ .. statements ]);
+    });
   }
 }

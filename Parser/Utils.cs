@@ -169,10 +169,10 @@ public partial class Parser
     return ([.. arguments], variadic);
   }
 
-  protected string MangleIdentifier()
-  {
-    string ident = (string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+  protected string MangleIdentifier() => MangleIdentifier((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!);
 
+  protected string MangleIdentifier(string ident)
+  {
     StringBuilder builder = new();
 
     if (Peek(Token.Get(Token.Type.COLON)) && Peek(Token.Get(Token.Type.COLON)))
@@ -766,6 +766,110 @@ public partial class Parser
       return new ExternFunction(func);
     }
     Error($"Extern only accepts functions and variables");
+    throw new UnreachableException();
+  }
+
+  protected static bool IsIntegerLiteral(Expression expression) => expression is LiteralExpr lit && 
+    (lit.Lit is CharLiteral || lit.Lit is ByteLiteral || lit.Lit is ShortLiteral || lit.Lit is UShortLiteral ||
+    lit.Lit is IntLiteral || lit.Lit is UIntLiteral || lit.Lit is LongLiteral || lit.Lit is ULongLiteral);
+  
+  protected static bool IsBinOperatorConstant(BinaryExpr.BinaryOp op) => op != BinaryExpr.BinaryOp.Equals && op != BinaryExpr.BinaryOp.NotEquals &&
+    op != BinaryExpr.BinaryOp.Greater && op != BinaryExpr.BinaryOp.Less && op != BinaryExpr.BinaryOp.GreaterEqual && op != BinaryExpr.BinaryOp.LessEqual &&
+    op != BinaryExpr.BinaryOp.And && op != BinaryExpr.BinaryOp.Or && op != BinaryExpr.BinaryOp.Assign;
+  
+  protected static bool IsEnumConstant(Expression expression, Dictionary<string, long> entries)
+  {
+    if (IsIntegerLiteral(expression))
+      return true;
+    if (expression is BinaryExpr bin && IsEnumConstant(bin.Left, entries) && IsEnumConstant(bin.Right, entries) && IsBinOperatorConstant(bin.Operator))
+      return true;
+    if (expression is UnaryExpression un && IsEnumConstant(un.Base, entries))
+      return true;
+    if (expression is IdentifierExpression id && entries.ContainsKey(id.Variable.Name))
+      return true;
+    return false;
+  }
+
+  protected static char ParseChar(string text)
+  {
+    if (text.Length == 1)
+      return text[0];
+
+    if (!text.StartsWith('\\'))
+      throw new FormatException($"Invalid character: {text}");
+
+    return text switch
+    {
+      "\\0"  => '\0',
+      "\\a"  => '\a',
+      "\\b"  => '\b',
+      "\\f"  => '\f',
+      "\\n"  => '\n',
+      "\\r"  => '\r',
+      "\\t"  => '\t',
+      "\\v"  => '\v',
+      "\\\\" => '\\',
+      "\\'"  => '\'',
+      "\\\"" => '"',
+
+      _ when text.StartsWith("\\u") =>
+        (char)Convert.ToInt32(text[2..], 16),
+
+      _ when text.StartsWith("\\x") =>
+        (char)Convert.ToInt32(text[2..], 16),
+
+      _ => throw new FormatException($"Unknown escape sequence: {text}")
+    };
+  }
+
+  protected static long ParseIntegerLiteral(Literal lit) => lit switch
+  {
+    CharLiteral c => ParseChar(c.Character),
+    ByteLiteral b => b.Byte,
+    ShortLiteral s => s.Short,
+    UShortLiteral us => us.UShort,
+    IntLiteral i => i.Int,
+    UIntLiteral ui => ui.UInt,
+    LongLiteral l => l.Long,
+    ULongLiteral ul => (long) ul.ULong,
+    _ => throw new Exception($"Invalid Integer literal {lit}")
+  };
+
+  protected long ParseConstantBinary(Expression left, Expression right, BinaryExpr.BinaryOp op, Dictionary<string, long> entries) => op switch {
+    BinaryExpr.BinaryOp.Add => ParseEnumConstant(left, entries) + ParseEnumConstant(right, entries),
+    BinaryExpr.BinaryOp.Sub => ParseEnumConstant(left, entries) - ParseEnumConstant(right, entries),
+    BinaryExpr.BinaryOp.Mul => ParseEnumConstant(left, entries) * ParseEnumConstant(right, entries),
+    BinaryExpr.BinaryOp.Div => ParseEnumConstant(left, entries) / ParseEnumConstant(right, entries),
+    BinaryExpr.BinaryOp.Mod => ParseEnumConstant(left, entries) % ParseEnumConstant(right, entries),
+    BinaryExpr.BinaryOp.BitAnd => ParseEnumConstant(left, entries) & ParseEnumConstant(right, entries),
+    BinaryExpr.BinaryOp.BitOr => ParseEnumConstant(left, entries) | ParseEnumConstant(right, entries),
+    BinaryExpr.BinaryOp.BitXor => ParseEnumConstant(left, entries) ^ ParseEnumConstant(right, entries),
+    BinaryExpr.BinaryOp.Shl => ParseEnumConstant(left, entries) << (int)ParseEnumConstant(right, entries),
+    BinaryExpr.BinaryOp.Shr => ParseEnumConstant(left, entries) >> (int)ParseEnumConstant(right, entries),
+    
+    _ => throw new Exception($"{left} {op} {right} is not a constant integer expression")
+  };
+
+  protected long ParseConstantUnary(Expression expr, UnaryExpression.UnaryOperator op, Dictionary<string, long> entries) => op switch {
+    UnaryExpression.UnaryOperator.Minus => -ParseEnumConstant(expr, entries),
+    UnaryExpression.UnaryOperator.BitNot => ~ParseEnumConstant(expr, entries),
+    _ => throw new Exception($"{op} {expr} is not a constant integer expression")
+  };
+
+  protected long ParseEnumConstant(Expression expression, Dictionary<string, long> entries)
+  {
+    if (!IsEnumConstant(expression, entries))
+      Error($"{expression} is not an enum compatible constant expression");
+
+    if (IsIntegerLiteral(expression))
+      return ParseIntegerLiteral((expression as LiteralExpr)!.Lit);
+    if (expression is BinaryExpr bin)
+      return ParseConstantBinary(bin.Left, bin.Right, bin.Operator, entries);
+    if (expression is UnaryExpression unary)
+      return ParseConstantUnary(unary.Base, unary.Operator, entries);
+    if (expression is IdentifierExpression id)
+      return entries[id.Variable.Name];
+
     throw new UnreachableException();
   }
 

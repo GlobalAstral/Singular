@@ -30,24 +30,28 @@ public abstract class DataType
 
 public class ByteType : DataType
 {
+  public static readonly Func<long, Literal> Factory = l => new ByteLiteral((byte)l);
   public static readonly DataType INSTANCE = new ByteType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned char)0");
   public override Expression GetNull() => NULL;
 }
 public class CharType : DataType
 {
+  public static readonly Func<long, Literal> Factory = l => new CharLiteral(((char)l).ToString());
   public static readonly DataType INSTANCE = new CharType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(char)0");
   public override Expression GetNull() => NULL;
 }
 public class UShortType : DataType
 {
+  public static readonly Func<long, Literal> Factory = l => new UShortLiteral((ushort)l);
   public static readonly DataType INSTANCE = new UShortType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned short)0");
   public override Expression GetNull() => NULL;
 }
 public class ShortType : DataType
 {
+  public static readonly Func<long, Literal> Factory = l => new ShortLiteral((short)l);
   public static readonly DataType INSTANCE = new ShortType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(short)0");
   public override Expression GetNull() => NULL;
@@ -55,24 +59,28 @@ public class ShortType : DataType
 }
 public class UIntType : DataType
 {
+  public static readonly Func<long, Literal> Factory = l => new UIntLiteral((uint)l);
   public static readonly DataType INSTANCE = new UIntType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned int)0");
   public override Expression GetNull() => NULL;
 }
 public class IntType : DataType
 {
+  public static readonly Func<long, Literal> Factory = l => new IntLiteral((int)l);
   public static readonly DataType INSTANCE = new IntType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(int)0");
   public override Expression GetNull() => NULL;
 }
 public class ULongType : DataType
 {
+  public static readonly Func<long, Literal> Factory = l => new ULongLiteral((ulong)l);
   public static readonly DataType INSTANCE = new ULongType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned long long)0");
   public override Expression GetNull() => NULL;
 }
 public class LongType : DataType
 {
+  public static readonly Func<long, Literal> Factory = l => new LongLiteral(l);
   public static readonly DataType INSTANCE = new LongType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(long long)0");
   public override Expression GetNull() => NULL;

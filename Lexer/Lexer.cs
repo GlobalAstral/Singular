@@ -184,6 +184,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
         "default" => new(Token.Type.DEFAULT, line),
         "rawc" => ParseRawC(),
         "extern" => new(Token.Type.EXTERN, line),
+        "enum" => new(Token.Type.ENUM, line),
         _ => new Token(Token.Type.IDENTIFIER, line, identifier),
       };
     }
