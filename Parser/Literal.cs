@@ -1,4 +1,5 @@
-using System.Reflection.PortableExecutable;
+using System.Globalization;
+using System.Numerics;
 
 namespace Parser;
 
@@ -8,7 +9,7 @@ public interface Literal
   {
     if (lit == "true" || lit == "false")
       return new BooleanLiteral(lit == "true");
-    
+
     if (lit.StartsWith('\'') && lit.EndsWith('\''))
       return new CharLiteral(lit[1..^1]);
 
@@ -16,73 +17,143 @@ public interface Literal
       return new StringLiteral(lit[1..^1]);
 
     char? suffix = null;
+
     if (lit.EndsWith('l') || lit.EndsWith('f') || lit.EndsWith('h'))
     {
-      suffix = lit.Last();
+      suffix = lit[^1];
       lit = lit[..^1];
     }
 
     bool unsigned = false;
+
     if (lit.EndsWith('u'))
     {
       unsigned = true;
       lit = lit[..^1];
     }
 
+    // Floating point
     if (lit.Contains('.'))
     {
       if (suffix != null && suffix != 'f')
-        throw new Exception($"Invalid literal suffix for double {suffix}. Expected 'f' or nothing");
+        throw new Exception($"Invalid literal suffix for floating-point literal: {suffix}. Expected 'f' or nothing");
       if (unsigned)
-        throw new Exception("Floating point literal cannot be unsigned");
+        throw new Exception("Floating-point literal cannot be unsigned");
       if (suffix == 'f')
-        return new FloatLiteral(float.Parse(lit));
-      return new DoubleLiteral(double.Parse(lit));      
-    }
-    
-    bool hex = false;
-    if (lit.StartsWith("0x"))
-    {
-      hex = true;
-      lit = lit[2..];
+        return new FloatLiteral(float.Parse(lit, CultureInfo.InvariantCulture));
+      return new DoubleLiteral(double.Parse(lit, CultureInfo.InvariantCulture));
     }
 
-    bool bin = false;
-    if (lit.StartsWith("0b"))
-    {
-      bin = true;
-      lit = lit[2..];
-    }
-
-    if (bin)
-    {
-      if (suffix != null)
-        throw new Exception($"Invalid literal suffix for byte literals {suffix}. Expected nothing");
-      if (unsigned)
-        throw new Exception($"Byte literals cannot be unsigned");
-      return new ByteLiteral( hex ? byte.Parse(lit, System.Globalization.NumberStyles.HexNumber) : byte.Parse(lit) );
-    }
-    if (suffix == 'l')
-    {
-      if (unsigned)
-        return new ULongLiteral(hex ? ulong.Parse(lit, System.Globalization.NumberStyles.HexNumber) : ulong.Parse(lit));
-      return new LongLiteral( hex ? long.Parse(lit, System.Globalization.NumberStyles.HexNumber) : long.Parse(lit) );
-    }
-    if (suffix == 'h')
-    {
-      if (unsigned)
-        return new UShortLiteral(hex ? ushort.Parse(lit, System.Globalization.NumberStyles.HexNumber) : ushort.Parse(lit));
-      return new ShortLiteral( hex ? short.Parse(lit, System.Globalization.NumberStyles.HexNumber) : short.Parse(lit) );
-    }
+    // `f` without a decimal point is still a float.
     if (suffix == 'f')
     {
       if (unsigned)
-        throw new Exception("Floating point literal cannot be unsigned");
-      return new FloatLiteral( hex ? throw new Exception("Float suffic cannot be used with HEX literals") : float.Parse(lit) );
+        throw new Exception("Floating-point literal cannot be unsigned");
+      if (lit.StartsWith("0x") || lit.StartsWith("0b"))
+        throw new Exception("Float suffix cannot be used with hexadecimal or binary literals");
+      return new FloatLiteral(float.Parse(lit, CultureInfo.InvariantCulture));
     }
+
+    int radix = 10;
+
+    if (lit.StartsWith("0x"))
+    {
+      radix = 16;
+      lit = lit[2..];
+    }
+    else if (lit.StartsWith("0b"))
+    {
+      radix = 2;
+      lit = lit[2..];
+    }
+
+    if (lit.Length == 0)
+      throw new Exception("Invalid numeric literal");
+
+    BigInteger value = ParseInteger(lit, radix);
+
+    // Your current language semantics treat 0b literals as ByteLiteral.
+    if (radix == 2)
+    {
+      if (suffix != null)
+        throw new Exception($"Invalid literal suffix for byte literal: {suffix}. Expected nothing");
+      if (unsigned)
+        throw new Exception("Byte literal cannot have an unsigned suffix");
+      if (value < byte.MinValue || value > byte.MaxValue)
+        throw new Exception($"Binary literal {value} does not fit in a byte");
+      return new ByteLiteral((byte)value);
+    }
+
+    // Explicit short
+    if (suffix == 'h')
+    {
+      if (unsigned)
+      {
+        if (value < ushort.MinValue || value > ushort.MaxValue)
+          throw new Exception($"Literal {value} does not fit in ushort");
+        return new UShortLiteral((ushort)value);
+      }
+
+      if (value < short.MinValue || value > short.MaxValue)
+        throw new Exception($"Literal {value} does not fit in short");
+      return new ShortLiteral((short)value);
+    }
+
+    // Explicit long
+    if (suffix == 'l')
+    {
+      if (unsigned)
+      {
+        if (value < ulong.MinValue || value > ulong.MaxValue)
+          throw new Exception($"Literal {value} does not fit in ulong");
+        return new ULongLiteral((ulong)value);
+      }
+
+      if (value < long.MinValue || value > long.MaxValue)
+        throw new Exception($"Literal {value} does not fit in long");
+      return new LongLiteral((long)value);
+    }
+
+    // Unsigned, but width wasn't explicitly forced.
     if (unsigned)
-      return new UIntLiteral( hex ? uint.Parse(lit, System.Globalization.NumberStyles.HexNumber) : uint.Parse(lit) );
-    return new IntLiteral(hex ? int.Parse(lit, System.Globalization.NumberStyles.HexNumber) : int.Parse(lit));
+    {
+      if (value < 0)
+        throw new Exception("Unsigned literal cannot be negative");
+      if (value <= uint.MaxValue)
+        return new UIntLiteral((uint)value);
+      if (value <= ulong.MaxValue)
+        return new ULongLiteral((ulong)value);
+
+      throw new Exception($"Integer literal {value} is too large");
+    }
+
+    // Normal signed literal: widen automatically.
+    if (value >= int.MinValue && value <= int.MaxValue)
+      return new IntLiteral((int)value);
+    if (value >= long.MinValue && value <= long.MaxValue)
+      return new LongLiteral((long)value);
+    throw new Exception($"Integer literal {value} is too large");
+  }
+
+  private static BigInteger ParseInteger(string text, int radix)
+  {
+    BigInteger value = 0;
+
+    foreach (char c in text)
+    {
+      int digit = c switch
+        {
+        >= '0' and <= '9' => c - '0',
+        >= 'a' and <= 'f' => c - 'a' + 10,
+        >= 'A' and <= 'F' => c - 'A' + 10,
+        _ => throw new Exception($"Invalid digit '{c}'")
+      };
+
+      if (digit >= radix)
+        throw new Exception($"Digit '{c}' is invalid in base {radix}");
+      value = value * radix + digit;
+    }
+    return value;
   }
   public DataType GetReturnType();
 }
