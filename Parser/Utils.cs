@@ -349,9 +349,13 @@ public partial class Parser
           
           bool isStatic = modifiers.IsStatic;
 
-          Variable variable = new(modifiers, type, name);
+          Variable variable;
           if (isStatic)
           {
+            namespaces.Push(ident);
+            string temp = MangleIdentifier(name);
+            namespaces.Pop();
+            variable = new(modifiers, type, temp);
             if (s.Statics.Keys.Any(v => v.Name == variable.Name))
               Error($"{kind} static field {variable.Name} already exists");
 
@@ -359,9 +363,11 @@ public partial class Parser
             if (TryConsume(Token.Get(Token.Type.EQUALS)))
               val = ParseExpression(variable.Type);
             s.Statics[variable] = val;
+            AddVariable(variable);
           }
           else
           {
+            variable = new(modifiers, type, name);
             if (s.Fields.Any(v => v.Name == variable.Name))
               Error($"{kind} non-static field {variable.Name} already exists");
             s.Fields.Add(variable);
