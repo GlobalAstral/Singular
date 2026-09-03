@@ -281,7 +281,7 @@ public partial class Parser
   private Statement ParseFunction(Func<string> namingConvention) {
     if (!InGlobalScope())
       Error("Functions cannot be outside of global scope");
-    ModifierHandler modifiers = GetModifiers(handler => { if (handler.IsMutable) Error("Function cannot be mutable"); });
+    ModifierHandler modifiers = GetModifiers(handler => { if (handler.IsMutable) Error("Function cannot be mutable"); handler.Mutable(); });
 
     string name = namingConvention();
     (Variable[] args, bool variadic) = ParseArgs();
