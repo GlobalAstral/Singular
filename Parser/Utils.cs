@@ -306,12 +306,12 @@ public partial class Parser
       if (body == null)
         Error("Cannot declare a function more than once");
       found.Body = body;
-      return new FunctionDecl(found);
+      return new FunctionDecl(info, found);
     }
     
     if (body != null)
       f.Body = body;
-    return new FunctionDecl(f);
+    return new FunctionDecl(info, f);
   }
 
   private Statement ParseFunction(TokenInfo info) => ParseFunction(info, MangleIdentifier);
@@ -382,7 +382,7 @@ public partial class Parser
       return s; 
     });
     group.Insert(0, factory(s));
-    return new Group([.. group]);
+    return new Group(info, [.. group]);
   }
 
   private bool PeekUnary() => (Peek(Token.Get(Token.Type.PLUS)) && Peek(Token.Get(Token.Type.PLUS), 1)) || Peek(Token.Get(Token.Type.MINUS)) ||
@@ -763,7 +763,7 @@ public partial class Parser
       string name = namingConvention();
       Variable variable = new(modifiers, type, name);
       AddVariable(variable);
-      return new ExternVariable(variable);
+      return new ExternVariable(info, variable);
     }
     else if (TryConsume(Token.Get(Token.Type.FUN)))
     {
@@ -773,7 +773,7 @@ public partial class Parser
         Error("Extern function cannot have a body");
       if (func.Modifiers.IsStatic)
         Error("Extern function cannot be static");
-      return new ExternFunction(func);
+      return new ExternFunction(info, func);
     }
     Error($"Extern only accepts functions and variables");
     throw new UnreachableException();

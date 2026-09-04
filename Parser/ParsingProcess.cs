@@ -17,7 +17,7 @@ public partial class Parser
       Token[] content = (Token[])TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
       Statement[] statements = Switch(content, Process);
       namespaces.Pop();
-      return new Group(statements);
+      return new Group(info, statements);
     });
 
     Wakeup(Token.Type.CURLY_BLOCK, false, info =>
@@ -33,7 +33,7 @@ public partial class Parser
 
       List<Statement> statements = [.. Switch(content, Process)];
 
-      Statement toadd = context.ResolveDefers();
+      Statement toadd = context.ResolveDefers(info);
 
       if (!(toadd is Group group && group.Content.Length == 0))
         statements.Add(toadd);
@@ -41,7 +41,7 @@ public partial class Parser
       activeScopes.Pop();
       currentContext.Pop();
 
-      return new Scope([.. statements]);
+      return new Scope(info, [.. statements]);
     });
 
     Wakeup(Token.Type.FUN, true, ParseFunction);
@@ -59,7 +59,7 @@ public partial class Parser
       {
         if (context.ReturnType != null)
           Error($"Cannot return nothing in a function returning {context.ReturnType}");
-        return scopeContext.ResolveDefers(new Return(null));
+        return scopeContext.ResolveDefers(info, new Return(info, null));
       }
       
       Expression expression = ParseExpression(context.ReturnType);
@@ -71,12 +71,12 @@ public partial class Parser
         Error($"Cannot return {temp} in a function returning {t}");
       }
       Semi();
-      return scopeContext.ResolveDefers(new Return(expression));
+      return scopeContext.ResolveDefers(info, new Return(info, expression));
     });
 
-    Wakeup(Token.Type.STRUCT, true, info => ParseComposite(info, Composite.Type.STRUCT, s => new StructDecl(s)));
+    Wakeup(Token.Type.STRUCT, true, info => ParseComposite(info, Composite.Type.STRUCT, s => new StructDecl(info, s)));
 
-    Wakeup(Token.Type.UNION, true, info => ParseComposite(info, Composite.Type.UNION, s => new UnionDecl(s)));
+    Wakeup(Token.Type.UNION, true, info => ParseComposite(info, Composite.Type.UNION, s => new UnionDecl(info, s)));
 
     Wakeup(Token.Type.VAR, true, info =>
     {
@@ -95,7 +95,7 @@ public partial class Parser
       Semi();
       Variable variable = new(modifiers, type ?? val!.GetReturnType(), name);
       AddVariable(variable);
-      return new VariableDecl(variable, val);
+      return new VariableDecl(info, variable, val);
     });
 
     Wakeup(Token.Type.TYPE, true, info =>
@@ -107,7 +107,7 @@ public partial class Parser
       DataType type = ParseType();
       Semi();
       aliases[name] = type;
-      return new TypeDefinition(name, type);
+      return new TypeDefinition(info, name, type);
     });
 
     Wakeup(Token.Type.DEFER, true, info =>
@@ -124,7 +124,7 @@ public partial class Parser
       Expression cond = Switch(condition, () => ParseExpression(BooleanType.INSTANCE));
       Statement body = ProcessOne();
       Statement? other = TryConsume(Token.Get(Token.Type.ELSE)) ? ProcessOne() : null;
-      return new IfStatement(cond, body, other);
+      return new IfStatement(info, cond, body, other);
     });
 
     Wakeup(Token.Type.WHILE, true, info =>
@@ -136,7 +136,7 @@ public partial class Parser
       Statement body = ProcessOne();
       currentContext.Pop();
 
-      return new WhileStmt(cond, body);
+      return new WhileStmt(info, cond, body);
     });
 
     Wakeup(Token.Type.DO, true, info =>
@@ -148,7 +148,7 @@ public partial class Parser
       TryConsumeError(Token.Get(Token.Type.WHILE));
       Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
       Expression cond = Switch(condition, () => ParseExpression(BooleanType.INSTANCE));
-      return new DoWhileStmt(cond, body);
+      return new DoWhileStmt(info, cond, body);
     });
 
     Wakeup(Token.Type.LOOP, true, info =>
@@ -157,7 +157,7 @@ public partial class Parser
       Statement body = ProcessOne();
       currentContext.Pop();
 
-      return new WhileStmt(new LiteralExpr(new BooleanLiteral(true)), body);
+      return new WhileStmt(info, new LiteralExpr(new BooleanLiteral(true)), body);
     });
 
     Wakeup(Token.Type.SEMI, true, info => new Nop());
@@ -177,7 +177,7 @@ public partial class Parser
         bool reverse = TryConsume(Token.Get(Token.Type.EXCLAMATION));
         Expression start = ParseExpression(variable.Type);
 
-        Statement init = new VariableDecl(variable, start);
+        Statement init = new VariableDecl(info, variable, start);
         AddVariable(variable);
 
         TryConsumeError(Token.Get(Token.Type.COMMA));
@@ -204,7 +204,7 @@ public partial class Parser
       else
         globals.RemoveAll(v => v.Name == var.Name);
 
-      return new ForStmt(Init, cond, update, body);
+      return new ForStmt(info, Init, cond, update, body);
     });
 
     Wakeup(Token.Type.BREAK, true, info =>
@@ -213,7 +213,7 @@ public partial class Parser
       if (current is not LoopContext && current is not SwitchContext)
         Error("Cannot break outside of loop or switch statement");
       Semi();
-      return new BreakStmt();
+      return new BreakStmt(info);
     });
 
     Wakeup(Token.Type.CONTINUE, true, info =>
@@ -221,7 +221,7 @@ public partial class Parser
       if (currentContext.Peek() is not LoopContext)
         Error("Cannot continue outside of loop");
       Semi();
-      return new ContinueStmt();
+      return new ContinueStmt(info);
     });
 
     Wakeup(Token.Type.SWITCH, true, info =>
@@ -256,7 +256,7 @@ public partial class Parser
       });
 
       currentContext.Pop();
-      return new SwitchStmt(expression, Cases.Item1, Cases.Item2);
+      return new SwitchStmt(info, expression, Cases.Item1, Cases.Item2);
     });
 
     Wakeup(Token.Type.EXTERN, true, info =>
@@ -318,7 +318,7 @@ public partial class Parser
       
       List<Statement> statements = [];
 
-      statements.Add(new TypeDefinition(name, dataType));
+      statements.Add(new TypeDefinition(info, name, dataType));
       aliases[name] = dataType;
 
       DataType varType = References.GetAliasType(name, dataType);
@@ -329,10 +329,10 @@ public partial class Parser
         Variable var = new(new ModifierHandler().Static(), varType, MangleIdentifier(pair.Key));
         AddVariable(var);
         Expression expr = new LiteralExpr(factory(pair.Value));
-        statements.Add(new VariableDecl(var, expr));
+        statements.Add(new VariableDecl(info, var, expr));
       }
       namespaces.Pop();
-      return new Group([ .. statements ]);
+      return new Group(info, [ .. statements ]);
     });
   }
 }

@@ -1,3 +1,5 @@
+using Lexer;
+
 namespace Parser;
 
 public interface Context { }
@@ -19,14 +21,14 @@ public class ScopeContext(FunctionContext? f = null) : Context
   public List<Variable> Locals {get;} = [];
   public Stack<Statement> Defers {get;} = [];
 
-  public Statement ResolveDefers(Statement? appended = null)
+  public Statement ResolveDefers(TokenInfo info, Statement? appended = null)
   {
     List<Statement> statements = [];
     while (Defers.Count > 0)
       statements.Add(Defers.Pop());
     if (appended != null)
       statements.Add(appended);
-    return statements.Count != 1 ? new Group([.. statements]) : statements.First();
+    return statements.Count != 1 ? new Group(info, [.. statements]) : statements.First();
   }
 }
 

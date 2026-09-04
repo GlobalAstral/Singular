@@ -1,3 +1,4 @@
+using Lexer;
 using Parser;
 
 namespace Generator;
@@ -10,10 +11,16 @@ public partial class Generator(Statement[] statements, int hash) : Processor<Sta
   protected uint lambdaID = 0;
   protected static readonly double RandomDouble = new Random().NextDouble();
   protected readonly int RandomizedParserHash = HashCode.Combine(hash, RandomDouble);
+
+  protected string GenerateLineDirective(TokenInfo info) => $"{NewLine()}#line {info.Line} \"{info.File}\"{NewLine()}";
+
   public override string ProcessOne() {
     Statement stmt = Consume();
     
-    return stmt switch
+    TokenInfo info = stmt.GetInfo();
+    string line = info.Line > 0 ? GenerateLineDirective(info) : "";
+
+    string res = stmt switch
     {
       Group group => GenerateGroup(group.Content),
       Scope scope => GenerateScope(scope.Content),
@@ -36,6 +43,8 @@ public partial class Generator(Statement[] statements, int hash) : Processor<Sta
       ExternFunction exfun => $"extern {GenerateFunctionDeclaration(exfun.Function)}",
       _ => throw new NotImplementedException(),
     };
+
+    return $"{line}{res}";
   }
 
   public override string[] Process()
