@@ -17,7 +17,7 @@ partial class Singular
     
     string content = File.ReadAllText(name);
 
-    Lexer.Lexer lexer = new([.. content]);
+    Lexer.Lexer lexer = new([.. content], name);
     Token[] tokens = lexer.Process();
     Console.WriteLine("TOKENS:\n");
     foreach (Token item in tokens)

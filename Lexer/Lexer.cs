@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Lexer;
 
-public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type == Token.Type.INVALID)
+public class Lexer(char[] content, string file) : Processor<char, Token>(content, t => t.type == Token.Type.INVALID)
 {
   private static char GetCloseBracket(char bracket) => bracket == '(' ? ')' : bracket == '[' ? ']' : bracket == '{' ? '}' : bracket == '<' ? '>' : '\0';
   private static Token.Type GetTokenForBracket(char bracket) => bracket == '(' ? Token.Type.PAREN_BLOCK : bracket == '[' ? Token.Type.SQUARE_BLOCK : bracket == '{' ? Token.Type.CURLY_BLOCK : bracket == '<' ? Token.Type.ANGLE_BLOCK : Token.Type.INVALID;
@@ -36,48 +36,48 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
         if (token.type != Token.Type.INVALID)
           tokens.Add(token);
       });
-      return new Token(GetTokenForBracket(open), line, tokens.ToArray());
+      return new Token(GetTokenForBracket(open), line, file, tokens.ToArray());
     }
     
     else if (TryConsume(','))
-      return new Token(Token.Type.COMMA, line);
+      return new Token(Token.Type.COMMA, line, file);
     
     else if (TryConsume(':'))
-      return new Token(Token.Type.COLON, line);
+      return new Token(Token.Type.COLON, line, file);
     
     else if (TryConsume(';'))
-      return new Token(Token.Type.SEMI, line);
+      return new Token(Token.Type.SEMI, line, file);
 
     else if (TryConsume('*'))
-      return new Token(Token.Type.STAR, line);
+      return new Token(Token.Type.STAR, line, file);
     else if (TryConsume('='))
-      return new Token(Token.Type.EQUALS, line);
+      return new Token(Token.Type.EQUALS, line, file);
     else if (TryConsume('.'))
-      return new Token(Token.Type.DOT, line);
+      return new Token(Token.Type.DOT, line, file);
     else if (TryConsume('+'))
-      return new Token(Token.Type.PLUS, line);
+      return new Token(Token.Type.PLUS, line, file);
     else if (TryConsume('-'))
-      return new Token(Token.Type.MINUS, line);
+      return new Token(Token.Type.MINUS, line, file);
     else if (TryConsume('!'))
-      return new Token(Token.Type.EXCLAMATION, line);
+      return new Token(Token.Type.EXCLAMATION, line, file);
     else if (TryConsume('~'))
-      return new Token(Token.Type.TILDE, line);
+      return new Token(Token.Type.TILDE, line, file);
     else if (TryConsume('&'))
-      return new Token(Token.Type.AMPER, line);
+      return new Token(Token.Type.AMPER, line, file);
     else if (TryConsume('?'))
-      return new Token(Token.Type.QUESTION, line);
+      return new Token(Token.Type.QUESTION, line, file);
     else if (TryConsume('/'))
-      return new Token(Token.Type.SLASH, line);
+      return new Token(Token.Type.SLASH, line, file);
     else if (TryConsume('%'))
-      return new Token(Token.Type.PERCENT, line);
+      return new Token(Token.Type.PERCENT, line, file);
     else if (TryConsume('^'))
-      return new Token(Token.Type.CARET, line);
+      return new Token(Token.Type.CARET, line, file);
     else if (TryConsume('<'))
-      return new Token(Token.Type.LANGLE, line);
+      return new Token(Token.Type.LANGLE, line, file);
     else if (TryConsume('>'))
-      return new Token(Token.Type.RANGLE, line);
+      return new Token(Token.Type.RANGLE, line, file);
     else if (TryConsume('|'))
-      return new Token(Token.Type.PIPE, line);
+      return new Token(Token.Type.PIPE, line, file);
 
     else if (TryConsume('\''))
     {
@@ -85,7 +85,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
       builder.Append('\'');
       DoUntil('\'', () => builder.Append(Consume()));
       builder.Append('\'');
-      return new Token(Token.Type.LITERAL, line, builder.ToString());
+      return new Token(Token.Type.LITERAL, line, file, builder.ToString());
     }
 
     else if (Peek('"'))
@@ -98,7 +98,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
         ProcessWhiteSpace();
       }
       builder.Append('"');
-      return new Token(Token.Type.LITERAL, line, builder.ToString());
+      return new Token(Token.Type.LITERAL, line, file, builder.ToString());
     }
 
     else if (char.IsDigit(Peek()))
@@ -127,7 +127,7 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
 
       if (Peek('h') || Peek('l') || Peek('f'))
         builder.Append(Consume());
-      return new Token(Token.Type.LITERAL, line, builder.ToString());
+      return new Token(Token.Type.LITERAL, line, file, builder.ToString());
     }
 
     else if (char.IsAsciiLetter(Peek()) || Peek('_'))
@@ -140,52 +140,52 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
 
       return identifier switch
       {
-        "static" => new Token(Token.Type.STATIC, line),
-        "return" => new Token(Token.Type.RETURN, line),
-        "byte" => new Token(Token.Type.BYTE, line),
-        "char" => new Token(Token.Type.CHAR, line),
-        "ushort" => new Token(Token.Type.USHORT, line),
-        "short" => new Token(Token.Type.SHORT, line),
-        "uint" => new Token(Token.Type.UINT, line),
-        "int" => new Token(Token.Type.INT, line),
-        "ulong" => new Token(Token.Type.ULONG, line),
-        "long" => new Token(Token.Type.LONG, line),
-        "boolean" => new Token(Token.Type.BOOLEAN, line),
-        "float" => new Token(Token.Type.FLOAT, line),
-        "double" => new Token(Token.Type.DOUBLE, line),
-        "string" => new Token(Token.Type.STRING, line),
-        "fun" => new Token(Token.Type.FUN, line),
-        "namespace" => new(Token.Type.NAMESPACE, line),
-        "true" => new(Token.Type.LITERAL, line, "true"),
-        "false" => new(Token.Type.LITERAL, line, "false"),
-        "null" => new(Token.Type.NULL, line),
-        "struct" => new(Token.Type.STRUCT, line),
-        "union" => new(Token.Type.UNION, line),
-        "var" => new(Token.Type.VAR, line),
-        "sizeof" => new(Token.Type.SIZEOF, line),
-        "as" => new(Token.Type.AS, line),
-        "bitcast" => new(Token.Type.BITCAST, line),
-        "dynamic" => new(Token.Type.DYNAMIC, line),
-        "type" => new(Token.Type.TYPE, line),
-        "mut" => new(Token.Type.MUTABLE, line),
-        "defer" => new(Token.Type.DEFER, line),
-        "if" => new(Token.Type.IF, line),
-        "else" => new(Token.Type.ELSE, line),
-        "infer" => new(Token.Type.INFER, line),
-        "while" => new(Token.Type.WHILE, line),
-        "do" => new(Token.Type.DO, line),
-        "loop" => new(Token.Type.LOOP, line),
-        "for" => new(Token.Type.FOR, line),
-        "in" => new(Token.Type.IN, line),
-        "break" => new(Token.Type.BREAK, line),
-        "continue" => new(Token.Type.CONTINUE, line),
-        "switch" => new(Token.Type.SWITCH, line),
-        "case" => new(Token.Type.CASE, line),
-        "default" => new(Token.Type.DEFAULT, line),
+        "static" => new Token(Token.Type.STATIC, line, file),
+        "return" => new Token(Token.Type.RETURN, line, file),
+        "byte" => new Token(Token.Type.BYTE, line, file),
+        "char" => new Token(Token.Type.CHAR, line, file),
+        "ushort" => new Token(Token.Type.USHORT, line, file),
+        "short" => new Token(Token.Type.SHORT, line, file),
+        "uint" => new Token(Token.Type.UINT, line, file),
+        "int" => new Token(Token.Type.INT, line, file),
+        "ulong" => new Token(Token.Type.ULONG, line, file),
+        "long" => new Token(Token.Type.LONG, line, file),
+        "boolean" => new Token(Token.Type.BOOLEAN, line, file),
+        "float" => new Token(Token.Type.FLOAT, line, file),
+        "double" => new Token(Token.Type.DOUBLE, line, file),
+        "string" => new Token(Token.Type.STRING, line, file),
+        "fun" => new Token(Token.Type.FUN, line, file),
+        "namespace" => new(Token.Type.NAMESPACE, line, file),
+        "true" => new(Token.Type.LITERAL, line, file, "true"),
+        "false" => new(Token.Type.LITERAL, line, file, "false"),
+        "null" => new(Token.Type.NULL, line, file),
+        "struct" => new(Token.Type.STRUCT, line, file),
+        "union" => new(Token.Type.UNION, line, file),
+        "var" => new(Token.Type.VAR, line, file),
+        "sizeof" => new(Token.Type.SIZEOF, line, file),
+        "as" => new(Token.Type.AS, line, file),
+        "bitcast" => new(Token.Type.BITCAST, line, file),
+        "dynamic" => new(Token.Type.DYNAMIC, line, file),
+        "type" => new(Token.Type.TYPE, line, file),
+        "mut" => new(Token.Type.MUTABLE, line, file),
+        "defer" => new(Token.Type.DEFER, line, file),
+        "if" => new(Token.Type.IF, line, file),
+        "else" => new(Token.Type.ELSE, line, file),
+        "infer" => new(Token.Type.INFER, line, file),
+        "while" => new(Token.Type.WHILE, line, file),
+        "do" => new(Token.Type.DO, line, file),
+        "loop" => new(Token.Type.LOOP, line, file),
+        "for" => new(Token.Type.FOR, line, file),
+        "in" => new(Token.Type.IN, line, file),
+        "break" => new(Token.Type.BREAK, line, file),
+        "continue" => new(Token.Type.CONTINUE, line, file),
+        "switch" => new(Token.Type.SWITCH, line, file),
+        "case" => new(Token.Type.CASE, line, file),
+        "default" => new(Token.Type.DEFAULT, line, file),
         "rawc" => ParseRawC(),
-        "extern" => new(Token.Type.EXTERN, line),
-        "enum" => new(Token.Type.ENUM, line),
-        _ => new Token(Token.Type.IDENTIFIER, line, identifier),
+        "extern" => new(Token.Type.EXTERN, line, file),
+        "enum" => new(Token.Type.ENUM, line, file),
+        _ => new Token(Token.Type.IDENTIFIER, line, file, identifier),
       };
     }
     
@@ -213,6 +213,6 @@ public class Lexer(char[] content) : Processor<char, Token>(content, t => t.type
     TryConsumeError('{');
     StringBuilder code = new();
     DoUntil('}', () => code.Append(Consume()));
-    return new(Token.Type.RAWC, line, code.ToString().Trim());
+    return new(Token.Type.RAWC, line, file, code.ToString().Trim());
   }
 }

@@ -1,7 +1,9 @@
 
 namespace Lexer;
 
-public struct Token(Token.Type type, int line, object? value)
+public record TokenInfo(int Line, string File) { }
+
+public struct Token(Token.Type type, TokenInfo info, object? value)
 {
   public enum Type {
     INVALID,
@@ -90,21 +92,22 @@ public struct Token(Token.Type type, int line, object? value)
   public static Token Get(Type type) => INSTANCES[type];
 
   public Type type = type;
-  public int line = line;
+  public TokenInfo info = info;
   public object? value = value;
 
-  public Token() : this(Type.INVALID, 0, null) { }
-  public Token(Type type, int line) : this(type, line, null) { }
-  public Token(Type type) : this(type, -1, null) { }
+  public Token() : this(Type.INVALID, new TokenInfo(0, ""), null) { }
+  public Token(Type type, int line, string file) : this(type, new TokenInfo(line, file), null) { }
+  public Token(Type type, int line, string file, object? value) : this(type, new TokenInfo(line, file), value) { }
+  public Token(Type type) : this(type, new TokenInfo(-1, ""), null) { }
   public static bool operator ==(Token? a, Token? b) => Equals(a, b);
   public static bool operator !=(Token? a, Token? b) => !Equals(a, b);
 
   public override readonly bool Equals(object? obj) => obj is Token b && type == b.type && (value == null || b.value == null || value == b.value);
-  public override readonly int GetHashCode() => HashCode.Combine(type, line, value);
+  public override readonly int GetHashCode() => HashCode.Combine(type, info, value);
 
   public override readonly string ToString()
   {
     string val = value is Token[] ? $"[{string.Join(", ", value)}]" : $"\"{value}\""; 
-    return $"[{type}] Line {line}: {val}";
+    return $"[{type}] Info (ln: {info.Line}, file: {info.File}): {val}";
   }
 }
