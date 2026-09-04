@@ -7,7 +7,7 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
   private static char GetCloseBracket(char bracket) => bracket == '(' ? ')' : bracket == '[' ? ']' : bracket == '{' ? '}' : bracket == '<' ? '>' : '\0';
   private static Token.Type GetTokenForBracket(char bracket) => bracket == '(' ? Token.Type.PAREN_BLOCK : bracket == '[' ? Token.Type.SQUARE_BLOCK : bracket == '{' ? Token.Type.CURLY_BLOCK : bracket == '<' ? Token.Type.ANGLE_BLOCK : Token.Type.INVALID;
   protected int line = 1;
-
+  //TODO ADD COMMENTS
   private static bool IsCharHexLetter(char c) {
     char ch = char.ToUpper(c);
     return ch == 'A' || ch == 'B' || ch == 'C' || ch == 'D' || ch == 'E' || ch == 'F';
@@ -51,7 +51,7 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
     else if (TryConsume('*'))
       return new Token(Token.Type.STAR, line, file);
     else if (TryConsume('='))
-      return new Token(Token.Type.EQUALS, line, file);
+      return new Token(Token.Type.EQUALS_SYMBOL, line, file);
     else if (TryConsume('.'))
       return new Token(Token.Type.DOT, line, file);
     else if (TryConsume('+'))
@@ -78,6 +78,8 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
       return new Token(Token.Type.RANGLE, line, file);
     else if (TryConsume('|'))
       return new Token(Token.Type.PIPE, line, file);
+    else if (TryConsume('$'))
+      return new Token(Token.Type.DOLLAR, line, file);
 
     else if (TryConsume('\''))
     {
@@ -185,6 +187,21 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
         "rawc" => ParseRawC(),
         "extern" => new(Token.Type.EXTERN, line, file),
         "enum" => new(Token.Type.ENUM, line, file),
+        "export" => new(Token.Type.EXPORT, line, file),
+        "import" => new(Token.Type.IMPORT, line, file),
+        "include" => new(Token.Type.INCLUDE, line, file),
+        "include_str" => new(Token.Type.INCLUDE_STR, line, file),
+        "include_bytes" => new(Token.Type.INCLUDE_BYTES, line, file),
+        "macro" => new(Token.Type.MACRO, line, file),
+        "stringify" => new(Token.Type.STRINGIFY, line, file),
+        "concat" => new(Token.Type.CONCAT, line, file),
+        "del" => new(Token.Type.DEL, line, file),
+        "defined" => new(Token.Type.DEFINED, line, file),
+        "equ" => new(Token.Type.EQUALS, line, file),
+        "gre" => new(Token.Type.GREATER, line, file),
+        "les" => new(Token.Type.LESS, line, file),
+        "grq" => new(Token.Type.GREATER_EQUALS, line, file),
+        "leq" => new(Token.Type.LESS_EQUALS, line, file),
         _ => new Token(Token.Type.IDENTIFIER, line, file, identifier),
       };
     }

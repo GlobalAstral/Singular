@@ -8,12 +8,18 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
   public enum Type {
     INVALID,
     NULL,
+    
     MUTABLE, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR, TYPE, DEFER, IF, ELSE, INFER, WHILE, DO, LOOP, FOR, IN,
-    BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM,
-    COMMA, COLON, SEMI, STAR, EQUALS, DOT, AS, BITCAST, SLASH, PERCENT, PIPE, CARET, LANGLE, RANGLE,
+    BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM, 
+    
+    EXPORT, IMPORT, INCLUDE, INCLUDE_STR, INCLUDE_BYTES, MACRO, STRINGIFY, CONCAT, DEL, DEFINED, EQUALS, GREATER, LESS, GREATER_EQUALS, LESS_EQUALS,
+    
+    COMMA, COLON, SEMI, STAR, EQUALS_SYMBOL, DOT, AS, BITCAST, SLASH, PERCENT, PIPE, CARET, LANGLE, RANGLE, DOLLAR,
     PLUS, MINUS, EXCLAMATION, TILDE, AMPER, SIZEOF, QUESTION,
+    
     STRUCT, UNION,
     BYTE, CHAR, USHORT, SHORT, UINT, INT, ULONG, LONG, BOOLEAN, FLOAT, DOUBLE, STRING, FUN, DYNAMIC,
+    
     LITERAL, IDENTIFIER
   }
 
@@ -33,7 +39,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     [Type.COLON] = new(Type.COLON),
     [Type.SEMI] = new(Type.SEMI),
     [Type.STAR] = new(Type.STAR),
-    [Type.EQUALS] = new(Type.EQUALS),
+    [Type.EQUALS_SYMBOL] = new(Type.EQUALS_SYMBOL),
     [Type.BYTE] = new(Type.BYTE),
     [Type.CHAR] = new(Type.CHAR),
     [Type.USHORT] = new(Type.USHORT),
@@ -87,6 +93,22 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     [Type.RAWC] = new(Type.RAWC),
     [Type.EXTERN] = new(Type.EXTERN),
     [Type.ENUM] = new(Type.ENUM),
+    [Type.DOLLAR] = new(Type.DOLLAR),
+    [Type.EXPORT] = new(Type.EXPORT),
+    [Type.IMPORT] = new(Type.IMPORT),
+    [Type.INCLUDE] = new(Type.INCLUDE),
+    [Type.INCLUDE_STR] = new(Type.INCLUDE_STR),
+    [Type.INCLUDE_BYTES] = new(Type.INCLUDE_BYTES),
+    [Type.MACRO] = new(Type.MACRO),
+    [Type.STRINGIFY] = new(Type.STRINGIFY),
+    [Type.CONCAT] = new(Type.CONCAT),
+    [Type.DEL] = new(Type.DEL),
+    [Type.DEFINED] = new(Type.DEFINED),
+    [Type.EQUALS] = new(Type.EQUALS),
+    [Type.GREATER] = new(Type.GREATER),
+    [Type.LESS] = new(Type.LESS),
+    [Type.GREATER_EQUALS] = new(Type.GREATER_EQUALS),
+    [Type.LESS_EQUALS] = new(Type.LESS_EQUALS),
   };
 
   public static Token Get(Type type) => INSTANCES[type];

@@ -364,7 +364,7 @@ public partial class Parser
               Error($"{kind} static field {variable.Name} already exists");
 
             Expression? val = null;
-            if (TryConsume(Token.Get(Token.Type.EQUALS)))
+            if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
               val = ParseExpression(variable.Type);
             s.Statics[variable] = val;
             AddVariable(variable);
@@ -552,7 +552,7 @@ public partial class Parser
   private Expression ParseBinary(Expression left, BinaryExpr.BinaryOp op)
   {
     bool compound = false;
-    if (TryConsume(Token.Get(Token.Type.EQUALS)))
+    if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
     {
       if (!BinaryExpr.IsBinaryOpAssignable(op)) Error($"Cannot compound operator {op} into an assignment");
       compound = true;
@@ -604,7 +604,7 @@ public partial class Parser
       return BinaryExpr.BinaryOp.BitXor;
     if (TryConsume(Token.Get(Token.Type.LANGLE)))
     {
-      if (TryConsume(Token.Get(Token.Type.EQUALS)))
+      if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
         return BinaryExpr.BinaryOp.LessEqual;
       if (TryConsume(Token.Get(Token.Type.LANGLE)))
         return BinaryExpr.BinaryOp.Shl;
@@ -612,19 +612,19 @@ public partial class Parser
     }
     if (TryConsume(Token.Get(Token.Type.RANGLE)))
     {
-      if (TryConsume(Token.Get(Token.Type.EQUALS)))
+      if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
         return BinaryExpr.BinaryOp.GreaterEqual;
       if (TryConsume(Token.Get(Token.Type.RANGLE)))
         return BinaryExpr.BinaryOp.Shr;
       return BinaryExpr.BinaryOp.Greater;
     }
-    if (TryConsume(Token.Get(Token.Type.EQUALS)))
+    if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
     {
-      if (TryConsume(Token.Get(Token.Type.EQUALS)))
+      if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
         return BinaryExpr.BinaryOp.Equals;
       return BinaryExpr.BinaryOp.Assign;
     }
-    if (Peek(Token.Get(Token.Type.EXCLAMATION)) && Peek(Token.Get(Token.Type.EQUALS), 1))
+    if (Peek(Token.Get(Token.Type.EXCLAMATION)) && Peek(Token.Get(Token.Type.EQUALS_SYMBOL), 1))
     {
       Consume(2);
       return BinaryExpr.BinaryOp.NotEquals;
@@ -697,7 +697,7 @@ public partial class Parser
         {
           named = true;
           string ident = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
-          TryConsumeError(Token.Get(Token.Type.EQUALS));
+          TryConsumeError(Token.Get(Token.Type.EQUALS_SYMBOL));
           Variable? found = composite.Comp.Fields.Find(v => v.Name == ident);
           if (found == null) Error($"Type {composite} has no field named {ident}");
           Expression e = ParseExpression(found.Type);

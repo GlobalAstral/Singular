@@ -88,7 +88,7 @@ public partial class Parser
 
       string name = MangleIdentifier();
       Expression? val = null;
-      if (TryConsume(Token.Get(Token.Type.EQUALS)))
+      if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
         val = ParseExpression(type);
       if (type == null && val == null)
         Error($"Cannot infer type of uninitialized variable {name}");
@@ -103,7 +103,7 @@ public partial class Parser
       if (!InGlobalScope())
         Error("Type declarations cannot be outside of global scope");
       string name = MangleIdentifier();
-      TryConsumeError(Token.Get(Token.Type.EQUALS));
+      TryConsumeError(Token.Get(Token.Type.EQUALS_SYMBOL));
       DataType type = ParseType();
       Semi();
       aliases[name] = type;
@@ -181,7 +181,7 @@ public partial class Parser
         AddVariable(variable);
 
         TryConsumeError(Token.Get(Token.Type.COMMA));
-        bool inclusive = TryConsume(Token.Get(Token.Type.EQUALS));
+        bool inclusive = TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL));
         Expression end = ParseExpression(variable.Type);
 
         BinaryExpr.BinaryOp op = reverse ? (inclusive ? BinaryExpr.BinaryOp.GreaterEqual : BinaryExpr.BinaryOp.Greater) : (inclusive ? BinaryExpr.BinaryOp.LessEqual : BinaryExpr.BinaryOp.Less);
@@ -289,7 +289,7 @@ public partial class Parser
       Switch(body, () =>
       {
         string entry = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
-        if (TryConsume(Token.Get(Token.Type.EQUALS)))
+        if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
         {
           Expression expression = ParseExpression(null);
           long val = ParseEnumConstant(expression, entries);
