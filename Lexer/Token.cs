@@ -108,6 +108,6 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
   public override readonly string ToString()
   {
     string val = value is Token[] ? $"[{string.Join(", ", value)}]" : $"\"{value}\""; 
-    return $"[{type}] Info (ln: {info.Line}, file: {info.File}): {val}";
+    return $"[{type}]({val})";
   }
 }

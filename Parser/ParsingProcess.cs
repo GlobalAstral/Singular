@@ -2,13 +2,13 @@ using Lexer;
 
 namespace Parser;
 
-public record ParsingProcess(Token.Type Type, bool Consume, Func<Statement> Factory) { }
+public record ParsingProcess(Token.Type Type, bool Consume, Func<TokenInfo, Statement> Factory) { }
 
 public partial class Parser
 {
   private void Init()
   {
-    Wakeup(Token.Type.NAMESPACE, true, () =>
+    Wakeup(Token.Type.NAMESPACE, true, info =>
     {
       if (!InGlobalScope())
         Error("Namespaces cannot be outside of global scope");
@@ -20,7 +20,7 @@ public partial class Parser
       return new Group(statements);
     });
 
-    Wakeup(Token.Type.CURLY_BLOCK, false, () =>
+    Wakeup(Token.Type.CURLY_BLOCK, false, info =>
     {
       Token[] content = (Token[])Consume().value!;
       
@@ -46,7 +46,7 @@ public partial class Parser
 
     Wakeup(Token.Type.FUN, true, ParseFunction);
 
-    Wakeup(Token.Type.RETURN, true, () =>
+    Wakeup(Token.Type.RETURN, true, info =>
     {
       Context? current = currentContext.Peek();
       if (!InFunction())
@@ -74,11 +74,11 @@ public partial class Parser
       return scopeContext.ResolveDefers(new Return(expression));
     });
 
-    Wakeup(Token.Type.STRUCT, true, () => ParseComposite(Composite.Type.STRUCT, s => new StructDecl(s)));
+    Wakeup(Token.Type.STRUCT, true, info => ParseComposite(info, Composite.Type.STRUCT, s => new StructDecl(s)));
 
-    Wakeup(Token.Type.UNION, true, () => ParseComposite(Composite.Type.UNION, s => new UnionDecl(s)));
+    Wakeup(Token.Type.UNION, true, info => ParseComposite(info, Composite.Type.UNION, s => new UnionDecl(s)));
 
-    Wakeup(Token.Type.VAR, true, () =>
+    Wakeup(Token.Type.VAR, true, info =>
     {
       ModifierHandler modifiers = GetModifiers(handler => {});
       DataType? type = null;
@@ -98,7 +98,7 @@ public partial class Parser
       return new VariableDecl(variable, val);
     });
 
-    Wakeup(Token.Type.TYPE, true, () =>
+    Wakeup(Token.Type.TYPE, true, info =>
     {
       if (!InGlobalScope())
         Error("Type declarations cannot be outside of global scope");
@@ -110,7 +110,7 @@ public partial class Parser
       return new TypeDefinition(name, type);
     });
 
-    Wakeup(Token.Type.DEFER, true, () =>
+    Wakeup(Token.Type.DEFER, true, info =>
     {
       if (!InScope(out var scope))
         Error("Cannot defer outside of a scope");
@@ -118,7 +118,7 @@ public partial class Parser
       return new Nop();
     });
 
-    Wakeup(Token.Type.IF, true, () =>
+    Wakeup(Token.Type.IF, true, info =>
     {
       Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
       Expression cond = Switch(condition, () => ParseExpression(BooleanType.INSTANCE));
@@ -127,7 +127,7 @@ public partial class Parser
       return new IfStatement(cond, body, other);
     });
 
-    Wakeup(Token.Type.WHILE, true, () =>
+    Wakeup(Token.Type.WHILE, true, info =>
     {
       Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
       Expression cond = Switch(condition, () => ParseExpression(BooleanType.INSTANCE));
@@ -139,7 +139,7 @@ public partial class Parser
       return new WhileStmt(cond, body);
     });
 
-    Wakeup(Token.Type.DO, true, () =>
+    Wakeup(Token.Type.DO, true, info =>
     {
       currentContext.Push(new LoopContext());
       Statement body = ProcessOne();
@@ -151,7 +151,7 @@ public partial class Parser
       return new DoWhileStmt(cond, body);
     });
 
-    Wakeup(Token.Type.LOOP, true, () =>
+    Wakeup(Token.Type.LOOP, true, info =>
     {
       currentContext.Push(new LoopContext());
       Statement body = ProcessOne();
@@ -160,9 +160,9 @@ public partial class Parser
       return new WhileStmt(new LiteralExpr(new BooleanLiteral(true)), body);
     });
 
-    Wakeup(Token.Type.SEMI, true, () => new Nop());
+    Wakeup(Token.Type.SEMI, true, info => new Nop());
 
-    Wakeup(Token.Type.FOR, true, () =>
+    Wakeup(Token.Type.FOR, true, info =>
     {
       Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
       
@@ -207,7 +207,7 @@ public partial class Parser
       return new ForStmt(Init, cond, update, body);
     });
 
-    Wakeup(Token.Type.BREAK, true, () =>
+    Wakeup(Token.Type.BREAK, true, info =>
     {
       Context? current = currentContext.Peek();
       if (current is not LoopContext && current is not SwitchContext)
@@ -216,7 +216,7 @@ public partial class Parser
       return new BreakStmt();
     });
 
-    Wakeup(Token.Type.CONTINUE, true, () =>
+    Wakeup(Token.Type.CONTINUE, true, info =>
     {
       if (currentContext.Peek() is not LoopContext)
         Error("Cannot continue outside of loop");
@@ -224,7 +224,7 @@ public partial class Parser
       return new ContinueStmt();
     });
 
-    Wakeup(Token.Type.SWITCH, true, () =>
+    Wakeup(Token.Type.SWITCH, true, info =>
     {
       Expression expression = Switch((Token[])TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!, () => ParseExpression(null));
       DataType caseType = expression.GetReturnType();
@@ -259,7 +259,7 @@ public partial class Parser
       return new SwitchStmt(expression, Cases.Item1, Cases.Item2);
     });
 
-    Wakeup(Token.Type.EXTERN, true, () =>
+    Wakeup(Token.Type.EXTERN, true, info =>
     {
       if (!InGlobalScope())
         Error("Extern cannot be outside of global scope");
@@ -269,12 +269,12 @@ public partial class Parser
         if (lit is not StringLiteral)
           Error($"Extern ABI can only be a string literal");
         string s = ((StringLiteral) lit).String;
-        return ParseABI(s);
+        return ParseABI(info, s);
       }
-      return ParseExtern(MangleIdentifier);
+      return ParseExtern(info, MangleIdentifier);
     });
 
-    Wakeup(Token.Type.ENUM, true, () =>
+    Wakeup(Token.Type.ENUM, true, info =>
     {
       if (!InGlobalScope())
         Error("Enum cannot be outside of global scope");

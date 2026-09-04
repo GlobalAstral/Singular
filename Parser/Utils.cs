@@ -278,7 +278,7 @@ public partial class Parser
     globals.Add(variable);
   }
 
-  private Statement ParseFunction(Func<string> namingConvention) {
+  private Statement ParseFunction(TokenInfo info, Func<string> namingConvention) {
     if (!InGlobalScope())
       Error("Functions cannot be outside of global scope");
     ModifierHandler modifiers = GetModifiers(handler => { if (handler.IsMutable) Error("Function cannot be mutable"); handler.Mutable(); });
@@ -314,9 +314,9 @@ public partial class Parser
     return new FunctionDecl(f);
   }
 
-  private Statement ParseFunction() => ParseFunction(MangleIdentifier);
+  private Statement ParseFunction(TokenInfo info) => ParseFunction(info, MangleIdentifier);
 
-  private Statement ParseComposite(Composite.Type kind, Func<Composite, Statement> factory) {
+  private Statement ParseComposite(TokenInfo info, Composite.Type kind, Func<Composite, Statement> factory) {
     if (!InGlobalScope())
       Error($"{kind} cannot be outside of global scope");
     string ident = MangleIdentifier();
@@ -340,7 +340,7 @@ public partial class Parser
         if (TryConsume(Token.Get(Token.Type.FUN)))
         {
           currentContext.Push(ctx);
-          Statement func = ParseFunction();
+          Statement func = ParseFunction(info);
           currentContext.Pop();
           group.Add(func);
         }
@@ -750,7 +750,7 @@ public partial class Parser
     return expression;
   }
 
-  protected Statement ParseExtern(Func<string> namingConvention)
+  protected Statement ParseExtern(TokenInfo info, Func<string> namingConvention)
   {
     if (TryConsume(Token.Get(Token.Type.VAR)))
     {
@@ -767,7 +767,7 @@ public partial class Parser
     }
     else if (TryConsume(Token.Get(Token.Type.FUN)))
     {
-      FunctionDecl s = (ParseFunction(namingConvention) as FunctionDecl)!;
+      FunctionDecl s = (ParseFunction(info, namingConvention) as FunctionDecl)!;
       Function func = s.Func;
       if (func.Body != null)
         Error("Extern function cannot have a body");
@@ -883,14 +883,14 @@ public partial class Parser
     throw new UnreachableException();
   }
 
-  protected Statement ParseABI(string abi) => abi switch
+  protected Statement ParseABI(TokenInfo info, string abi) => abi switch
   {
-    "C" => ParseExtern(() => (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!),
+    "C" => ParseExtern(info, () => (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!),
 
     _ => throw new Exception($"Unsupported ABI {abi}"),
   };
   
-  protected void Wakeup(Token.Type token, bool consume, Func<Statement> action)
+  protected void Wakeup(Token.Type token, bool consume, Func<TokenInfo, Statement> action)
   {
     processes.Add(new ParsingProcess(token, consume, action));
   }

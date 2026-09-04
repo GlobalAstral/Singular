@@ -8,7 +8,7 @@ public abstract class Processor<T, O>(T[] content, Func<O, bool>? Skip = null) w
   protected static string EXPECTED_ERROR(T expected, T found) => $"Expected {Convert.ToString(expected)} found {found}";
 
   [DoesNotReturn]
-  protected void Error(string msg) => throw new Exception(msg);
+  protected virtual void Error(string msg) => throw new Exception(msg);
 
   protected bool HasPeek(int offset = 0) => (peek + offset) >= 0 && (peek + offset) < content.Length;
   protected T Peek(int offset = 0) => HasPeek(offset) ? content[peek + offset] : new T();
@@ -28,7 +28,7 @@ public abstract class Processor<T, O>(T[] content, Func<O, bool>? Skip = null) w
     }
     return false;
   }
-  protected T TryConsumeError(T consume)
+  protected virtual T TryConsumeError(T consume)
   {
     if (EqualityComparer<T>.Default.Equals(Peek(), consume))
       return Consume();
@@ -49,7 +49,7 @@ public abstract class Processor<T, O>(T[] content, Func<O, bool>? Skip = null) w
     }
   }
 
-  protected void DoUntil(T find, Action action)
+  protected virtual void DoUntil(T find, Action action)
   {
     bool found = false;
     T? instead = default;
