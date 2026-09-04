@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Lexer;
 
 public abstract class Processor<T, O>(T[] content, Func<O, bool>? Skip = null) where T: new()
 {

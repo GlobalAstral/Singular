@@ -1,4 +1,3 @@
-using System.Security.Principal;
 using Parser;
 
 namespace Generator;
