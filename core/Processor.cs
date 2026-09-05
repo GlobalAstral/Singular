@@ -5,10 +5,15 @@ public abstract class Processor<T, O>(T[] content, Func<O, bool>? Skip = null) w
   protected int peek = 0;
   protected List<O> output = [];
 
+  private static readonly string RED = "\x1b[31m";
+  private static readonly string YELLOW = "\x1b[33m";
+  private static readonly string RESET = "\x1b[0m";
+
   protected static string EXPECTED_ERROR(T expected, T found) => $"Expected {Convert.ToString(expected)} found {found}";
 
   [DoesNotReturn]
-  protected virtual void Error(string msg) => throw new Exception(msg);
+  protected virtual void Error(string msg) => throw new Exception($"{RED}{msg}{RESET}");
+  protected virtual void Warn(string msg) => Console.WriteLine($"{YELLOW}{msg}{RESET}");
 
   protected bool HasPeek(int offset = 0) => (peek + offset) >= 0 && (peek + offset) < content.Length;
   protected T Peek(int offset = 0) => HasPeek(offset) ? content[peek + offset] : new T();
