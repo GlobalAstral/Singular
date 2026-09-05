@@ -128,11 +128,18 @@ public class StringType : DataType
   public override Expression GetNull() => NULL;
 }
 
-public class ArrayType(DataType elements, Expression size) : DataType
+public class ArrayType(DataType elements, Expression? size) : DataType
 {
   public DataType Elements {get;} = elements;
-  public Expression Size {get;} = size;
+  public Expression? Size {get; set;} = size;
   public override Expression GetNull() => new RawExpr(this, "{0}");
+
+  public override bool CanAccept(DataType other)
+  {
+    if (other.Matches<AliasType>(out var alias))
+      return this == other || CanAccept(alias!.Type);
+    return other.Matches<ArrayType>(out var arr) && Elements.CanAccept(arr!.Elements);
+  }
 }
 public class PointerType(DataType target, bool mutable) : DataType
 {
@@ -180,20 +187,10 @@ public class CompositeType(Composite Comp) : DataType
 }
 
 public static class References {
-  private static readonly Dictionary<DataType, ArrayType> ArrayCache = [];
   private static readonly List<PointerType> PointerCache = [];
   private static readonly Dictionary<string, AliasType> AliasCache = [];
   private static readonly Dictionary<string, CompositeType> StructCache = [];
   private static readonly List<FunctionType> FunctionCache = [];
-  public static DataType GetArrayType(DataType elements, Expression size)
-  {
-    if (!ArrayCache.TryGetValue(elements, out var value))
-    {
-      value = new ArrayType(elements, size);
-      ArrayCache[elements] = value;
-    }
-    return value;
-  }
 
   public static DataType GetPointerType(DataType target, bool mutable)
   {

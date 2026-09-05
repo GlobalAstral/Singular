@@ -34,7 +34,7 @@ public class ArrayLiteral(DataType type, Expression[] Expressions) : Expression
 {
   public Expression[] Expressions {get;} = Expressions;
 
-  public DataType GetReturnType() => References.GetArrayType(type, new LiteralExpr(new IntLiteral(Expressions.Length)));
+  public DataType GetReturnType() => new ArrayType(type, new LiteralExpr(new ULongLiteral((ulong)Expressions.Length)));
   public override string ToString() => $"[{string.Join(", ", Expressions)}]";
 }
 

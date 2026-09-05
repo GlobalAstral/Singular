@@ -136,10 +136,8 @@ public partial class Parser
     if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
     {
       Token[] temp = (Token[])Consume().value!;
-      if (temp.Length == 0)
-        Error("Invalid Array Type");
-      Expression size = Switch(temp, () => ParseExpression(ULongType.INSTANCE));
-      dataType = References.GetArrayType(dataType, size);
+      Expression? size = temp.Length == 0 ? null : Switch(temp, () => ParseExpression(ULongType.INSTANCE));
+      dataType = new ArrayType(dataType, size);
     }
     return dataType;
   }
@@ -670,13 +668,20 @@ public partial class Parser
       Token[] body = (Token[]) Consume().value!;
       List<Expression> expressions = [];
       DataType? locked_type = typeCheckerContext.Peek();
+      if (locked_type == null)  
+        Error("Cannot infer type from Array Literal");
+      if (locked_type is not ArrayType)
+        Error("Cannot initialize non-array type with ArrayLiteral");
+      ArrayType arr = (locked_type as ArrayType)!;
+      locked_type = arr.Elements;
       Switch(body, () =>
       {
         Expression e = ParseExpression(locked_type);
-        locked_type ??= e.GetReturnType();
         expressions.Add(e);
       }, Token.Get(Token.Type.COMMA));
-      if (locked_type == null) Error("Cannot infer type from Array Literal");
+      if (arr.Size != null)
+        Error("Cannot specify array size when initializing it with an ArrayLiteral");
+      arr.Size = new LiteralExpr(new ULongLiteral((ulong) expressions.Count));
       expression = new ArrayLiteral(locked_type!, [.. expressions]);
     }
     else if (Peek(Token.Get(Token.Type.CURLY_BLOCK)))
