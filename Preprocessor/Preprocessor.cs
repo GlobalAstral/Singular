@@ -97,7 +97,7 @@ public partial class Preprocessor : Processor<Token, Token>
   public Token[] GetRegular()
   {
     List<Token> ret = [];
-    while (!Peek(Token.Get(Token.Type.DOLLAR)))
+    while (HasPeek() && !Peek(Token.Get(Token.Type.DOLLAR)))
       ret.Add(Consume());
     return [.. ret];
   }
