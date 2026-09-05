@@ -119,11 +119,10 @@ public partial class Generator
     _ => throw new UnreachableException()
   };
 
-  protected string GenerateExpression(Expression expression) => $"({GenerateExpression_(expression)})";
+  protected string GenerateExpression(Expression expression) => expression is RawExpr raw ? raw.Generated : $"({GenerateExpression_(expression)})";
   protected string GenerateExpression_(Expression expression) => expression switch
   {
     LiteralExpr litexpr => litexpr.Lit.ToString()!,
-    RawExpr raw => raw.Generated,
     IdentifierExpression id => id.Variable.Name,
     ArrayLiteral arr => $"{{{string.Join(", ", arr.Expressions.Select(v => GenerateExpression(v)))}}}",
     CompositeLiteral cmp => GenerateCompositeLiteral((CompositeType) cmp.Type, cmp.Expressions),
