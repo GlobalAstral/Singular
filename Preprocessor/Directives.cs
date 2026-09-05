@@ -64,6 +64,16 @@ public partial class Preprocessor
       return [.. result];
     });
 
-    
+    Directive(Token.Type.CINCLUDE, true, () =>
+    {
+      bool local = TryConsume(new(Token.Type.LITERAL, (object?)"\"local\""));
+      Token[] tokens = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      if (tokens.Length != 1) Error("Invalid .h file block");
+      string header = Switch(tokens, () => (string) TryConsumeError(Token.Get(Token.Type.LITERAL)).value!);
+      if (!header.StartsWith('"') || !header.EndsWith('"')) Error("Expected string literal");
+      header = header[1..^1];
+      string raw = local ? $"#include \"{header}\"" : $"#include <{header}>";
+      return [new Token(Token.Type.RAWC, tokenInfos.Peek(), raw), Token.Get(Token.Type.SEMI)];
+    });
   }
 }

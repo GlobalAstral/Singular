@@ -189,7 +189,7 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
         "enum" => new(Token.Type.ENUM, line, file),
         "export" => new(Token.Type.EXPORT, line, file),
         "import" => new(Token.Type.IMPORT, line, file),
-        "include" => new(Token.Type.INCLUDE, line, file),
+        "cinclude" => new(Token.Type.CINCLUDE, line, file),
         "include_str" => new(Token.Type.INCLUDE_STR, line, file),
         "include_bytes" => new(Token.Type.INCLUDE_BYTES, line, file),
         "macro" => new(Token.Type.MACRO, line, file),

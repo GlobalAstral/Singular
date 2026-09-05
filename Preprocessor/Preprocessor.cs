@@ -62,6 +62,7 @@ public partial class Preprocessor : Processor<Token, Token>
   }
 
   protected void Directive(Token.Type wakeup, bool consume, Func<Token[]> factory) => directives.Add(new(wakeup, consume, factory));
+  protected void Directive(Token.Type wakeup, bool consume, Func<Token> factory) => directives.Add(new(wakeup, consume, () => [factory()]));
   public Token[] PreprocessDirective()
   {
     (Directive dir, TokenInfo info)? result = null;
