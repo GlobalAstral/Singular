@@ -31,8 +31,10 @@ public partial class Generator
 
   protected string GenerateTypedefName() => $"T{typedefID++}_{RandomizedParserHash}";
 
-  protected string GenerateArrayType(DataType type, Expression size)
+  protected string GenerateArrayType(DataType type, Expression? size)
   {
+    if (size == null)
+      Error("Array type with no explicit size");
     string typedef_name = GenerateTypedefName();
     string typedef = $"typedef {GenerateType(type)} {typedef_name}[{GenerateExpression(size)}];\n";
     contexts.Peek()!.Prologue(typedef);
@@ -118,10 +120,9 @@ public partial class Generator
     BinaryExpr.BinaryOp.Assign => $"{GenerateExpression(left)} = {GenerateExpression(right)}",
     _ => throw new UnreachableException()
   };
-
-  protected string GenerateExpression(Expression expression) => expression is RawExpr raw ? raw.Generated : $"({GenerateExpression_(expression)})";
-  protected string GenerateExpression_(Expression expression) => expression switch
+  protected string GenerateExpression(Expression expression) => expression switch
   {
+    RawExpr raw => raw.Generated,
     LiteralExpr litexpr => litexpr.Lit.ToString()!,
     IdentifierExpression id => id.Variable.Name,
     ArrayLiteral arr => $"{{{string.Join(", ", arr.Expressions.Select(v => GenerateExpression(v)))}}}",
