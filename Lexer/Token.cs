@@ -120,6 +120,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
   public Token() : this(Type.INVALID, new TokenInfo(0, ""), null) { }
   public Token(Type type, int line, string file) : this(type, new TokenInfo(line, file), null) { }
   public Token(Type type, int line, string file, object? value) : this(type, new TokenInfo(line, file), value) { }
+  public Token(Type type, object? value) : this(type, new TokenInfo(0, ""), value) { }
   public Token(Type type) : this(type, new TokenInfo(-1, ""), null) { }
   public static bool operator ==(Token? a, Token? b) => Equals(a, b);
   public static bool operator !=(Token? a, Token? b) => !Equals(a, b);
