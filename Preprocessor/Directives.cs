@@ -88,5 +88,27 @@ public partial class Preprocessor
       string content = Escape(File.ReadAllText(path));
       return new Token(Token.Type.LITERAL, tokenInfos.Peek(), $"\"{content}\"");
     });
+
+    Directive(Token.Type.INCLUDE_BYTES, true, () =>
+    {
+      Token[] tokens = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      if (tokens.Length != 1) Error("Invalid file block");
+      string path = Switch(tokens, () => (string) TryConsumeError(Token.Get(Token.Type.LITERAL)).value!);
+      if (!path.StartsWith('"') || !path.EndsWith('"')) Error("Expected string literal");
+      path = path[1..^1];
+      if (!File.Exists(path))
+        Error($"File {path} does not exist");
+      byte[] content = File.ReadAllBytes(path);
+      List<Token> result = [];
+
+      int count = 0;
+      foreach (byte b in content)
+      {
+        if (count++ > 0) result.Add(Token.Get(Token.Type.COMMA)); 
+        result.Add(new(Token.Type.LITERAL, tokenInfos.Peek(), $"0b{Convert.ToString(b, 2).PadLeft(8, '0')}"));
+      }
+
+      return new(Token.Type.SQUARE_BLOCK, tokenInfos.Peek(), result.ToArray());
+    });
   }
 }
