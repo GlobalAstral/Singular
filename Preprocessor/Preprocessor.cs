@@ -5,15 +5,17 @@ namespace Preprocessor;
 
 public partial class Preprocessor(Token[] tokens) : Processor<Token, Token>(tokens)
 {
+  protected Context context = new([]);
   public Token[] PreprocessDirective()
   {
     if (TryConsume(Token.Get(Token.Type.EXPORT)))
     {
-      
+      Export export = ParseExport(context.Exports);
+      context.Exports.Add(export);
     }
     else if (TryConsume(Token.Get(Token.Type.IMPORT)))
     {
-      throw new NotImplementedException();
+      
     }
     else if (TryConsume(Token.Get(Token.Type.INCLUDE)))
     {
