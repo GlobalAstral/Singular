@@ -75,5 +75,18 @@ public partial class Preprocessor
       string raw = local ? $"#include \"{header}\"" : $"#include <{header}>";
       return [new Token(Token.Type.RAWC, tokenInfos.Peek(), raw), Token.Get(Token.Type.SEMI)];
     });
+
+    Directive(Token.Type.INCLUDE_STR, true, () =>
+    {
+      Token[] tokens = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      if (tokens.Length != 1) Error("Invalid file block");
+      string path = Switch(tokens, () => (string) TryConsumeError(Token.Get(Token.Type.LITERAL)).value!);
+      if (!path.StartsWith('"') || !path.EndsWith('"')) Error("Expected string literal");
+      path = path[1..^1];
+      if (!File.Exists(path))
+        Error($"File {path} does not exist");
+      string content = Escape(File.ReadAllText(path));
+      return new Token(Token.Type.LITERAL, tokenInfos.Peek(), $"\"{content}\"");
+    });
   }
 }
