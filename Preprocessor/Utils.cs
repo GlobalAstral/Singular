@@ -72,4 +72,15 @@ public partial class Preprocessor
     return [.. result];
   }
   
+  static string Escape(string str) => str
+    .Replace("\\", "\\\\")
+    .Replace("\n", "\\n")
+    .Replace("\r", "\\r")
+    .Replace("\t", "\\t")
+    .Replace("\0", "\\0")
+    .Replace("\b", "\\b")
+    .Replace("\f", "\\f")
+    .Replace("\v", "\\v")
+    .Replace("\"", "\\\"");
+
 }
