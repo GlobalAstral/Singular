@@ -26,7 +26,7 @@ public abstract class Processor<T, O>(T[] content, Func<O, bool>? Skip = null) w
   protected void Consume(int amount) { for (int i = 0; i < amount; i++, Consume()); }
   protected bool TryConsume(T consume)
   {
-    if (EqualityComparer<T>.Default.Equals(Peek(), consume))
+    if (Peek() != null && Peek()!.Equals(consume))
     {
       Consume();
       return true;

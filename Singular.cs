@@ -48,7 +48,13 @@ partial class Singular
     foreach (Token item in tokens)
       Console.WriteLine(item);
 
-    Parser.Parser parser = new(tokens);
+    Preprocessor.Preprocessor preprocessor = new([.. tokens]);
+    Token[] processed = preprocessor.Process();
+    Console.WriteLine("PREPROCESSED:\n");
+    foreach (Token item in processed)
+      Console.WriteLine(item);
+
+    Parser.Parser parser = new(processed);
     Statement[] statements = parser.Process();
     Console.WriteLine("Statements:\n");
     foreach (Statement item in statements)

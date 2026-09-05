@@ -1,29 +1,94 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Lexer;
 
 namespace Preprocessor;
 
-public partial class Preprocessor(Token[] tokens) : Processor<Token, Token>(tokens)
+public partial class Preprocessor : Processor<Token, Token>
 {
+  public Preprocessor(Token[] tokens) : base(tokens) {
+    RegisterDirectives();  
+  }
+
   protected Context context = new([]);
+  protected readonly HashSet<uint> IncludedOnce = [];
+  protected readonly List<Directive> directives = [];
+  protected readonly Stack<TokenInfo> tokenInfos = [];
+
+  [DoesNotReturn]
+  protected override void Error(string msg)
+  {
+    TokenInfo? info = tokenInfos.Count == 0 ? null : tokenInfos.Peek();
+    if (info == null)
+      base.Error(msg);
+    base.Error($"{msg} at (ln: {info.Line}, file: {info.File})");
+  }
+  protected override void Warn(string msg)
+  {
+    TokenInfo? info = tokenInfos.Count == 0 ? null : tokenInfos.Peek();
+    if (info == null) {
+      base.Warn(msg);
+      return;
+    }
+    base.Warn($"{msg} at (ln: {info.Line}, file: {info.File})");
+  }
+  protected static string EXPECTED_ERROR(Token expected, Token found, TokenInfo info) => $"Error: {EXPECTED_ERROR(expected, found)} at (ln: {info.Line}, file: {info.File})";
+  protected override Token TryConsumeError(Token consume)
+  {
+    if (Peek().Equals(consume))
+      return Consume();
+    Token token = Peek();
+    Error(EXPECTED_ERROR(consume, token, token.info));
+    return new Token();
+  }
+
+  protected override void DoUntil(Token find, Action action)
+  {
+    bool found = false;
+    Token instead = default;
+    while (HasPeek())
+    {
+      if (TryConsume(find))
+      {
+        instead = default;
+        found = true;
+        break; 
+      }
+      instead = Peek();
+      action();
+    }
+    if (!found)
+      Error(EXPECTED_ERROR(find, instead, instead.info!));
+  }
+
+  protected void Directive(Token.Type wakeup, bool consume, Func<Token[]> factory) => directives.Add(new(wakeup, consume, factory));
   public Token[] PreprocessDirective()
   {
-    if (TryConsume(Token.Get(Token.Type.EXPORT)))
+    (Directive dir, TokenInfo info)? result = null;
+
+    foreach (Directive directive in directives)
     {
-      Export export = ParseExport(context.Exports);
-      context.Exports.Add(export);
+      Token tok = Token.Get(directive.Wakeup);
+      if (Peek(tok))
+      {
+        Token p = Peek();
+        result = (directive, p.info);
+        if (directive.Consume)
+          Consume();
+        break;
+      }
     }
-    else if (TryConsume(Token.Get(Token.Type.IMPORT)))
+
+    if (result.HasValue)
     {
-      
-    }
-    else if (TryConsume(Token.Get(Token.Type.INCLUDE)))
-    {
-      throw new NotImplementedException();
+      tokenInfos.Push(result.Value.info);
+      Token[] ret = result.Value.dir.Factory();
+      tokenInfos.Pop();
+      return ret;
     }
 
     Token peek = Peek();
-    Error($"Invalid directive at (ln: {peek.info.Line}, file: {peek.info.File})");
+    base.Error($"Invalid directive at (ln: {peek.info.Line}, file: {peek.info.File})");
     throw new UnreachableException();
   }
  

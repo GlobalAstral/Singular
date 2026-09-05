@@ -32,7 +32,7 @@ public partial class Parser : Processor<Token, Statement>
 
   protected override Token TryConsumeError(Token consume)
   {
-    if (EqualityComparer<Token>.Default.Equals(Peek(), consume))
+    if (Peek().Equals(consume))
       return Consume();
 
     Token token = Peek();

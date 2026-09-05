@@ -2,17 +2,17 @@ using Lexer;
 
 namespace Preprocessor;
 
-public record Export(string Name, bool Once, Token[] Content, IReadOnlyList<Export> Exports, uint ID)
+public record Export(string Name, bool Once, Token[] Content, List<Export> Exports, uint ID)
 {
   private static uint CURRENT_ID = 0;
-  public Export(string Name, bool Once, Token[] Content, IReadOnlyList<Export> Exports) : this(Name, Once, Content, Exports, CURRENT_ID++) { }
+  public Export(string Name, bool Once, Token[] Content, List<Export> Exports) : this(Name, Once, Content, Exports, CURRENT_ID++) { }
 }
 
 public record Context(List<Export> Exports) { }
 
 public partial class Preprocessor
 {
-  protected Export ParseExport(IReadOnlyList<Export> exports)
+  protected Export ParseExport(List<Export> exports)
   {
     bool once = TryConsume(new(Token.Type.LITERAL, (object?)"\"once\""));
     string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
@@ -22,7 +22,7 @@ public partial class Preprocessor
     Token[] other = ParseExportsOnly(body, out var found_exports);
     return new Export(name, once, other, found_exports);
   }
-  protected Token[] ParseExportsOnly(Token[] body, out IReadOnlyList<Export> exports)
+  protected Token[] ParseExportsOnly(Token[] body, out List<Export> exports)
   {
     List<Export> temp = [];
     Token[] content = Switch(body, () =>
@@ -36,11 +36,40 @@ public partial class Preprocessor
           Export export = ParseExport(temp);
           temp.Add(export);
         }
-        content.Add(Consume());
+        if (HasPeek())
+          content.Add(Consume());
       }
       return content.ToArray();
     });
     exports = temp;
     return content;
   }
+  //TODO
+  protected string? SearchImportPath(string file) => null;
+
+  protected Token[] ResolveAllExports(List<Export> all)
+  {
+    List<Token> result = [];
+    foreach (Export ex in all)
+      result.AddRange(ResolveExport(ex, true));
+    return [.. result];
+  }
+  protected Token[] ResolveExport(Export export, bool ResolveAll)
+  {
+    List<Token> result = [];
+
+    if (export.Once && IncludedOnce.Contains(export.ID))
+      return [];
+
+    result.AddRange(Switch(export.Content, Process));
+
+    if (ResolveAll)
+      result.AddRange(ResolveAllExports(export.Exports));
+
+    if (export.Once)
+      IncludedOnce.Add(export.ID);
+   
+    return [.. result];
+  }
+  
 }

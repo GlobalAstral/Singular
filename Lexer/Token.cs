@@ -125,7 +125,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
   public static bool operator ==(Token? a, Token? b) => Equals(a, b);
   public static bool operator !=(Token? a, Token? b) => !Equals(a, b);
 
-  public override readonly bool Equals(object? obj) => obj is Token b && type == b.type && (value == null || b.value == null || value == b.value);
+  public override readonly bool Equals(object? obj) => obj is Token b && type == b.type && (value == null || b.value == null || value.Equals(b.value));
   public override readonly int GetHashCode() => HashCode.Combine(type, info, value);
 
   public override readonly string ToString()
