@@ -132,7 +132,7 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
       return new Token(Token.Type.LITERAL, line, file, builder.ToString());
     }
 
-    else if (char.IsAsciiLetter(Peek()) || Peek('_'))
+    else if (char.IsLetter(Peek()) || Peek('_'))
     {
       StringBuilder builder = new();
       while (char.IsLetterOrDigit(Peek()) || Peek('_'))
