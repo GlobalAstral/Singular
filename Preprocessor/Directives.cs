@@ -209,5 +209,17 @@ public partial class Preprocessor
         return Switch(rest, Process);
       return [];
     });
+
+    Directive(Token.Type.STRINGIFY, true, () =>
+    {
+      Token[] processed = Switch((Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!, Process);
+      if (processed.Length != 1)
+        Error("Expected single token block");
+      Token token = processed[0];
+      string? str = token.Stringify();
+      if (str == null)
+        Error($"Cannot stringify token {token}");
+      return new Token(Token.Type.LITERAL, tokenInfos.Peek(), (object?) $"\"{str}\"");
+    });
   }
 }
