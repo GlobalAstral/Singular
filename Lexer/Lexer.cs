@@ -7,7 +7,9 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
   private static char GetCloseBracket(char bracket) => bracket == '(' ? ')' : bracket == '[' ? ']' : bracket == '{' ? '}' : bracket == '<' ? '>' : '\0';
   private static Token.Type GetTokenForBracket(char bracket) => bracket == '(' ? Token.Type.PAREN_BLOCK : bracket == '[' ? Token.Type.SQUARE_BLOCK : bracket == '{' ? Token.Type.CURLY_BLOCK : bracket == '<' ? Token.Type.ANGLE_BLOCK : Token.Type.INVALID;
   protected int line = 1;
-  //TODO ADD COMMENTS
+  protected bool comment = false;
+  protected bool multicomment = false;
+
   private static bool IsCharHexLetter(char c) {
     char ch = char.ToUpper(c);
     return ch == 'A' || ch == 'B' || ch == 'C' || ch == 'D' || ch == 'E' || ch == 'F';
@@ -17,7 +19,14 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
     if (TryConsume('\n'))
     {
       line++;
+      comment = false;
       return new Token();
+    }
+
+    else if (comment || multicomment)
+    {
+      Consume();
+      return new();
     }
 
     else if (char.IsWhiteSpace(Peek()))
@@ -49,7 +58,14 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
       return new Token(Token.Type.SEMI, line, file);
 
     else if (TryConsume('*'))
+    {
+      if (TryConsume('/'))
+      {
+        multicomment = false;
+        return new();
+      }
       return new Token(Token.Type.STAR, line, file);
+    }
     else if (TryConsume('='))
       return new Token(Token.Type.EQUALS_SYMBOL, line, file);
     else if (TryConsume('.'))
@@ -67,7 +83,19 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
     else if (TryConsume('?'))
       return new Token(Token.Type.QUESTION, line, file);
     else if (TryConsume('/'))
+    {
+      if (TryConsume('/'))
+      {
+        comment = true;
+        return new();
+      }
+      if (TryConsume('*'))
+      {
+        multicomment = true;
+        return new();
+      }
       return new Token(Token.Type.SLASH, line, file);
+    }
     else if (TryConsume('%'))
       return new Token(Token.Type.PERCENT, line, file);
     else if (TryConsume('^'))
@@ -80,6 +108,16 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
       return new Token(Token.Type.PIPE, line, file);
     else if (TryConsume('$'))
       return new Token(Token.Type.DOLLAR, line, file);
+    else if (TryConsume('#'))
+    {
+      if (!char.IsLetter(Peek()))
+        Error("Identifier must start with a letter");
+      StringBuilder builder = new();
+      while (char.IsLetterOrDigit(Peek()) || Peek('_'))
+        builder.Append(Consume());
+      string identifier = builder.ToString();
+      return new Token(Token.Type.IDENTIFIER, line, file, identifier);
+    }
 
     else if (TryConsume('\''))
     {
