@@ -192,5 +192,22 @@ public partial class Preprocessor
       }
       return Switch(argsMacro.Content, Process);
     });
+
+    Directive(Token.Type.OPT, true, () =>
+    {
+      Token[] temp = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      (string name, Token[] rest) = Switch(temp, () =>
+      {
+        List<Token> rest = [];
+        string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+        TryConsumeError(Token.Get(Token.Type.COMMA));
+        while (HasPeek())
+          rest.Add(Consume());
+        return (name, rest.ToArray());
+      });
+      if (currentMacroArgs.TryGetValue(name, out var content) && content.Length > 0 || (macros.TryGetValue(name, out var macro) && (macro is SimpleMacro simple ? (simple.Content.Length > 0) : ((macro as ArgsMacro)!.Content.Length > 0))))
+        return Switch(rest, Process);
+      return [];
+    });
   }
 }

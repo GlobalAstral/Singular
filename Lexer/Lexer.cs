@@ -202,6 +202,7 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
         "les" => new(Token.Type.LESS, line, file),
         "grq" => new(Token.Type.GREATER_EQUALS, line, file),
         "leq" => new(Token.Type.LESS_EQUALS, line, file),
+        "opt" => new(Token.Type.OPT, line, file),
         _ => new Token(Token.Type.IDENTIFIER, line, file, identifier),
       };
     }
