@@ -1,4 +1,5 @@
 
+using System.Text;
 using Lexer;
 
 namespace Preprocessor;
@@ -220,6 +221,21 @@ public partial class Preprocessor
       if (str == null)
         Error($"Cannot stringify token {token}");
       return new Token(Token.Type.LITERAL, tokenInfos.Peek(), (object?) $"\"{str}\"");
+    });
+
+    Directive(Token.Type.CONCAT, true, () =>
+    {
+      Token[][] comma_separated = ParseArgs();
+      StringBuilder builder = new();
+      foreach (Token[] body in comma_separated)
+      {
+        Token[] processed = Switch(body, Process);
+        if (processed.Length != 1)
+          Error($"Each argument of $concat must result in one single token at a time");
+        Token token = processed[0];
+        builder.Append(token.Stringify());
+      }
+      return new(Token.Type.IDENTIFIER, tokenInfos.Peek(), builder.ToString());
     });
   }
 }
