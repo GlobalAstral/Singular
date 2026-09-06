@@ -10,8 +10,8 @@ public partial class Preprocessor
   protected void RegisterDirectives()
   {
     Directive(Token.Type.EXPORT, true, () => {
-      Export export = ParseExport(context.Exports);
-      context.Exports.Add(export);
+      Export export = ParseExport(Exports);
+      Exports.Add(export);
       return [];
     });
 

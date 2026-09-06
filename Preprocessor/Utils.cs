@@ -8,8 +8,6 @@ public record Export(string Name, bool Once, Token[] Content, List<Export> Expor
   public Export(string Name, bool Once, Token[] Content, List<Export> Exports) : this(Name, Once, Content, Exports, CURRENT_ID++) { }
 }
 
-public record Context(List<Export> Exports) { }
-
 public partial class Preprocessor
 {
   protected Export ParseExport(List<Export> exports)

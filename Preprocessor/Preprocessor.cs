@@ -13,7 +13,7 @@ public partial class Preprocessor : Processor<Token, Token>
     RegisterDirectives();
   }
 
-  protected Context context = new([]);
+  protected readonly List<Export> Exports = [];
   protected readonly HashSet<uint> IncludedOnce = [];
   protected readonly List<Directive> directives = [];
   protected readonly Stack<TokenInfo> tokenInfos = [];
