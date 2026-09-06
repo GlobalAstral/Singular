@@ -107,6 +107,31 @@ public partial class Preprocessor
     .Replace("\v", "\\v")
     .Replace("\"", "\\\"");
 
+
+  Token[][] ParseArgs()
+  {
+    Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+    Token[][] result = Switch(body, () =>
+    {
+      List<Token[]> result = [];
+      List<Token> current = [];
+      while (HasPeek())
+      {
+        if (TryConsume(Token.Get(Token.Type.COMMA)))
+        {
+          result.Add([.. current]);
+          current.Clear();
+          continue;
+        }
+        current.Add(Consume());
+      }
+      if (current.Count != 0)
+        result.Add([.. current]);
+      return result.ToArray();
+    });
+    return result;
+  }
+
 }
 
 public record Macro { }

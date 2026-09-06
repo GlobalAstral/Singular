@@ -127,7 +127,7 @@ public partial class Preprocessor
         return [];
       }
 
-      List<string> args = [];
+      HashSet<string> args = [];
       string? variadic = null;
       tokens = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
       Switch(tokens, () =>
@@ -136,15 +136,61 @@ public partial class Preprocessor
         {
           Consume(3);
           variadic = (string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+          if (args.Contains(variadic))
+            Error($"Argument {variadic} already exists");
           return;
         }
-        args.Add((string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!);
+        string arg = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+        if (args.Contains(arg))
+          Error($"Argument {arg} already exists");
+        args.Add(arg);
       }, Token.Get(Token.Type.COMMA));
 
       tokens = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
       macro = new ArgsMacro(name, tokens, [ .. args ], variadic);
       macros[name] = macro;
       return []; 
+    });
+
+    Directive(Token.Type.IDENTIFIER, false, () =>
+    {
+      string name = (string) Consume().value!;
+
+      if (currentMacroArgs.TryGetValue(name, out Token[]? value))
+        return value;
+
+      if (!macros.TryGetValue(name, out Macro? macro))
+        Error($"Macro {name} does not exist");
+      
+      if (macro is SimpleMacro simple)
+        return Switch(simple.Content, Process);
+      
+      ArgsMacro argsMacro = (macro as ArgsMacro)!;
+      Token[][] args = ParseArgs();
+      if (args.Length < argsMacro.Arguments.Length || (argsMacro.Variadic == null && args.Length > argsMacro.Arguments.Length))
+        Error($"Invalid {argsMacro.Name} macro arguments. Provided {args.Length} Expected {argsMacro.Arguments.Length}");
+
+      int i = 0;
+      for (; i < argsMacro.Arguments.Length; i++)
+      {
+        string arg = argsMacro.Arguments[i];
+        Token[] tokens = args[i];
+        currentMacroArgs[arg] = tokens;
+      }
+      var remainder = args.Skip(i);
+      if (argsMacro.Variadic != null && remainder.Any())
+      {
+        List<Token> tokens = [];
+        int count = 0;
+        foreach (Token[] toks in remainder)
+        {
+          if (count++ > 0)
+            tokens.Add(Token.Get(Token.Type.COMMA));
+          tokens.AddRange(toks);
+        }
+        currentMacroArgs.Add(argsMacro.Variadic, [.. tokens]);
+      }
+      return Switch(argsMacro.Content, Process);
     });
   }
 }

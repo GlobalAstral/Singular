@@ -19,6 +19,7 @@ public partial class Preprocessor : Processor<Token, Token>
   protected readonly Stack<TokenInfo> tokenInfos = [];
   protected readonly string[] importPath;
   protected readonly Dictionary<string, Macro> macros = [];
+  protected readonly Dictionary<string, Token[]> currentMacroArgs = [];
 
   [DoesNotReturn]
   protected override void Error(string msg)
