@@ -1,19 +1,24 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using Lexer;
 
 namespace Preprocessor;
 
 public partial class Preprocessor : Processor<Token, Token>
 {
-  public Preprocessor(Token[] tokens) : base(tokens) {
-    RegisterDirectives();  
+  public Preprocessor(Token[] tokens, string[] importPath) : base(tokens) {
+    this.importPath = importPath;
+    VerifyImportPath();
+    RegisterDirectives();
   }
 
   protected Context context = new([]);
   protected readonly HashSet<uint> IncludedOnce = [];
   protected readonly List<Directive> directives = [];
   protected readonly Stack<TokenInfo> tokenInfos = [];
+  protected readonly string[] importPath;
+  protected readonly Dictionary<string, Macro> macros = [];
 
   [DoesNotReturn]
   protected override void Error(string msg)

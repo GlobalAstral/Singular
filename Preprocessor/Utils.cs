@@ -44,8 +44,32 @@ public partial class Preprocessor
     exports = temp;
     return content;
   }
-  //TODO
-  protected string? SearchImportPath(string file) => null;
+
+  protected void VerifyImportPath()
+  {
+    foreach (string path in importPath)
+    {
+      if (!Directory.Exists(path))
+        Error($"Directory {path} in include path does not exist");
+    }
+  }
+  protected string? SearchImportPath(string file)
+  {
+    string oldDir = Environment.CurrentDirectory;
+
+    foreach (string path in importPath)
+    {
+      Environment.CurrentDirectory = path;
+      if (File.Exists(file))
+      {
+        string ret = Path.GetFullPath(file);
+        Environment.CurrentDirectory = oldDir;
+        return ret;
+      }
+    }
+    Environment.CurrentDirectory = oldDir;
+    return null;
+  }
 
   protected Token[] ResolveAllExports(List<Export> all)
   {

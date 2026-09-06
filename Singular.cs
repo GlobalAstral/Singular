@@ -48,7 +48,7 @@ partial class Singular
     foreach (Token item in tokens)
       Console.WriteLine(item);
 
-    Preprocessor.Preprocessor preprocessor = new([.. tokens]);
+    Preprocessor.Preprocessor preprocessor = new([.. tokens], []);
     Token[] processed = preprocessor.Process();
     Console.WriteLine("PREPROCESSED:\n");
     foreach (Token item in processed)
