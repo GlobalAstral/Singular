@@ -237,5 +237,13 @@ public partial class Preprocessor
       }
       return new(Token.Type.IDENTIFIER, tokenInfos.Peek(), builder.ToString());
     });
+
+    Directive(Token.Type.DEL, true, () =>
+    {
+      string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+      if (!macros.Remove(name))
+        Error($"Macro {name} does not exist");
+      return [];
+    });
   }
 }
