@@ -9,7 +9,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     INVALID,
     NULL,
     
-    MUTABLE, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR, TYPE, DEFER, IF, ELSE, INFER, WHILE, DO, LOOP, FOR, IN,
+    MUT, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR, TYPE, DEFER, IF, ELSE, INFER, WHILE, DO, LOOP, FOR, IN,
     BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM, OPTIONAL,
     
     EXPORT, IMPORT, CINCLUDE, INCLUDE_STR, INCLUDE_BYTES, MACRO, STRINGIFY, CONCAT, DEL, DEFINED, EQUALS, GREATER, LESS, GREATER_EQUALS, LESS_EQUALS,
@@ -27,7 +27,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
   {
     [Type.INVALID] = new(Type.INVALID),
     [Type.NULL] = new(Type.NULL),
-    [Type.MUTABLE] = new(Type.MUTABLE),
+    [Type.MUT] = new(Type.MUT),
     [Type.CURLY_BLOCK] = new(Type.CURLY_BLOCK),
     [Type.STATIC] = new(Type.STATIC),
     [Type.PAREN_BLOCK] = new(Type.PAREN_BLOCK),

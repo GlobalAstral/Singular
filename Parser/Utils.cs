@@ -57,7 +57,7 @@ public partial class Parser
     if (TryConsume(Token.Get(Token.Type.STATIC)))
       handler.Static();
     
-    if (TryConsume(Token.Get(Token.Type.MUTABLE)))
+    if (TryConsume(Token.Get(Token.Type.MUT)))
       handler.Mutable();
     
     return action(handler);
@@ -83,7 +83,7 @@ public partial class Parser
     DataType? dataType = null;
     if (TryConsume(Token.Get(Token.Type.STAR)))
     {
-      bool mutable = TryConsume(Token.Get(Token.Type.MUTABLE));
+      bool mutable = TryConsume(Token.Get(Token.Type.MUT));
       dataType = References.GetPointerType(ParseType(), mutable);
     }
     else if (TryConsume(Token.Get(Token.Type.BYTE)))
@@ -408,7 +408,7 @@ public partial class Parser
     else if (TryConsume(Token.Get(Token.Type.STAR)))
       op = UnaryExpression.UnaryOperator.Deref;
     else if (TryConsume(Token.Get(Token.Type.AMPER)))
-      op = TryConsume(Token.Get(Token.Type.MUTABLE)) ? UnaryExpression.UnaryOperator.MutRef : UnaryExpression.UnaryOperator.Ref;
+      op = TryConsume(Token.Get(Token.Type.MUT)) ? UnaryExpression.UnaryOperator.MutRef : UnaryExpression.UnaryOperator.Ref;
     else if (TryConsume(Token.Get(Token.Type.SIZEOF)))
       op = UnaryExpression.UnaryOperator.Sizeof;
     if (op == null)

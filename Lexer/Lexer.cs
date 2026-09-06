@@ -207,7 +207,7 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
         "bitcast" => new(Token.Type.BITCAST, line, file),
         "dynamic" => new(Token.Type.DYNAMIC, line, file),
         "type" => new(Token.Type.TYPE, line, file),
-        "mut" => new(Token.Type.MUTABLE, line, file),
+        "mut" => new(Token.Type.MUT, line, file),
         "defer" => new(Token.Type.DEFER, line, file),
         "if" => new(Token.Type.IF, line, file),
         "else" => new(Token.Type.ELSE, line, file),
