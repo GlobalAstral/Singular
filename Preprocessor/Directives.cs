@@ -193,7 +193,7 @@ public partial class Preprocessor
       return Switch(argsMacro.Content, Process);
     });
 
-    Directive(Token.Type.OPT, true, () =>
+    Directive(Token.Type.OPTIONAL, true, () =>
     {
       Token[] temp = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
       (string name, Token[] rest) = Switch(temp, () =>
