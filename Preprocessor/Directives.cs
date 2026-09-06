@@ -110,5 +110,41 @@ public partial class Preprocessor
 
       return new(Token.Type.SQUARE_BLOCK, tokenInfos.Peek(), result.ToArray());
     });
+
+    Directive(Token.Type.MACRO, true, () =>
+    {
+      string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+      if (macros.ContainsKey(name))
+        Error($"Macro {name} already exists");
+      
+      Token[] tokens;
+      Macro macro;
+      if (Peek(Token.Get(Token.Type.CURLY_BLOCK)))
+      {
+        tokens = (Token[]) Consume().value!;
+        macro = new SimpleMacro(name, [ .. tokens ]);
+        macros[name] = macro;
+        return [];
+      }
+
+      List<string> args = [];
+      string? variadic = null;
+      tokens = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      Switch(tokens, () =>
+      {
+        if ( variadic == null && Peek(Token.Get(Token.Type.DOT)) && Peek(Token.Get(Token.Type.DOT), 1) && Peek(Token.Get(Token.Type.DOT), 2) )
+        {
+          Consume(3);
+          variadic = (string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+          return;
+        }
+        args.Add((string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!);
+      }, Token.Get(Token.Type.COMMA));
+
+      tokens = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
+      macro = new ArgsMacro(name, tokens, [ .. args ], variadic);
+      macros[name] = macro;
+      return []; 
+    });
   }
 }

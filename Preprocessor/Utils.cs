@@ -108,3 +108,7 @@ public partial class Preprocessor
     .Replace("\"", "\\\"");
 
 }
+
+public record Macro { }
+public record SimpleMacro(string Name, Token[] Content) : Macro { }
+public record ArgsMacro(string Name, Token[] Content, string[] Arguments, string? Variadic) : Macro { }
