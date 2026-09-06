@@ -10,7 +10,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     NULL,
     
     MUTABLE, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR, TYPE, DEFER, IF, ELSE, INFER, WHILE, DO, LOOP, FOR, IN,
-    BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM, OPT,
+    BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM, OPTIONAL,
     
     EXPORT, IMPORT, CINCLUDE, INCLUDE_STR, INCLUDE_BYTES, MACRO, STRINGIFY, CONCAT, DEL, DEFINED, EQUALS, GREATER, LESS, GREATER_EQUALS, LESS_EQUALS,
     
@@ -109,7 +109,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     [Type.LESS] = new(Type.LESS),
     [Type.GREATER_EQUALS] = new(Type.GREATER_EQUALS),
     [Type.LESS_EQUALS] = new(Type.LESS_EQUALS),
-    [Type.OPT] = new(Type.OPT),
+    [Type.OPTIONAL] = new(Type.OPTIONAL),
   };
 
   public static Token Get(Type type) => INSTANCES[type];
