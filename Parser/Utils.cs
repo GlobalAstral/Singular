@@ -477,10 +477,9 @@ public partial class Parser
       List<Expression> values = [];
 
       Switch(body, () => values.Add(ParseExpression()), Token.Get(Token.Type.COMMA));
-
-      if (!functionType.Variadic && values.Count != functionType.Arguments.Length)
+      
+      if (values.Count < functionType.Arguments.Length || (!functionType.Variadic && values.Count > functionType.Arguments.Length))
         Error($"Invalid function arguments. Provided {values.Count} Expected {functionType.Arguments.Length}");
-
       if (!values.Zip(functionType.Arguments).All(pair => pair.First.GetReturnType() == pair.Second))
         Error("Invalid types for function arguments");
       
