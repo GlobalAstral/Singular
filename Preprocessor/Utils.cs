@@ -106,7 +106,7 @@ public partial class Preprocessor
     .Replace("\"", "\\\"");
 
 
-  Token[][] ParseArgs()
+  protected Token[][] ParseArgs()
   {
     Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
     Token[][] result = Switch(body, () =>

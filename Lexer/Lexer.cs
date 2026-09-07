@@ -234,12 +234,6 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
         "stringify" => new(Token.Type.STRINGIFY, line, file),
         "concat" => new(Token.Type.CONCAT, line, file),
         "del" => new(Token.Type.DEL, line, file),
-        "defined" => new(Token.Type.DEFINED, line, file),
-        "equ" => new(Token.Type.EQUALS, line, file),
-        "gre" => new(Token.Type.GREATER, line, file),
-        "les" => new(Token.Type.LESS, line, file),
-        "grq" => new(Token.Type.GREATER_EQUALS, line, file),
-        "leq" => new(Token.Type.LESS_EQUALS, line, file),
         "optional" => new(Token.Type.OPTIONAL, line, file),
         _ => new Token(Token.Type.IDENTIFIER, line, file, identifier),
       };
