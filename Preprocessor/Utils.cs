@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Lexer;
+using Parser;
 
 namespace Preprocessor;
 
@@ -130,6 +132,124 @@ public partial class Preprocessor
     return result;
   }
 
+  protected Func<dynamic, dynamic, bool>? GetOperator()
+  {
+    if (Peek(Token.Get(Token.Type.EQUALS_SYMBOL)) && Peek(Token.Get(Token.Type.EQUALS_SYMBOL), 1))
+    {
+      Consume(2);
+      return (a, b) => a == b;
+    }
+
+    if (Peek(Token.Get(Token.Type.EXCLAMATION)) && Peek(Token.Get(Token.Type.EQUALS_SYMBOL), 1))
+    {
+      Consume(2);
+      return (a, b) => a != b;
+    }
+
+    if (TryConsume(Token.Get(Token.Type.RANGLE)))
+    {
+      if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
+        return (a, b) => a >= b;
+      return (a, b) => a > b;
+    }
+
+    if (TryConsume(Token.Get(Token.Type.LANGLE)))
+    {
+      if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
+        return (a, b) => a <= b;
+      return (a, b) => a < b;
+    }
+    return null;
+  }
+
+  protected dynamic PreprocessExpr()
+    => ParseOr();
+
+  protected dynamic ParseOr()
+  {
+    dynamic left = ParseAnd();
+
+    while (Peek(Token.Get(Token.Type.PIPE)) && Peek(Token.Get(Token.Type.PIPE), 1))
+    {
+      Consume(2);
+      dynamic right = ParseAnd();
+      left = (bool)left || (bool)right;
+    }
+
+    return left;
+  }
+
+  protected dynamic ParseAnd()
+  {
+    dynamic left = ParseComparison();
+
+    while (Peek(Token.Get(Token.Type.AMPER)) && Peek(Token.Get(Token.Type.AMPER), 1))
+    {
+      Consume(2);
+      dynamic right = ParseComparison();
+      left = (bool)left && (bool)right;
+    }
+
+    return left;
+  }
+
+  protected dynamic ParseComparison()
+  {
+    dynamic left = ParseUnaryExpr();
+
+    Func<dynamic, dynamic, bool>? op = GetOperator();
+
+    if (op == null)
+      return left;
+
+    dynamic right = ParseUnaryExpr();
+
+    return op(left, right);
+  }
+
+  protected dynamic ParseUnaryExpr()
+  {
+    if (TryConsume(Token.Get(Token.Type.EXCLAMATION)))
+      return !(bool)ParseUnaryExpr();
+    return PreprocessExpr__();
+  }
+
+  protected dynamic PreprocessExpr__()
+  {
+    if (Peek(Token.Get(Token.Type.LITERAL)))
+    {
+      Literal literal = Literal.ParseLiteral((string)Consume().value!);
+
+      return literal switch
+      {
+        ByteLiteral b => b.Byte,
+        CharLiteral c => Literal.ParseChar(c.Character),
+        UShortLiteral us => us.UShort,
+        ShortLiteral s => s.Short,
+        UIntLiteral ui => ui.UInt,
+        IntLiteral i => i.Int,
+        ULongLiteral ul => ul.ULong,
+        LongLiteral l => l.Long,
+        FloatLiteral f => f.Float,
+        DoubleLiteral d => d.Double,
+        StringLiteral s => s.String,
+        BooleanLiteral b => b.Boolean,
+        _ => throw new UnreachableException()
+      };
+    }
+
+    if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
+      return Switch((Token[])Consume().value!, PreprocessExpr);
+
+    if (Peek(Token.Get(Token.Type.IDENTIFIER)))
+      return macros.ContainsKey((string)Consume().value!);
+
+    if (Peek(Token.Get(Token.Type.DOLLAR)))
+      return Switch(PreprocessOne(), PreprocessExpr);
+
+    Error("Invalid expression");
+    throw new UnreachableException();
+  }
 }
 
 public record Macro { }

@@ -245,5 +245,19 @@ public partial class Preprocessor
         Error($"Macro {name} does not exist");
       return [];
     });
+
+    Directive(Token.Type.IF, true, () =>
+    {
+      dynamic val = PreprocessExpr();
+      Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
+      if (val)
+        return Switch(body, Process);
+      if (TryConsume(Token.Get(Token.Type.ELSE)))
+      {
+        body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
+        return Switch(body, Process);
+      }
+      return [];
+    });
   }
 }

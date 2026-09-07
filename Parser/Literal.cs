@@ -5,6 +5,38 @@ namespace Parser;
 
 public interface Literal
 {
+  public static char ParseChar(string text)
+  {
+    if (text.Length == 1)
+      return text[0];
+
+    if (!text.StartsWith('\\'))
+      throw new FormatException($"Invalid character: {text}");
+
+    return text switch
+    {
+      "\\0"  => '\0',
+      "\\a"  => '\a',
+      "\\b"  => '\b',
+      "\\f"  => '\f',
+      "\\n"  => '\n',
+      "\\r"  => '\r',
+      "\\t"  => '\t',
+      "\\v"  => '\v',
+      "\\\\" => '\\',
+      "\\'"  => '\'',
+      "\\\"" => '"',
+
+      _ when text.StartsWith("\\u") =>
+        (char)Convert.ToInt32(text[2..], 16),
+
+      _ when text.StartsWith("\\x") =>
+        (char)Convert.ToInt32(text[2..], 16),
+
+      _ => throw new FormatException($"Unknown escape sequence: {text}")
+    };
+  }
+
   public static Literal ParseLiteral(string lit)
   {
     if (lit == "true" || lit == "false")

@@ -804,41 +804,9 @@ public partial class Parser
     return false;
   }
 
-  protected static char ParseChar(string text)
-  {
-    if (text.Length == 1)
-      return text[0];
-
-    if (!text.StartsWith('\\'))
-      throw new FormatException($"Invalid character: {text}");
-
-    return text switch
-    {
-      "\\0"  => '\0',
-      "\\a"  => '\a',
-      "\\b"  => '\b',
-      "\\f"  => '\f',
-      "\\n"  => '\n',
-      "\\r"  => '\r',
-      "\\t"  => '\t',
-      "\\v"  => '\v',
-      "\\\\" => '\\',
-      "\\'"  => '\'',
-      "\\\"" => '"',
-
-      _ when text.StartsWith("\\u") =>
-        (char)Convert.ToInt32(text[2..], 16),
-
-      _ when text.StartsWith("\\x") =>
-        (char)Convert.ToInt32(text[2..], 16),
-
-      _ => throw new FormatException($"Unknown escape sequence: {text}")
-    };
-  }
-
   protected static long ParseIntegerLiteral(Literal lit) => lit switch
   {
-    CharLiteral c => ParseChar(c.Character),
+    CharLiteral c => Literal.ParseChar(c.Character),
     ByteLiteral b => b.Byte,
     ShortLiteral s => s.Short,
     UShortLiteral us => us.UShort,
