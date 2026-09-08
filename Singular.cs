@@ -46,13 +46,13 @@ partial class Singular
     Token[] tokens = lexer.Process();
     Console.WriteLine("TOKENS:\n");
     foreach (Token item in tokens)
-      Console.WriteLine(item);
+      Console.WriteLine(item.ToString());
 
     Preprocessor.Preprocessor preprocessor = new([.. tokens], []);
     Token[] processed = preprocessor.Process();
     Console.WriteLine("PREPROCESSED:\n");
     foreach (Token item in processed)
-      Console.WriteLine(item);
+      Console.WriteLine(item.ToString());
 
     Parser.Parser parser = new(processed);
     Statement[] statements = parser.Process();

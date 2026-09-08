@@ -10,9 +10,9 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     NULL,
     
     MUT, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR, TYPE, DEFER, IF, ELSE, INFER, WHILE, DO, LOOP, FOR, IN,
-    BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM, OPTIONAL,
+    BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM,
     
-    EXPORT, IMPORT, CINCLUDE, INCLUDE_STR, INCLUDE_BYTES, MACRO, STRINGIFY, CONCAT, DEL,
+    EXPORT, IMPORT, CINCLUDE, INCLUDE_STR, INCLUDE_BYTES, MACRO, STRINGIFY, CONCAT, DEL, OPTIONAL, GENERIC,
     
     COMMA, COLON, SEMI, STAR, EQUALS_SYMBOL, DOT, AS, BITCAST, SLASH, PERCENT, PIPE, CARET, LANGLE, RANGLE, DOLLAR,
     PLUS, MINUS, EXCLAMATION, TILDE, AMPER, SIZEOF, QUESTION,
@@ -104,6 +104,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     [Type.CONCAT] = new(Type.CONCAT),
     [Type.DEL] = new(Type.DEL),
     [Type.OPTIONAL] = new(Type.OPTIONAL),
+    [Type.GENERIC] = new(Type.GENERIC),
   };
 
   public static Token Get(Type type) => INSTANCES[type];
@@ -134,7 +135,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
 
   public override readonly string ToString()
   {
-    string val = value is Token[] ? $"[{string.Join(", ", value)}]" : $"\"{value}\""; 
-    return $"[{type}]({val})";
+    string v = value is Token[] val ? $"[{string.Join(", ", val)}]" : $"\"{value}\"";
+    return $"[{type}]({v})";
   }
 }

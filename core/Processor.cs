@@ -120,6 +120,7 @@ public abstract class Processor<T, O>(T[] content, Func<O, bool>? Skip = null) w
         found = true;
         break;
       }
+      Consume();
     }
     peek = old_peek;
     return found;

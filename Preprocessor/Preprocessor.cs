@@ -102,6 +102,15 @@ public partial class Preprocessor : Processor<Token, Token>
   public override Token ProcessOne() => throw new NotImplementedException();
   public Token[] GetRegular()
   {
+    if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
+      return [new Token(Token.Type.PAREN_BLOCK, Peek().info, Switch((Token[]) Consume().value!, Process))];
+    if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
+      return [new Token(Token.Type.SQUARE_BLOCK, Peek().info, Switch((Token[]) Consume().value!, Process))];
+    if (Peek(Token.Get(Token.Type.CURLY_BLOCK)))
+      return [new Token(Token.Type.CURLY_BLOCK, Peek().info, Switch((Token[]) Consume().value!, Process))];
+    if (Peek(Token.Get(Token.Type.ANGLE_BLOCK)))
+      return [new Token(Token.Type.ANGLE_BLOCK, Peek().info, Switch((Token[]) Consume().value!, Process))];
+
     List<Token> ret = [];
     while (HasPeek() && !Peek(Token.Get(Token.Type.DOLLAR)))
       ret.Add(Consume());

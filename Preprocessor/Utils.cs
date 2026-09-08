@@ -108,9 +108,9 @@ public partial class Preprocessor
     .Replace("\"", "\\\"");
 
 
-  protected Token[][] ParseArgs()
+  protected Token[][] ParseArgs(Token.Type block = Token.Type.PAREN_BLOCK)
   {
-    Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+    Token[] body = (Token[]) TryConsumeError(Token.Get(block)).value!;
     Token[][] result = Switch(body, () =>
     {
       List<Token[]> result = [];
@@ -250,8 +250,75 @@ public partial class Preprocessor
     Error("Invalid expression");
     throw new UnreachableException();
   }
+
+  protected bool IsMacroEmpty(string name)
+  {
+    if (currentMacroArgs.TryGetValue(name, out var content) && content.Length > 0)
+      return true;
+    if (macros.TryGetValue(name, out var macro))
+    {
+      if (macro is SimpleMacro simple)
+        return simple.Content.Length > 0;
+      if (macro is ArgsMacro args)
+        return args.Content.Length > 0;
+      return false;
+    }
+    return false;
+  }
+
+  protected Token[] ExpandMacro(Macro macro)
+  {
+    if (macro is SimpleMacro simple)
+      return Switch(simple.Content, Process);
+
+    if (macro is ArgsMacro argsMacro)
+    {
+      Token[][] args = ParseArgs();
+      if (args.Length < argsMacro.Arguments.Length || (argsMacro.Variadic == null && args.Length > argsMacro.Arguments.Length))
+        Error($"Invalid {argsMacro.Name} macro arguments. Provided {args.Length} Expected {argsMacro.Arguments.Length}");
+
+      int i = 0;
+      for (; i < argsMacro.Arguments.Length; i++)
+      {
+        string arg = argsMacro.Arguments[i];
+        Token[] tokens = args[i];
+        currentMacroArgs[arg] = tokens;
+      }
+      var remainder = args.Skip(i);
+      if (argsMacro.Variadic != null && remainder.Any())
+      {
+        List<Token> tokens = [];
+        int count = 0;
+        foreach (Token[] toks in remainder)
+        {
+          if (count++ > 0)
+            tokens.Add(Token.Get(Token.Type.COMMA));
+          tokens.AddRange(toks);
+        }
+        currentMacroArgs.Add(argsMacro.Variadic, [.. tokens]);
+      }
+      return Switch(argsMacro.Content, Process);
+    }
+
+    // GenericMacro genericMacro = (macro as GenericMacro)!;
+    // Token[][] types = ParseArgs(Token.Type.ANGLE_BLOCK);
+    // if (types.Length != genericMacro.Generics.Length)
+    //   Error($"Generic macro {genericMacro.Name} expects {genericMacro.Generics.Length} generic type arguments but {types.Length} were given");
+    
+    // foreach ((string name, Token[] body) in genericMacro.Generics.Zip(types))
+    //   currentMacroArgs[name] = body;
+    
+    // Token[] genericName = [new(Token.Type.IDENTIFIER, tokenInfos.Peek(), $"{genericMacro.Name}_{string.Join('_', types.Select(t => string.Join('_', t.Select(tk => tk.Stringify()))))}")];
+    // currentMacroArgs["self"] = genericName;
+
+    // Token[] decl = Switch(genericMacro.Content, Process);
+    // output.InsertRange(genericMacro.GenerationSpot, decl);
+    // return genericName;
+    throw new NotImplementedException();
+  }
 }
 
 public record Macro { }
 public record SimpleMacro(string Name, Token[] Content) : Macro { }
 public record ArgsMacro(string Name, Token[] Content, string[] Arguments, string? Variadic) : Macro { }
+public record GenericMacro(string Name, string[] Generics, Token[] Content, int GenerationSpot) : Macro { }

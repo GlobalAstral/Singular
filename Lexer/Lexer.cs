@@ -35,7 +35,7 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
       return new Token();
     }
 
-    else if (Peek('(') || Peek('[') || Peek('{') || Peek('<') && CheckAheadFor('>'))
+    else if (Peek('(') || Peek('[') || Peek('{') || (Peek('<') && CheckAheadFor('>')))
     {
       char open = Consume();
       List<Token> tokens = [];
@@ -235,6 +235,7 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
         "concat" => new(Token.Type.CONCAT, line, file),
         "del" => new(Token.Type.DEL, line, file),
         "optional" => new(Token.Type.OPTIONAL, line, file),
+        "generic" => new(Token.Type.GENERIC, line, file),
         _ => new Token(Token.Type.IDENTIFIER, line, file, identifier),
       };
     }

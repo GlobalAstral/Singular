@@ -163,35 +163,7 @@ public partial class Preprocessor
       if (!macros.TryGetValue(name, out Macro? macro))
         Error($"Macro {name} does not exist");
       
-      if (macro is SimpleMacro simple)
-        return Switch(simple.Content, Process);
-      
-      ArgsMacro argsMacro = (macro as ArgsMacro)!;
-      Token[][] args = ParseArgs();
-      if (args.Length < argsMacro.Arguments.Length || (argsMacro.Variadic == null && args.Length > argsMacro.Arguments.Length))
-        Error($"Invalid {argsMacro.Name} macro arguments. Provided {args.Length} Expected {argsMacro.Arguments.Length}");
-
-      int i = 0;
-      for (; i < argsMacro.Arguments.Length; i++)
-      {
-        string arg = argsMacro.Arguments[i];
-        Token[] tokens = args[i];
-        currentMacroArgs[arg] = tokens;
-      }
-      var remainder = args.Skip(i);
-      if (argsMacro.Variadic != null && remainder.Any())
-      {
-        List<Token> tokens = [];
-        int count = 0;
-        foreach (Token[] toks in remainder)
-        {
-          if (count++ > 0)
-            tokens.Add(Token.Get(Token.Type.COMMA));
-          tokens.AddRange(toks);
-        }
-        currentMacroArgs.Add(argsMacro.Variadic, [.. tokens]);
-      }
-      return Switch(argsMacro.Content, Process);
+      return ExpandMacro(macro);
     });
 
     Directive(Token.Type.OPTIONAL, true, () =>
@@ -206,7 +178,7 @@ public partial class Preprocessor
           rest.Add(Consume());
         return (name, rest.ToArray());
       });
-      if (currentMacroArgs.TryGetValue(name, out var content) && content.Length > 0 || (macros.TryGetValue(name, out var macro) && (macro is SimpleMacro simple ? (simple.Content.Length > 0) : ((macro as ArgsMacro)!.Content.Length > 0))))
+      if (IsMacroEmpty(name))
         return Switch(rest, Process);
       return [];
     });
@@ -257,6 +229,26 @@ public partial class Preprocessor
         body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
         return Switch(body, Process);
       }
+      return [];
+    });
+
+    Directive(Token.Type.GENERIC, true, () =>
+    {
+      List<string> generics = [];
+      Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.ANGLE_BLOCK)).value!;
+      Switch(body, () =>
+      {
+        string generic = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+        if (generics.Contains(generic))
+          Error($"Generic type {generic} already exists");
+        generics.Add(generic);
+      }, Token.Get(Token.Type.COMMA));
+      string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+      if (macros.ContainsKey(name))
+        Error($"Macro {name} already exists");
+      body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
+      Macro macro = new GenericMacro(name, [ .. generics ], body, output.Count);
+      macros[name] = macro;
       return [];
     });
   }
