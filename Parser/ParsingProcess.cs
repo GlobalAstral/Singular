@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using Lexer;
 
 namespace Parser;
@@ -93,6 +94,7 @@ public partial class Parser
       if (type == null && val == null)
         Error($"Cannot infer type of uninitialized variable {name}");
       Semi();
+      val ??= type!.GetNull();
       Variable variable = new(modifiers, type ?? val!.GetReturnType(), name);
       AddVariable(variable);
       return new VariableDecl(info, variable, val);

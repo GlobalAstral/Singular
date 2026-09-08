@@ -52,7 +52,7 @@ public partial class Generator
 
   protected string GenerateType(DataType dataType) => dataType switch
   {
-    ByteType => "unsigned char",
+    ByteType or BooleanType => "unsigned char",
     CharType => "char",
     UShortType => "unsigned short",
     ShortType => "short",
@@ -60,7 +60,6 @@ public partial class Generator
     IntType => "int",
     ULongType => "unsigned long long",
     LongType => "long long",
-    BooleanType => "bool",
     FloatType => "float",
     DoubleType => "double",
     DynamicType => "void*",

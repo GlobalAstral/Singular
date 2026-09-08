@@ -107,7 +107,7 @@ public class DoubleType : DataType
 public class DynamicType : DataType
 {
   public static readonly DataType INSTANCE = new DynamicType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "NULL");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(void*)0");
   public override Expression GetNull() => NULL;
   public override bool CanAccept(DataType other)
   {
@@ -124,7 +124,7 @@ public class DynamicType : DataType
 public class StringType : DataType
 {
   public static readonly DataType INSTANCE = new StringType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "NULL");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(void*)0");
   public override Expression GetNull() => NULL;
 }
 
@@ -145,7 +145,7 @@ public class PointerType(DataType target, bool mutable) : DataType
 {
   public DataType Target {get;} = target;
   public bool Mutable {get;} = mutable;
-  public override Expression GetNull() => new RawExpr(this, "NULL");
+  public override Expression GetNull() => new RawExpr(this, "(void*)0");
   public override bool CanAccept(DataType other)
   {
     if (ReferenceEquals(this, other))
@@ -160,7 +160,7 @@ public class FunctionType(DataType? Result, DataType[] Args, bool Variadic) : Da
   public DataType? Return {get;} = Result;
   public DataType[] Arguments {get;} = Args;
   public bool Variadic {get;} = Variadic;
-  public override Expression GetNull() => new RawExpr(this, "NULL");
+  public override Expression GetNull() => new RawExpr(this, "(void*)0");
 }
 
 public class AliasType(DataType Target, string Name) : DataType
