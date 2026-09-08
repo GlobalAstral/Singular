@@ -4,7 +4,7 @@ using Lexer;
 
 namespace Preprocessor;
 
-public record Directive(Token.Type Wakeup, bool Consume, Func<Token[]> Factory) { }
+public record Directive(Token.Type Wakeup, bool Consume, Func<List<Token>, Token[]> Factory) { }
 
 public partial class Preprocessor
 {
@@ -218,9 +218,9 @@ public partial class Preprocessor
       return [];
     });
 
-    Directive(Token.Type.IF, true, () =>
+    Directive(Token.Type.IF, true, output =>
     {
-      dynamic val = PreprocessExpr();
+      dynamic val = PreprocessExpr(output);
       Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
       if (val)
         return Switch(body, Process);
@@ -232,7 +232,7 @@ public partial class Preprocessor
       return [];
     });
 
-    Directive(Token.Type.GENERIC, true, () =>
+    Directive(Token.Type.GENERIC, true, outputList =>
     {
       List<string> generics = [];
       Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.ANGLE_BLOCK)).value!;
@@ -247,7 +247,7 @@ public partial class Preprocessor
       if (macros.ContainsKey(name))
         Error($"Macro {name} already exists");
       body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
-      Macro macro = new GenericMacro(name, [ .. generics ], body, output.Count);
+      Macro macro = new GenericMacro(name, [ .. generics ], body, outputList.Count, outputList);
       macros[name] = macro;
       return [];
     });

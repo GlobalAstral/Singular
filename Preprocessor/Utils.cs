@@ -162,59 +162,59 @@ public partial class Preprocessor
     return null;
   }
 
-  protected dynamic PreprocessExpr()
-    => ParseOr();
+  protected dynamic PreprocessExpr(List<Token> output)
+    => ParseOr(output);
 
-  protected dynamic ParseOr()
+  protected dynamic ParseOr(List<Token> output)
   {
-    dynamic left = ParseAnd();
+    dynamic left = ParseAnd(output);
 
     while (Peek(Token.Get(Token.Type.PIPE)) && Peek(Token.Get(Token.Type.PIPE), 1))
     {
       Consume(2);
-      dynamic right = ParseAnd();
+      dynamic right = ParseAnd(output);
       left = (bool)left || (bool)right;
     }
 
     return left;
   }
 
-  protected dynamic ParseAnd()
+  protected dynamic ParseAnd(List<Token> output)
   {
-    dynamic left = ParseComparison();
+    dynamic left = ParseComparison(output);
 
     while (Peek(Token.Get(Token.Type.AMPER)) && Peek(Token.Get(Token.Type.AMPER), 1))
     {
       Consume(2);
-      dynamic right = ParseComparison();
+      dynamic right = ParseComparison(output);
       left = (bool)left && (bool)right;
     }
 
     return left;
   }
 
-  protected dynamic ParseComparison()
+  protected dynamic ParseComparison(List<Token> output)
   {
-    dynamic left = ParseUnaryExpr();
+    dynamic left = ParseUnaryExpr(output);
 
     Func<dynamic, dynamic, bool>? op = GetOperator();
 
     if (op == null)
       return left;
 
-    dynamic right = ParseUnaryExpr();
+    dynamic right = ParseUnaryExpr(output);
 
     return op(left, right);
   }
 
-  protected dynamic ParseUnaryExpr()
+  protected dynamic ParseUnaryExpr(List<Token> output)
   {
     if (TryConsume(Token.Get(Token.Type.EXCLAMATION)))
-      return !(bool)ParseUnaryExpr();
-    return PreprocessExpr__();
+      return !(bool)ParseUnaryExpr(output);
+    return PreprocessExpr__(output);
   }
 
-  protected dynamic PreprocessExpr__()
+  protected dynamic PreprocessExpr__(List<Token> output)
   {
     if (Peek(Token.Get(Token.Type.LITERAL)))
     {
@@ -239,13 +239,13 @@ public partial class Preprocessor
     }
 
     if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
-      return Switch((Token[])Consume().value!, PreprocessExpr);
+      return Switch((Token[])Consume().value!, () => PreprocessExpr(output));
 
     if (Peek(Token.Get(Token.Type.IDENTIFIER)))
       return macros.ContainsKey((string)Consume().value!);
 
     if (Peek(Token.Get(Token.Type.DOLLAR)))
-      return Switch(PreprocessOne(), PreprocessExpr);
+      return Switch(PreprocessOne(output), () => PreprocessExpr(output));
 
     Error("Invalid expression");
     throw new UnreachableException();
@@ -318,7 +318,7 @@ public partial class Preprocessor
     currentMacroArgs["self"] = genericName;
 
     Token[] decl = Switch(genericMacro.Content, Process);
-    output.InsertRange(genericMacro.GenerationSpot, decl);
+    genericMacro.GenerationOutput.InsertRange(genericMacro.GenerationSpot, decl);
     GenericBlocks.Add(genstrname);
     currentMacroArgs.Clear();
     return genericName;
@@ -328,4 +328,4 @@ public partial class Preprocessor
 public record Macro { }
 public record SimpleMacro(string Name, Token[] Content) : Macro { }
 public record ArgsMacro(string Name, Token[] Content, string[] Arguments, string? Variadic) : Macro { }
-public record GenericMacro(string Name, string[] Generics, Token[] Content, int GenerationSpot) : Macro { }
+public record GenericMacro(string Name, string[] Generics, Token[] Content, int GenerationSpot, List<Token> GenerationOutput) : Macro { }

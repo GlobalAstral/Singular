@@ -50,7 +50,6 @@ partial class Singular
 
     Preprocessor.Preprocessor preprocessor = new([.. tokens], []);
     Token[] processed = preprocessor.Process();
-    processed = [.. preprocessor.Output(), .. processed];
     Console.WriteLine("PREPROCESSED:\n");
     foreach (Token item in processed)
       Console.WriteLine(item.ToString());

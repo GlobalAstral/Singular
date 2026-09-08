@@ -69,9 +69,12 @@ public partial class Preprocessor : Processor<Token, Token>
       Error(EXPECTED_ERROR(find, instead, instead.info!));
   }
 
-  protected void Directive(Token.Type wakeup, bool consume, Func<Token[]> factory) => directives.Add(new(wakeup, consume, factory));
-  protected void Directive(Token.Type wakeup, bool consume, Func<Token> factory) => directives.Add(new(wakeup, consume, () => [factory()]));
-  public Token[] PreprocessDirective()
+  protected void Directive(Token.Type wakeup, bool consume, Func<Token[]> factory) => directives.Add(new(wakeup, consume, o => factory()));
+  protected void Directive(Token.Type wakeup, bool consume, Func<Token> factory) => directives.Add(new(wakeup, consume, o => [factory()]));
+  protected void Directive(Token.Type wakeup, bool consume, Func<List<Token>, Token[]> factory) => directives.Add(new(wakeup, consume, factory));
+  protected void Directive(Token.Type wakeup, bool consume, Func<List<Token>, Token> factory) => directives.Add(new(wakeup, consume, o => [factory(o)]));
+
+  public Token[] PreprocessDirective(List<Token> output)
   {
     (Directive dir, TokenInfo info)? result = null;
 
@@ -91,7 +94,7 @@ public partial class Preprocessor : Processor<Token, Token>
     if (result.HasValue)
     {
       tokenInfos.Push(result.Value.info);
-      Token[] ret = result.Value.dir.Factory();
+      Token[] ret = result.Value.dir.Factory(output);
       tokenInfos.Pop();
       return ret;
     }
@@ -118,17 +121,17 @@ public partial class Preprocessor : Processor<Token, Token>
       ret.Add(Consume());
     return [.. ret];
   }
-  public Token[] PreprocessOne()
+  public Token[] PreprocessOne(List<Token> output)
   {
     if (TryConsume(Token.Get(Token.Type.DOLLAR)))
-      return PreprocessDirective();
+      return PreprocessDirective(output);
     return GetRegular();
   }
   public override Token[] Process()
   {
     List<Token> ret = [];
     while (HasPeek())
-      ret.AddRange(PreprocessOne());
+      ret.AddRange(PreprocessOne(ret));
     return [.. ret];
   }
 }
