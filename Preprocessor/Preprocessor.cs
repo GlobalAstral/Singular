@@ -20,6 +20,8 @@ public partial class Preprocessor : Processor<Token, Token>
   protected readonly string[] importPath;
   protected readonly Dictionary<string, Macro> macros = [];
   protected readonly Dictionary<string, Token[]> currentMacroArgs = [];
+  protected readonly HashSet<string> GenericBlocks = [];
+  public List<Token> Output() => output;
 
   [DoesNotReturn]
   protected override void Error(string msg)
@@ -112,7 +114,7 @@ public partial class Preprocessor : Processor<Token, Token>
       return [new Token(Token.Type.ANGLE_BLOCK, Peek().info, Switch((Token[]) Consume().value!, Process))];
 
     List<Token> ret = [];
-    while (HasPeek() && !Peek(Token.Get(Token.Type.DOLLAR)))
+    while (HasPeek() && !Peek(Token.Get(Token.Type.DOLLAR)) && !Peek(Token.Get(Token.Type.PAREN_BLOCK)) && !Peek(Token.Get(Token.Type.SQUARE_BLOCK)) && !Peek(Token.Get(Token.Type.CURLY_BLOCK)) && !Peek(Token.Get(Token.Type.ANGLE_BLOCK)))
       ret.Add(Consume());
     return [.. ret];
   }

@@ -297,24 +297,31 @@ public partial class Preprocessor
         }
         currentMacroArgs.Add(argsMacro.Variadic, [.. tokens]);
       }
+      currentMacroArgs.Clear();
       return Switch(argsMacro.Content, Process);
     }
 
-    // GenericMacro genericMacro = (macro as GenericMacro)!;
-    // Token[][] types = ParseArgs(Token.Type.ANGLE_BLOCK);
-    // if (types.Length != genericMacro.Generics.Length)
-    //   Error($"Generic macro {genericMacro.Name} expects {genericMacro.Generics.Length} generic type arguments but {types.Length} were given");
-    
-    // foreach ((string name, Token[] body) in genericMacro.Generics.Zip(types))
-    //   currentMacroArgs[name] = body;
-    
-    // Token[] genericName = [new(Token.Type.IDENTIFIER, tokenInfos.Peek(), $"{genericMacro.Name}_{string.Join('_', types.Select(t => string.Join('_', t.Select(tk => tk.Stringify()))))}")];
-    // currentMacroArgs["self"] = genericName;
+    GenericMacro genericMacro = (macro as GenericMacro)!;
+    Token[][] types = ParseArgs(Token.Type.ANGLE_BLOCK);
+    if (types.Length != genericMacro.Generics.Length)
+      Error($"Generic macro {genericMacro.Name} expects {genericMacro.Generics.Length} generic type arguments but {types.Length} were given");
 
-    // Token[] decl = Switch(genericMacro.Content, Process);
-    // output.InsertRange(genericMacro.GenerationSpot, decl);
-    // return genericName;
-    throw new NotImplementedException();
+    string genstrname = $"{genericMacro.Name}_{string.Join('_', types.Select(t => string.Join('_', t.Select(tk => tk.Stringify()))))}";
+    Token[] genericName = [new(Token.Type.IDENTIFIER, tokenInfos.Peek(), genstrname)];
+
+    if (GenericBlocks.Contains(genstrname))
+      return genericName;
+
+    foreach ((string name, Token[] body) in genericMacro.Generics.Zip(types))
+      currentMacroArgs[name] = body;
+    
+    currentMacroArgs["self"] = genericName;
+
+    Token[] decl = Switch(genericMacro.Content, Process);
+    output.InsertRange(genericMacro.GenerationSpot, decl);
+    GenericBlocks.Add(genstrname);
+    currentMacroArgs.Clear();
+    return genericName;
   }
 }
 
