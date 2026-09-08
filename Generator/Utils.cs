@@ -170,10 +170,15 @@ public partial class Generator
   protected string GenerateStructDecl(Composite @struct)
   {
     indentLevel++;
-    string ret = $$"""
-      typedef struct {{@struct.Name}} {
+    string inside = "";
+    if (@struct.Fields.Count != 0)
+      inside = $$"""
+       {
         {{string.Join($";{NewLine()}", @struct.Fields.Select(f => GenerateVariable(f)))}}
-      } {{@struct.Name}};
+      }
+      """;
+    string ret = $$"""
+      typedef struct {{@struct.Name}}{{inside}} {{@struct.Name}};
       {{string.Join(";\n", @struct.Statics.Select(f => GenerateVarDecl(f.Key, f.Value)))}}
     """;
     indentLevel--;
@@ -183,11 +188,16 @@ public partial class Generator
   protected string GenerateUnionDecl(Composite @union)
   {
     string statics = $$"""{{string.Join($";{NewLine()}", @union.Statics.Select(f => GenerateVarDecl(f.Key, f.Value)))}}""";
+    string inside = "";
+    if (@union.Fields.Count != 0)
+      inside = $$"""
+       {
+        {{string.Join($";{NewLine()}", @union.Fields.Select(f => GenerateVariable(f)))}}
+      }
+      """;
     indentLevel++;
     string ret = $$"""
-      typedef union {{@union.Name}} {
-        {{string.Join($";{NewLine()}", @union.Fields.Select(f => GenerateVariable(f)))}}
-      } {{@union.Name}};
+      typedef union {{@union.Name}}{{inside}} {{@union.Name}};
       {{statics}}
     """;
     indentLevel--;

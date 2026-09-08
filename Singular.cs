@@ -38,6 +38,8 @@ partial class Singular
     // if (!name.EndsWith(SRC_EXT))
     //   throw new ArgumentException("Invalid file extension. Expected " + SRC_EXT, name);
 
+    Environment.CurrentDirectory = "../../../../std";
+
     string name = "test.sgl";
     
     string content = File.ReadAllText(name);
@@ -65,7 +67,7 @@ partial class Singular
     string output = string.Join("\n", generator.Process());
     Console.WriteLine(output);
 
-    string outputfile = "test.c";
+    string outputfile = name.Replace(".sgl", ".c");
 
     string clangFormat = ExtractClangFormat();
     var info = new ProcessStartInfo
