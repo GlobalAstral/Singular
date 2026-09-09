@@ -34,6 +34,7 @@ public class ByteType : DataType
   public static readonly DataType INSTANCE = new ByteType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned char)0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "byte";
 }
 public class CharType : DataType
 {
@@ -41,6 +42,7 @@ public class CharType : DataType
   public static readonly DataType INSTANCE = new CharType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(char)0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "char";
 }
 public class UShortType : DataType
 {
@@ -48,6 +50,7 @@ public class UShortType : DataType
   public static readonly DataType INSTANCE = new UShortType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned short)0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "ushort";
 }
 public class ShortType : DataType
 {
@@ -55,7 +58,7 @@ public class ShortType : DataType
   public static readonly DataType INSTANCE = new ShortType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(short)0");
   public override Expression GetNull() => NULL;
-
+  public override string ToString() => "short";
 }
 public class UIntType : DataType
 {
@@ -63,6 +66,7 @@ public class UIntType : DataType
   public static readonly DataType INSTANCE = new UIntType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned int)0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "uint";
 }
 public class IntType : DataType
 {
@@ -70,6 +74,7 @@ public class IntType : DataType
   public static readonly DataType INSTANCE = new IntType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(int)0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "int";
 }
 public class ULongType : DataType
 {
@@ -77,6 +82,7 @@ public class ULongType : DataType
   public static readonly DataType INSTANCE = new ULongType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned long long)0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "ulong";
 }
 public class LongType : DataType
 {
@@ -84,24 +90,28 @@ public class LongType : DataType
   public static readonly DataType INSTANCE = new LongType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(long long)0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "long";
 }
 public class BooleanType : DataType
 {
   public static readonly DataType INSTANCE = new BooleanType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "false");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "boolean";
 }
 public class FloatType : DataType
 {
   public static readonly DataType INSTANCE = new FloatType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(float)0.0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "float";
 }
 public class DoubleType : DataType
 {
   public static readonly DataType INSTANCE = new DoubleType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(double)0.0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "double";
 }
 
 public class DynamicType : DataType
@@ -119,6 +129,7 @@ public class DynamicType : DataType
     
     return base.CanAccept(other);
   }
+  public override string ToString() => "dynamic";
 }
 
 public class StringType : DataType
@@ -126,6 +137,7 @@ public class StringType : DataType
   public static readonly DataType INSTANCE = new StringType();
   public static readonly Expression NULL = new RawExpr(INSTANCE, "(void*)0");
   public override Expression GetNull() => NULL;
+  public override string ToString() => "string";
 }
 
 public class ArrayType(DataType elements, Expression? size) : DataType
@@ -140,6 +152,7 @@ public class ArrayType(DataType elements, Expression? size) : DataType
       return this == other || CanAccept(alias!.Type);
     return other.Matches<ArrayType>(out var arr) && Elements.CanAccept(arr!.Elements);
   }
+  public override string ToString() => $"{Elements}[{Size}]";
 }
 public class PointerType(DataType target, bool mutable) : DataType
 {
@@ -154,6 +167,8 @@ public class PointerType(DataType target, bool mutable) : DataType
       return true;
     return base.CanAccept(other);
   }
+  public override string ToString() => $"*{(Mutable ? "mut " : "")}{Target}";
+
 }
 public class FunctionType(DataType? Result, DataType[] Args, bool Variadic) : DataType
 {
@@ -161,6 +176,7 @@ public class FunctionType(DataType? Result, DataType[] Args, bool Variadic) : Da
   public DataType[] Arguments {get;} = Args;
   public bool Variadic {get;} = Variadic;
   public override Expression GetNull() => new RawExpr(this, "(void*)0");
+  public override string ToString() => $"fun({string.Join(", ", Arguments)}{(Variadic ? ", ..." : "")}) : {Return}";
 }
 
 public class AliasType(DataType Target, string Name) : DataType
@@ -178,12 +194,14 @@ public class AliasType(DataType Target, string Name) : DataType
     return Type.Matches(out value);
   }
   public override bool CanAccept(DataType other) => base.CanAccept(other) || Type.CanAccept(other);
+  public override string ToString() => $"{Alias} (aka {Type})";
 }
 
 public class CompositeType(Composite Comp) : DataType
 {
   public Composite Comp {get;} = Comp;
   public override Expression GetNull() => new RawExpr(this, "{0}");
+  public override string ToString() => Comp.ToString();
 }
 
 public static class References {

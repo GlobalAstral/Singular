@@ -12,4 +12,5 @@ public struct Composite(string Name, Variable[] Fields, Dictionary<Variable, Exp
   public string Name {get;} = Name;
   public List<Variable> Fields {get;} = [.. Fields];
   public Dictionary<Variable, Expression?> Statics {get;} = Statics;
+  public override readonly string ToString() => $"{Kind} {Name} {{{string.Join(", ", [ .. Fields, .. Statics])}}}";
 }
