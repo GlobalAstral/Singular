@@ -1,8 +1,3 @@
-using System.IO.Compression;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
-using System.Text;
-
 public class ArgHelper(string[] Args)
 {
   public enum Flag
