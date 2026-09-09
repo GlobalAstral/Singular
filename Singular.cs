@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Lexer;
 using Parser;
+using Tomlyn.Model;
 partial class Singular
 {
   static readonly TomlTable platforms = ResourceHelper.ExtractToml("platforms");
@@ -20,6 +21,7 @@ partial class Singular
     string[] importPath = argHelper.GetImportPath();
     string[] inputs = argHelper.GetInputs();
     string cfile = argHelper.GetCFile();
+    string host = argHelper.GetHost();
 
     List<Token> allContents = [];
 
@@ -40,7 +42,10 @@ partial class Singular
       allContents.AddRange(tokens);
     }
 
-    Preprocessor.Preprocessor preprocessor = new([.. allContents], importPath);
+    if (!platforms.TryGetValue(host, out var value) || value is not TomlTable platform)
+      throw new PlatformNotSupportedException($"Platform {host} is not currently supported");
+
+    Preprocessor.Preprocessor preprocessor = new([.. allContents], importPath, platform);
     Token[] processed = preprocessor.Process();
     
     if (argHelper.GetFlag(ArgHelper.Flag.Debug))

@@ -11,6 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="clang-format\clang-format.exe"/>
+    <EmbeddedResource Include="clang-format\clang-format.exe" />
+    <EmbeddedResource Include="data\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Tomlyn" Version="2.10.1" />
   </ItemGroup>
 </Project>

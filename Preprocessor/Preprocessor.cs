@@ -1,13 +1,15 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Lexer;
+using Tomlyn.Model;
 
 namespace Preprocessor;
 
 public partial class Preprocessor : Processor<Token, Token>
 {
-  public Preprocessor(Token[] tokens, string[] importPath) : base(tokens) {
+  public Preprocessor(Token[] tokens, string[] importPath, TomlTable platform) : base(tokens) {
     this.importPath = importPath;
+    InitMacros(platform);
     VerifyImportPath();
     RegisterDirectives();
   }

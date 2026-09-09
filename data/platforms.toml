@@ -1,0 +1,43 @@
+
+[win_x86]
+  __SIZE_T__ = "uint"
+[win_arm]
+  __SIZE_T__ = "uint"
+[win_x64]
+  __SIZE_T__ = "ulong"
+[win_arm64]
+  __SIZE_T__ = "ulong"
+
+
+[linux_arm]
+  __SIZE_T__ = "uint"
+[linux_rv32]
+  __SIZE_T__ = "uint"
+[linux_x86]
+  __SIZE_T__ = "uint"
+[linux_arm64]
+  __SIZE_T__ = "ulong"
+[linux_rv64]
+  __SIZE_T__ = "ulong"
+[linux_x64]
+  __SIZE_T__ = "ulong"
+
+
+[macos_x86]
+  __SIZE_T__ = "uint"
+[macos_x64]
+  __SIZE_T__ = "ulong"
+[macos_arm64]
+  __SIZE_T__ = "ulong"
+
+
+[freebsd_x64]
+  __SIZE_T__ = "ulong"
+[freebsd_arm64]
+  __SIZE_T__ = "ulong"
+[freebsd_x86]
+  __SIZE_T__ = "uint"
+[freebsd_arm]
+  __SIZE_T__ = "uint"
+[freebsd_rv64]
+  __SIZE_T__ = "ulong"

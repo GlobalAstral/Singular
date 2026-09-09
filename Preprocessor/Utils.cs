@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Lexer;
 using Parser;
+using Tomlyn.Model;
 
 namespace Preprocessor;
 
@@ -322,6 +323,27 @@ public partial class Preprocessor
     GenericBlocks.Add(genstrname);
     currentMacroArgs.Clear();
     return genericName;
+  }
+
+  private Dictionary<string, Token[]> ProcessPlatformValues(TomlTable platform)
+  {
+    Dictionary<string, Token[]> pairs = [];
+    Lexer.Lexer lexer = new([], "");
+    foreach ((string key, object value) in platform)
+    {
+      string? val = value as string;
+      if (val == null)
+        Error("Invalid token string");
+      pairs[key] = lexer.Process([.. val]);
+    }
+    return pairs;
+  }
+
+  private void InitMacros(TomlTable platform)
+  {
+    Dictionary<string, Token[]> pairs = ProcessPlatformValues(platform);
+    foreach ((string name, Token[] content) in pairs)
+      macros.Add(name, new SimpleMacro(name, content));
   }
 }
 

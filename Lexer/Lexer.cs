@@ -10,6 +10,8 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
   protected bool comment = false;
   protected bool multicomment = false;
 
+  public Token[] Process(char[] body) => Switch(body, Process);
+
   private static bool IsCharHexLetter(char c) {
     char ch = char.ToUpper(c);
     return ch == 'A' || ch == 'B' || ch == 'C' || ch == 'D' || ch == 'E' || ch == 'F';
