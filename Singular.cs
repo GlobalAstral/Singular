@@ -7,6 +7,25 @@ partial class Singular
   static readonly TomlTable platforms = ResourceHelper.ExtractToml("platforms");
   static void Main(string[] args)
   {
+    var info = new ProcessStartInfo
+    {
+      FileName = "gcc",
+      RedirectStandardInput = true,
+      RedirectStandardOutput = true,
+      RedirectStandardError = true,
+      UseShellExecute = false,
+      CreateNoWindow = true
+    };
+
+    info.ArgumentList.Add("--version");
+
+    using Process gcctest = Process.Start(info)!;
+
+    gcctest.WaitForExit();
+
+    if (gcctest.ExitCode != 0)
+      throw new Exception("gcc is not installed");
+
     // ArgHelper argHelper = new(args);
     ArgHelper argHelper = new([
       "--debug",
@@ -84,7 +103,7 @@ partial class Singular
     }
 
     string clangFormat = ResourceHelper.ExtractClangFormat();
-    var info = new ProcessStartInfo
+    info = new ProcessStartInfo
     {
       FileName = clangFormat,
       RedirectStandardInput = true,
