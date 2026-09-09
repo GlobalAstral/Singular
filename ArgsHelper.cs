@@ -13,6 +13,7 @@ public class ArgHelper(string[] Args)
   private string? output = null;
   private readonly List<string> importpath = [];
   private string? cfile = null;
+  private string? host = null;
 
   private static int Btoi(bool b) => b ? 1 : 0;
   private void SetFlag(Flag flag, bool value) => flags |= Btoi(value) << (int) flag;
@@ -22,6 +23,7 @@ public class ArgHelper(string[] Args)
   public string GetOutput() => output!;
   public string[] GetImportPath() => [ .. importpath ];
   public string GetCFile() => cfile!;
+  public string GetHost() => host!;
 
   public void Parse()
   {
@@ -40,6 +42,8 @@ public class ArgHelper(string[] Args)
         output = Consume();
       else if (TryConsume("-I"))
         importpath.Add(Consume());
+      else if (TryConsume("--target"))
+        host = Consume();
       else
         inputs.Add(Consume());
     }
@@ -52,7 +56,9 @@ public class ArgHelper(string[] Args)
     if (!inputs.All(i => i.EndsWith(".sgl")))
       throw new Exception("Not all input files are Singular .sgl files");
 
-    output ??= inputs[0].Replace(".sgl", OperatingSystem.IsWindows() ? ".exe" : "");
+    host ??= PlatformHelper.GetHost();
+
+    output ??= inputs[0].Replace(".sgl", host.StartsWith("win") ? ".exe" : "");
 
     cfile = output.EndsWith(".exe") ? output.Replace(".exe", ".c") : $"{output}.c";
     gcc ??= $"gcc -Wall -Wextra {cfile} -o {output}";
