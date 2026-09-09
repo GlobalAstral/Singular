@@ -3,29 +3,7 @@ using Lexer;
 using Parser;
 partial class Singular
 {
-  static string ExtractClangFormat()
-  {
-    string outputDir = Path.Combine(
-      "clang-format"
-    );
-
-    Directory.CreateDirectory(outputDir);
-
-    string outputPath = Path.Combine(outputDir, "clang-format.exe");
-
-    if (File.Exists(outputPath))
-      return outputPath;
-
-    Assembly assembly = Assembly.GetExecutingAssembly();
-
-    string resourceName = "Singular.clang_format.clang-format.exe";
-
-    using Stream? resource = assembly.GetManifestResourceStream(resourceName) ?? throw new Exception($"Could not find embedded resource {resourceName}");
-    using FileStream file = File.Create(outputPath);
-    resource.CopyTo(file);
-    return outputPath;
-  }
-
+  static readonly TomlTable platforms = ResourceHelper.ExtractToml("platforms");
   static void Main(string[] args)
   {
     // ArgHelper argHelper = new(args);
@@ -100,7 +78,7 @@ partial class Singular
       Console.WriteLine(src);
     }
 
-    string clangFormat = ExtractClangFormat();
+    string clangFormat = ResourceHelper.ExtractClangFormat();
     var info = new ProcessStartInfo
     {
       FileName = clangFormat,
