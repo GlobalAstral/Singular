@@ -26,17 +26,16 @@ public partial class Preprocessor
       TryConsumeError(Token.Get(Token.Type.SEMI));
       
       string stem = $"{names[0]}.sgl";
-      string? path = File.Exists(stem) ? stem : SearchImportPath(stem);
-      if (path == null)
-        Error($"File {path} does not exist");
+      (string path, string content)? pair = SearchImportPath(stem);
+      if (pair == null)
+        Error($"File {stem} does not exist");
 
-      string content = File.ReadAllText(path);
-      Lexer.Lexer lexer = new([.. content], path);
+      Lexer.Lexer lexer = new([.. pair.Value.content], pair.Value.path);
       Token[] body = lexer.Process();
 
       ParseExportsOnly(body, out var exports);
       if (exports.Count == 0)
-        Warn($"File {path} contains no $export directives");
+        Warn($"File {pair.Value.path} contains no $export directives");
       
       if (names.Count == 1)
         return ResolveAllExports(exports);
@@ -44,7 +43,7 @@ public partial class Preprocessor
       string first = names[1];
       Export? export = exports.Find(ex => ex.Name == first);
       if (export == null)
-        Error($"Export {first} not found in file {path}");
+        Error($"Export {first} not found in file {pair.Value.path}");
       
       if (names.Count == 2)
         return ResolveExport(export, true);

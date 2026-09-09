@@ -13,6 +13,10 @@ public record Export(string Name, bool Once, Token[] Content, List<Export> Expor
 
 public partial class Preprocessor
 {
+  protected readonly Dictionary<string, (string path, string content)> builtins = new()
+  {
+    ["std"] = ResourceHelper.ExtractSglWithPath("builtins.std"),
+  };
   protected Export ParseExport(List<Export> exports)
   {
     bool once = TryConsume(new(Token.Type.LITERAL, (object?)"\"once\""));
@@ -54,8 +58,11 @@ public partial class Preprocessor
         Error($"Directory {path} in include path does not exist");
     }
   }
-  protected string? SearchImportPath(string file)
+  protected (string path, string content)? SearchImportPath(string file)
   {
+    if (builtins.TryGetValue(file[..^4], out var value))
+      return value;
+
     string oldDir = Environment.CurrentDirectory;
 
     foreach (string path in importPath)
@@ -65,10 +72,14 @@ public partial class Preprocessor
       {
         string ret = Path.GetFullPath(file);
         Environment.CurrentDirectory = oldDir;
-        return ret;
+        return (ret, File.ReadAllText(ret));
       }
     }
     Environment.CurrentDirectory = oldDir;
+
+    if (File.Exists(file))
+      return (file, File.ReadAllText(file));
+
     return null;
   }
 

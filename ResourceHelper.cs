@@ -34,4 +34,15 @@ public static class ResourceHelper
     TomlTable model = TomlSerializer.Deserialize<TomlTable>(resource)!;
     return model;
   }
+
+  public static string ExtractSgl(string name)
+  {
+    Assembly assembly = Assembly.GetExecutingAssembly();
+    string resourceName = $"Singular.data.{name}.sgl";
+    using Stream resource = assembly.GetManifestResourceStream(resourceName) ?? throw new Exception($"Could not find embedded resource {resourceName}");
+    using StreamReader reader = new(resource);
+    return reader.ReadToEnd();
+  }
+
+  public static (string path, string content) ExtractSglWithPath(string name) => (name, ExtractSgl(name));
 }
