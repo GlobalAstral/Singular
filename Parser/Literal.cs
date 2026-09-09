@@ -250,7 +250,7 @@ public readonly struct BooleanLiteral(bool Boolean) : Literal
 {
   public bool Boolean {get;} = Boolean;
   public readonly DataType GetReturnType() => BooleanType.INSTANCE;
-  public override string ToString() => $"(bool){{{Boolean}}}";
+  public override string ToString() => $"(unsigned char){{{(Boolean ? 1 : 0)}}}";
 }
 
 public readonly struct FloatLiteral(float Float) : Literal
