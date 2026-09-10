@@ -1,12 +1,35 @@
 
-$export "once" types {
-  type size_t = $__SIZE_T__;
-}
+$export "once" errors {
+  namespace std {
+    struct Err {
+      string msg;
+      int code;
+    }
 
-$export "once" mem {
-  $import std.types;
+    $generic<T> ErrOr {
+      struct $self {
+        variant($T value, Err err) v;
+        boolean is_err;
+        
+        fun static Ok($T value) : Self {
+          return {
+            { .value = value },
+            false
+          };
+        }
 
-  fun malloc(size_t size) : dynamic {
-    return null;
+        fun static Err(Err error) : Self {
+          return {
+            { .err = error },
+            true
+          };
+        }
+
+      }
+    }
+
+    fun readfile(string path) : $ErrOr<string> {
+
+    }
   }
 }
