@@ -18,7 +18,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     PLUS, MINUS, EXCLAMATION, TILDE, AMPER, SIZEOF, QUESTION,
     
     STRUCT, UNION,
-    BYTE, CHAR, USHORT, SHORT, UINT, INT, ULONG, LONG, BOOLEAN, FLOAT, DOUBLE, STRING, FUN, DYNAMIC,
+    BYTE, CHAR, USHORT, SHORT, UINT, INT, ULONG, LONG, BOOLEAN, FLOAT, DOUBLE, STRING, FUN, DYNAMIC, SELF,
     
     LITERAL, IDENTIFIER
   }
@@ -105,6 +105,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     [Type.DEL] = new(Type.DEL),
     [Type.OPTIONAL] = new(Type.OPTIONAL),
     [Type.GENERIC] = new(Type.GENERIC),
+    [Type.SELF] = new(Type.SELF),
   };
 
   public static Token Get(Type type) => INSTANCES[type];

@@ -112,6 +112,12 @@ public partial class Parser
       dataType = DynamicType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.STRING)))
       dataType = StringType.INSTANCE;
+    else if (TryConsume(Token.Get(Token.Type.SELF)))
+    {
+      if (currentContext.Peek() is CompositeContext context)
+        return References.GetCompositeType(context.Comp.Name, context.Comp);
+      Error("Cannot use Self outside of Composite context");
+    }
     else if (TryConsume(Token.Get(Token.Type.FUN)))
     {
       (Variable[] arguments, bool variadic) = ParseArgs();
@@ -159,7 +165,7 @@ public partial class Parser
         Error("Argument cannot be static");
 
       DataType t = ParseType();
-      string ident = MangleIdentifier();
+      string ident = MangleIdentifier(false);
       if (arguments.Any(v => v.Name == ident))
         Error($"Function type cannot have duplicate arguments");
       arguments.Add(new Variable(handler, t, ident));
@@ -167,9 +173,9 @@ public partial class Parser
     return ([.. arguments], variadic);
   }
 
-  protected string MangleIdentifier() => MangleIdentifier((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!);
+  protected string MangleIdentifier(bool mangle = true) => MangleIdentifier((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!, mangle);
 
-  protected string MangleIdentifier(string ident)
+  protected string MangleIdentifier(string ident, bool mangle = true)
   {
     StringBuilder builder = new();
 
@@ -183,6 +189,9 @@ public partial class Parser
       }
       return builder.ToString();
     }
+
+    if (!mangle)
+      return ident;
 
     if (currentContext.Count != 0 && currentContext.Peek() is CompositeContext context)
       return $"{context.Comp.Name}_{ident}";
@@ -263,7 +272,7 @@ public partial class Parser
   }
 
   private Statement ParseFunction(TokenInfo info, Func<string> namingConvention) {
-    if (!InGlobalScope())
+    if (!InGlobalScope() && currentContext.Peek() is not CompositeContext)
       Error("Functions cannot be outside of global scope");
     ModifierHandler modifiers = GetModifiers(handler => { if (handler.IsMutable) Error("Function cannot be mutable"); handler.Mutable(); });
 
@@ -298,7 +307,7 @@ public partial class Parser
     return new FunctionDecl(info, f);
   }
 
-  private Statement ParseFunction(TokenInfo info) => ParseFunction(info, MangleIdentifier);
+  private Statement ParseFunction(TokenInfo info) => ParseFunction(info, () => MangleIdentifier());
 
   private Statement ParseComposite(TokenInfo info, Composite.Type kind, Func<Composite, Statement> factory) {
     if (!InGlobalScope())
@@ -635,7 +644,7 @@ public partial class Parser
     }
     else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
     {
-      string name = MangleIdentifier();
+      string name = MangleIdentifier(false);
       Function? fn = functions.Find(f => f.Name == name);
 
       if (fn != null)

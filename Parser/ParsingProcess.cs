@@ -272,7 +272,7 @@ public partial class Parser
         string s = ((StringLiteral) lit).String;
         return ParseABI(info, s);
       }
-      return ParseExtern(info, MangleIdentifier);
+      return ParseExtern(info, () => MangleIdentifier());
     });
 
     Wakeup(Token.Type.ENUM, true, info =>
