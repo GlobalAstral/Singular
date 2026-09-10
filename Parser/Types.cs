@@ -197,9 +197,10 @@ public class AliasType(DataType Target, string Name) : DataType
   public override string ToString() => $"{Alias} (aka {Type})";
 }
 
-public class CompositeType(Composite Comp) : DataType
+public class CompositeType(Composite Comp, bool Anon) : DataType
 {
   public Composite Comp {get;} = Comp;
+  public bool Anon {get;} = Anon;
   public override Expression GetNull() => new RawExpr(this, $"({Comp.Name}){{0}}");
   public override string ToString() => Comp.ToString();
 }
@@ -231,11 +232,11 @@ public static class References {
     return value;
   }
 
-  public static DataType GetCompositeType(string name, Composite @struct)
+  public static DataType GetCompositeType(string name, Composite @struct, bool anon)
   {
     if (!StructCache.TryGetValue(name, out var value))
     {
-      value = new CompositeType(@struct);
+      value = new CompositeType(@struct, anon);
       StructCache[name] = value;
     }
     return value;

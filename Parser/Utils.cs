@@ -115,7 +115,7 @@ public partial class Parser
     else if (TryConsume(Token.Get(Token.Type.SELF)))
     {
       if (currentContext.Peek() is CompositeContext context)
-        return References.GetCompositeType(context.Comp.Name, context.Comp);
+        return References.GetCompositeType(context.Comp.Name, context.Comp, false);
       Error("Cannot use Self outside of Composite context");
     }
     else if (TryConsume(Token.Get(Token.Type.FUN)))
@@ -133,7 +133,22 @@ public partial class Parser
       if (aliases.TryGetValue(ident, out var value))
         dataType = References.GetAliasType(ident, value);
       else if (composites.TryGetValue(ident, out var val))
-        dataType = References.GetCompositeType(ident, val);
+        dataType = References.GetCompositeType(ident, val, false);
+    }
+    else if (Peek(Token.Get(Token.Type.TUPLE)) || Peek(Token.Get(Token.Type.VARIANT)))
+    {
+      Composite.Type compType = TryConsume(Token.Get(Token.Type.TUPLE)) ? Composite.Type.STRUCT : Peek() == Consume() ? Composite.Type.UNION : throw new UnreachableException();
+      Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
+      int count = 1;
+      List<Variable> fields = [];
+      Switch(body, () =>
+      {
+        DataType type = ParseType();
+        string name = Peek(Token.Get(Token.Type.IDENTIFIER)) ? (string) Consume().value! : $"item{count++}";
+        fields.Add(new(new ModifierHandler().Mutable(), type, name));
+      }, Token.Get(Token.Type.COMMA));
+      string compName = $"S_{GetHashCode()}_{string.Join('_', fields.Select(v => $"{v.Type}_{v.Name}"))}";
+      dataType = References.GetCompositeType(compName, new(compName, [ .. fields ], [], compType), true);
     }
     
     if (dataType == null)

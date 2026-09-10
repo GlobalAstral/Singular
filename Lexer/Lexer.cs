@@ -239,6 +239,8 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
         "optional" => new(Token.Type.OPTIONAL, line, file),
         "generic" => new(Token.Type.GENERIC, line, file),
         "Self" => new(Token.Type.SELF, line, file),
+        "variant" => new(Token.Type.VARIANT, line, file),
+        "tuple" => new(Token.Type.TUPLE, line, file),
         _ => new Token(Token.Type.IDENTIFIER, line, file, identifier),
       };
     }

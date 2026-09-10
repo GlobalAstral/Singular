@@ -50,6 +50,20 @@ public partial class Generator
     return typedef_name;
   }
 
+  protected string GenerateCompositeType(Composite comp, bool anon)
+  {
+    if (!anon)
+      return comp.Name;
+    
+    string typedef = $$"""
+    typedef {{(comp.Kind == Composite.Type.STRUCT ? "struct" : "union")}} {{comp.Name}} {
+      {{string.Join("\n", comp.Fields.Select(f => $"{GenerateType(f.Type)} {f.Name};"))}}
+    } {{comp.Name}};
+    """;
+    contexts.Peek()!.Prologue(typedef);
+    return comp.Name;
+  }
+
   protected string GenerateType(DataType dataType) => dataType switch
   {
     ByteType or BooleanType => "unsigned char",
@@ -68,7 +82,7 @@ public partial class Generator
     PointerType ptr => $"{GenerateType(ptr.Target)}{(!ptr.Mutable ? " const" : "")}*",
     FunctionType fn => GenerateFunctionType(fn.Return, fn.Arguments, fn.Variadic),
     AliasType alias => alias.Alias,
-    CompositeType comp => comp.Comp.Name,
+    CompositeType comp => GenerateCompositeType(comp.Comp, comp.Anon),
     _ => throw new UnreachableException()
   };
 
