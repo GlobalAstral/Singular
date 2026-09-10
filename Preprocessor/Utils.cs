@@ -5,10 +5,9 @@ using Tomlyn.Model;
 
 namespace Preprocessor;
 
-public record Export(string Name, bool Once, Token[] Content, List<Export> Exports, uint ID)
+public record Export(string Name, bool Once, Token[] Content, List<Export> Exports, int ID)
 {
-  private static uint CURRENT_ID = 0;
-  public Export(string Name, bool Once, Token[] Content, List<Export> Exports) : this(Name, Once, Content, Exports, CURRENT_ID++) { }
+  public Export(string Name, bool Once, Token[] Content, List<Export> Exports) : this(Name, Once, Content, Exports, Name.GetHashCode()) { }
 }
 
 public partial class Preprocessor
@@ -40,6 +39,7 @@ public partial class Preprocessor
           Consume(2);
           Export export = ParseExport(temp);
           temp.Add(export);
+          continue;
         }
         if (HasPeek())
           content.Add(Consume());
