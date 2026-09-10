@@ -129,7 +129,7 @@ public partial class Parser
     }
     else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
     {
-      string ident = MangleIdentifier();
+      string ident = MangleIdentifier(true, false);
       if (aliases.TryGetValue(ident, out var value))
         dataType = References.GetAliasType(ident, value);
       else if (composites.TryGetValue(ident, out var val))
@@ -147,7 +147,7 @@ public partial class Parser
         string name = Peek(Token.Get(Token.Type.IDENTIFIER)) ? (string) Consume().value! : $"item{count++}";
         fields.Add(new(new ModifierHandler().Mutable(), type, name));
       }, Token.Get(Token.Type.COMMA));
-      string compName = $"S_{GetHashCode()}_{string.Join('_', fields.Select(v => $"{v.Type}_{v.Name}"))}";
+      string compName = $"S_{GetHashCode()}_{string.Join('_', fields.Select(v => $"{v.Type.Stringify()}_{v.Name}"))}";
       dataType = References.GetCompositeType(compName, new(compName, [ .. fields ], [], compType), true);
     }
     
@@ -188,9 +188,9 @@ public partial class Parser
     return ([.. arguments], variadic);
   }
 
-  protected string MangleIdentifier(bool mangle = true) => MangleIdentifier((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!, mangle);
+  protected string MangleIdentifier(bool mangle = true, bool compositeMangle = true) => MangleIdentifier((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!, mangle, compositeMangle);
 
-  protected string MangleIdentifier(string ident, bool mangle = true)
+  protected string MangleIdentifier(string ident, bool mangle = true, bool compositeMangle = true)
   {
     StringBuilder builder = new();
 
@@ -208,7 +208,7 @@ public partial class Parser
     if (!mangle)
       return ident;
 
-    if (currentContext.Count != 0 && currentContext.Peek() is CompositeContext context)
+    if (compositeMangle && currentContext.Count != 0 && currentContext.Peek() is CompositeContext context)
       return $"{context.Comp.Name}_{ident}";
 
 
@@ -292,6 +292,7 @@ public partial class Parser
     ModifierHandler modifiers = GetModifiers(handler => { if (handler.IsMutable) Error("Function cannot be mutable"); handler.Mutable(); });
 
     string name = namingConvention();
+    
     (Variable[] args, bool variadic) = ParseArgs();
     DataType? retType = TryConsume(Token.Get(Token.Type.COLON)) ? ParseType() : null;
     
