@@ -11,7 +11,7 @@ public partial class Preprocessor
   protected void RegisterDirectives()
   {
     Directive(Token.Type.EXPORT, true, () => {
-      Export export = ParseExport(Exports);
+      Export export = ParseExport(Exports, tokenInfos.Peek().File.Replace(".sgl", ""));
       Exports.Add(export);
       return [];
     });
@@ -33,7 +33,7 @@ public partial class Preprocessor
       Lexer.Lexer lexer = new([.. pair.Value.content], pair.Value.path);
       Token[] body = lexer.Process();
 
-      ParseExportsOnly(body, out var exports);
+      ParseExportsOnly(body, out var exports, names[0]);
       if (exports.Count == 0)
         Warn($"File {pair.Value.path} contains no $export directives");
       

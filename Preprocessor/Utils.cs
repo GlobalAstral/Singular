@@ -5,9 +5,37 @@ using Tomlyn.Model;
 
 namespace Preprocessor;
 
-public record Export(string Name, bool Once, Token[] Content, List<Export> Exports, int ID)
+public class Export
 {
-  public Export(string Name, bool Once, Token[] Content, List<Export> Exports) : this(Name, Once, Content, Exports, Name.GetHashCode()) { }
+  public string Name { get; init; }
+  public bool Once { get; init; }
+  public Token[] Content { get; init; }
+  public List<Export> Exports { get; init; }
+  public string ID { get; init; }
+
+  private Export(string name, bool once, Token[] content, List<Export> exports, string id)
+  {
+    Name = name;
+    Once = once;
+    Content = content;
+    Exports = exports;
+    ID = id;
+  }
+
+  private static readonly Dictionary<string, Export> CachedExports = [];
+  public static string GetID(string path, string name) => $"{path}.{name}";
+  public static Export FromPath(string Name, bool Once, Token[] Content, List<Export> Exports, string path) => new(Name, Once, Content, Exports, GetID(path, Name));
+  public static Export Create(string name, string path, Func<(bool once, Token[] content, List<Export> exports)> factory)
+  {
+    string id = GetID(path, name);
+    if (!CachedExports.TryGetValue(id, out var value))
+    {
+      (bool once, Token[] content, List<Export> exports) = factory();
+      value = FromPath(name, once, content, exports, path);
+      CachedExports[id] = value;
+    }
+    return value;
+  }
 }
 
 public partial class Preprocessor
@@ -16,17 +44,20 @@ public partial class Preprocessor
   {
     ["std"] = ResourceHelper.ExtractSglWithPath("builtins.std"),
   };
-  protected Export ParseExport(List<Export> exports)
+  protected Export ParseExport(List<Export> exports, string path)
   {
     bool once = TryConsume(new(Token.Type.LITERAL, (object?)"\"once\""));
     string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
     if (exports.Any(e => e.Name == name))
       Error($"Export {name} already exists");
-    Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
-    Token[] other = ParseExportsOnly(body, out var found_exports);
-    return new Export(name, once, other, found_exports);
+    return Export.Create(name, path, () =>
+    {
+      Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
+      Token[] other = ParseExportsOnly(body, out var found_exports, $"{path}.{name}");
+      return (once, other, found_exports);
+    });
   }
-  protected Token[] ParseExportsOnly(Token[] body, out List<Export> exports)
+  protected Token[] ParseExportsOnly(Token[] body, out List<Export> exports, string path)
   {
     List<Export> temp = [];
     Token[] content = Switch(body, () =>
@@ -37,7 +68,7 @@ public partial class Preprocessor
         if (Peek(Token.Get(Token.Type.DOLLAR)) && Peek(Token.Get(Token.Type.EXPORT), 1))
         {
           Consume(2);
-          Export export = ParseExport(temp);
+          Export export = ParseExport(temp, path);
           temp.Add(export);
           continue;
         }

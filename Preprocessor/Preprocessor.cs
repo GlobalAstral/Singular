@@ -15,7 +15,7 @@ public partial class Preprocessor : Processor<Token, Token>
   }
 
   protected readonly List<Export> Exports = [];
-  protected readonly HashSet<int> IncludedOnce = [];
+  protected readonly HashSet<string> IncludedOnce = [];
   protected readonly List<Directive> directives = [];
   protected readonly Stack<TokenInfo> tokenInfos = [];
   protected readonly string[] importPath;
