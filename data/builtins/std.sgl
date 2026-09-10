@@ -1,1 +1,12 @@
 
+$export "once" types {
+  type size_t = $__SIZE_T__;
+}
+
+$export "once" mem {
+  $import std.types;
+
+  fun malloc(size_t size) : dynamic {
+    return null;
+  }
+}
