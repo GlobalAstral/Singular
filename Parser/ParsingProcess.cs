@@ -173,7 +173,7 @@ public partial class Parser
 
       (Statement Init, Expression cond, Statement update, Variable var) = Switch(condition, () =>
       {
-        Variable variable = new(new ModifierHandler().Mutable(), ParseType(), ParseIdentifier());
+        Variable variable = new(new ModifierHandler().Mutable(), ParseType(), MangleIdentifier());
         TryConsumeError(Token.Get(Token.Type.IN));
         bool reverse = TryConsume(Token.Get(Token.Type.EXCLAMATION));
         Expression start = ParseExpression(variable.Type);

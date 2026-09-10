@@ -123,7 +123,7 @@ public partial class Parser
     }
     else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
     {
-      string ident = ParseIdentifier();
+      string ident = MangleIdentifier();
       if (aliases.TryGetValue(ident, out var value))
         dataType = References.GetAliasType(ident, value);
       else if (composites.TryGetValue(ident, out var val))
@@ -159,7 +159,7 @@ public partial class Parser
         Error("Argument cannot be static");
 
       DataType t = ParseType();
-      string ident = ParseIdentifier();
+      string ident = MangleIdentifier();
       if (arguments.Any(v => v.Name == ident))
         Error($"Function type cannot have duplicate arguments");
       arguments.Add(new Variable(handler, t, ident));
@@ -192,20 +192,6 @@ public partial class Parser
       builder.Append($"{namesp}_");
 
     builder.Append(ident);
-
-    return builder.ToString();
-  }
-
-  protected string ParseIdentifier()
-  {
-    StringBuilder builder = new();
-    builder.Append((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!);
-
-    while (Peek(Token.Get(Token.Type.COLON)) && Peek(Token.Get(Token.Type.COLON), 1))
-    {
-      Consume(2);
-      builder.Append($"_{(string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!}");
-    }
 
     return builder.ToString();
   }
@@ -649,7 +635,7 @@ public partial class Parser
     }
     else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
     {
-      string name = ParseIdentifier();
+      string name = MangleIdentifier();
       Function? fn = functions.Find(f => f.Name == name);
 
       if (fn != null)
