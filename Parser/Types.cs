@@ -200,7 +200,7 @@ public class AliasType(DataType Target, string Name) : DataType
 public class CompositeType(Composite Comp) : DataType
 {
   public Composite Comp {get;} = Comp;
-  public override Expression GetNull() => new RawExpr(this, "{0}");
+  public override Expression GetNull() => new RawExpr(this, $"({Comp.Name}){{0}}");
   public override string ToString() => Comp.ToString();
 }
 
