@@ -55,9 +55,11 @@ public partial class Generator
     if (!anon)
       return comp.Name;
     
+    string inside = string.Join("\n", comp.Fields.Select(f => $"{GenerateType(f.Type)} {f.Name};"));
+
     string typedef = $$"""
     typedef {{(comp.Kind == Composite.Type.STRUCT ? "struct" : "union")}} {{comp.Name}} {
-      {{string.Join("\n", comp.Fields.Select(f => $"{GenerateType(f.Type)} {f.Name};"))}}
+      {{inside}}
     } {{comp.Name}};
     """;
     contexts.Peek()!.Prologue(typedef);
@@ -188,7 +190,7 @@ public partial class Generator
     if (@struct.Fields.Count != 0)
       inside = $$"""
        {
-        {{string.Join($";{NewLine()}", @struct.Fields.Select(f => GenerateVariable(f)))}}
+        {{string.Join($"{NewLine()}", @struct.Fields.Select(f => $"{GenerateVariable(f)};"))}}
       }
       """;
     string ret = $$"""
