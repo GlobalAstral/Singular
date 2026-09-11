@@ -3,7 +3,6 @@ $export "once" errors {
   namespace std {
     struct Err {
       string msg;
-      int code;
     }
 
     $generic<T> ErrOr {
@@ -27,9 +26,27 @@ $export "once" errors {
 
       }
     }
+  }
+}
 
-    fun readfile(string path) : $ErrOr<string> {
+$export "once" core {
+  namespace std {
+    type size_t = $__SIZE_T__;
+  }
+}
 
+$export "once" mem {
+  $import std.core;
+  $import std.errors;
+  $cinclude("memory.h")
+
+  namespace std {
+    fun static malloc(size_t size) : $ErrOr<dynamic>  {
+      var dynamic m = rawc { malloc(size) };
+      if (isnull m)
+        return std::$ErrOr<dynamic>::Err({"Cannot allocate memory"});
+      return std::$ErrOr<dynamic>::Ok(m);
     }
   }
+
 }
