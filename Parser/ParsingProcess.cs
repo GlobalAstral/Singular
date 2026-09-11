@@ -86,7 +86,7 @@ public partial class Parser
       if (!TryConsume(Token.Get(Token.Type.INFER)))
         type = ParseType();
 
-      string name = MangleIdentifier();
+      string name = MangleIdentifier(InGlobalScope());
       Expression? val = null;
       if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
         val = ParseExpression(type);
@@ -173,7 +173,7 @@ public partial class Parser
 
       (Statement Init, Expression cond, Statement update, Variable var) = Switch(condition, () =>
       {
-        Variable variable = new(new ModifierHandler().Mutable(), ParseType(), MangleIdentifier());
+        Variable variable = new(new ModifierHandler().Mutable(), ParseType(), MangleIdentifier(false));
         TryConsumeError(Token.Get(Token.Type.IN));
         bool reverse = TryConsume(Token.Get(Token.Type.EXCLAMATION));
         Expression start = ParseExpression(variable.Type);
