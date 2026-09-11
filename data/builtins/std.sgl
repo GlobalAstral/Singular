@@ -38,7 +38,7 @@ $export "once" core {
 $export "once" mem {
   $import std.core;
   $import std.errors;
-  $cinclude("memory.h")
+  $cinclude("stdlib.h")
 
   namespace std {
     fun static malloc(size_t size) : $ErrOr<dynamic>  {
