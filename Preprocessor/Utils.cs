@@ -340,8 +340,9 @@ public partial class Preprocessor
         }
         currentMacroArgs.Add(argsMacro.Variadic, [.. tokens]);
       }
+      Token[] ret = Switch(argsMacro.Content, Process);
       currentMacroArgs.Clear();
-      return Switch(argsMacro.Content, Process);
+      return ret;
     }
 
     GenericMacro genericMacro = (macro as GenericMacro)!;
