@@ -6,6 +6,7 @@ namespace Generator;
 
 public partial class Generator
 {
+  protected bool IsMemcmpDeclared = false;
   protected string Indent() => new('\t', indentLevel);
   protected string NewLine() => $"\n{Indent()}";
   protected string GenerateGroup(Statement[] stmts) => Switch(stmts, () =>
@@ -99,6 +100,23 @@ public partial class Generator
     contexts.Peek()!.Prologue(func);
     return lambdaName;
   }
+
+  protected static bool IsComplexType(DataType type) => type is CompositeType || type is AliasType alias && IsComplexType(alias.Type);
+
+  protected string GenerateIsNull(Expression expr)
+  { 
+    DataType retType = expr.GetReturnType();
+    if (!IsComplexType(retType))
+      return $"{GenerateExpression(expr)} == {GenerateExpression(expr.GetReturnType().GetNull())}";
+
+    if (!IsMemcmpDeclared)
+    {
+      contexts.Last().Prologue("#include <stddef.h>\nextern int memcmp(const void *, const void *, size_t);");
+      IsMemcmpDeclared = true;
+    }
+    return $"memcmp(&({GenerateExpression(expr)}), &({GenerateExpression(expr.GetReturnType().GetNull())}), sizeof({GenerateType(expr.GetReturnType())})) == 0";
+  }
+
   protected string GenerateUnary(UnaryExpression.UnaryOperator op, Expression expr) => op switch
   {
     UnaryExpression.UnaryOperator.Minus => $"-{GenerateExpression(expr)}",
@@ -109,6 +127,7 @@ public partial class Generator
     UnaryExpression.UnaryOperator.Deref => $"*{GenerateExpression(expr)}",
     UnaryExpression.UnaryOperator.Ref or UnaryExpression.UnaryOperator.MutRef => $"&{GenerateExpression(expr)}",
     UnaryExpression.UnaryOperator.Sizeof => $"sizeof({GenerateExpression(expr)})",
+    UnaryExpression.UnaryOperator.IsNull => GenerateIsNull(expr),
     _ => throw new UnreachableException()
   };
 

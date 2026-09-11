@@ -97,7 +97,7 @@ public class UnaryExpression : Expression
   }
   public enum UnaryOperator
   {
-    Minus, Not, BitNot, PreInc, PreDec, Deref, Ref, MutRef, Sizeof
+    Minus, Not, BitNot, PreInc, PreDec, Deref, Ref, MutRef, Sizeof, IsNull,
   }
 
   public Expression Base {get;}
@@ -148,6 +148,7 @@ public class UnaryExpression : Expression
     UnaryOperator.Ref => References.GetPointerType(Base.GetReturnType(), false),
     UnaryOperator.MutRef => MutRef(),
     UnaryOperator.Sizeof => ULongType.INSTANCE,
+    UnaryOperator.IsNull => BooleanType.INSTANCE,
 
     _ => throw new ArgumentOutOfRangeException(nameof(Operator)),
   };

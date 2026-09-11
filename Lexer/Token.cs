@@ -16,7 +16,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     EXPORT, IMPORT, CINCLUDE, INCLUDE_STR, INCLUDE_BYTES, MACRO, STRINGIFY, CONCAT, DEL, OPTIONAL, GENERIC,
     
     COMMA, COLON, SEMI, STAR, EQUALS_SYMBOL, DOT, AS, BITCAST, SLASH, PERCENT, PIPE, CARET, LANGLE, RANGLE, DOLLAR,
-    PLUS, MINUS, EXCLAMATION, TILDE, AMPER, SIZEOF, QUESTION,
+    PLUS, MINUS, EXCLAMATION, TILDE, AMPER, SIZEOF, QUESTION, ISNULL,
     
     STRUCT, UNION,
     BYTE, CHAR, USHORT, SHORT, UINT, INT, ULONG, LONG, BOOLEAN, FLOAT, DOUBLE, STRING, FUN, DYNAMIC, SELF, VARIANT, TUPLE,
@@ -109,6 +109,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     [Type.SELF] = new(Type.SELF),
     [Type.VARIANT] = new(Type.VARIANT),
     [Type.TUPLE] = new(Type.TUPLE),
+    [Type.ISNULL] = new(Type.ISNULL),
   };
 
   public static Token Get(Type type) => INSTANCES[type];

@@ -396,7 +396,7 @@ public partial class Parser
 
   private bool PeekUnary() => (Peek(Token.Get(Token.Type.PLUS)) && Peek(Token.Get(Token.Type.PLUS), 1)) || Peek(Token.Get(Token.Type.MINUS)) ||
     Peek(Token.Get(Token.Type.EXCLAMATION)) || Peek(Token.Get(Token.Type.TILDE)) || Peek(Token.Get(Token.Type.STAR)) || Peek(Token.Get(Token.Type.AMPER)) ||
-    Peek(Token.Get(Token.Type.SIZEOF));
+    Peek(Token.Get(Token.Type.SIZEOF)) || Peek(Token.Get(Token.Type.ISNULL));
 
   private Expression ParseUnary()
   {
@@ -422,6 +422,9 @@ public partial class Parser
       op = TryConsume(Token.Get(Token.Type.MUT)) ? UnaryExpression.UnaryOperator.MutRef : UnaryExpression.UnaryOperator.Ref;
     else if (TryConsume(Token.Get(Token.Type.SIZEOF)))
       op = UnaryExpression.UnaryOperator.Sizeof;
+    else if (TryConsume(Token.Get(Token.Type.ISNULL)))
+      op = UnaryExpression.UnaryOperator.IsNull;
+
     if (op == null)
       throw new Exception("Expected Unary Operator");
     
@@ -499,8 +502,6 @@ public partial class Parser
       
       if (values.Count < functionType.Arguments.Length)
         Error($"Invalid function arguments. Provided {values.Count} Expected {functionType.Arguments.Length}");
-      if (!values.Zip(functionType.Arguments).All(pair => pair.First.GetReturnType() == pair.Second))
-        Error("Invalid types for function arguments");
       
       if (functionType.Return == null && IgnoringExpression == 0)
         Error("Not returned value not ignored as it ought to be");
