@@ -6,7 +6,7 @@ namespace Generator;
 public partial class Generator(Statement[] statements, int hash) : Processor<Statement, string>(statements, s => s.Trim().Length == 0)
 {
   protected int indentLevel = 0;
-  protected Stack<Context> contexts = [];
+  protected Stack<Context> contexts = new([new Context()]);
   protected uint typedefID = 0;
   protected uint lambdaID = 0;
   protected static readonly double RandomDouble = new Random().NextDouble();
