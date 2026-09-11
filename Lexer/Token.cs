@@ -8,6 +8,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
   public enum Type {
     INVALID,
     NULL,
+    GENERIC_SLOT,
     
     MUT, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR, TYPE, DEFER, IF, ELSE, INFER, WHILE, DO, LOOP, FOR, IN,
     BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM,
@@ -138,7 +139,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
 
   public override readonly string ToString()
   {
-    string v = value is Token[] val ? $"[{string.Join(", ", val)}]" : $"\"{value}\"";
+    string v = value is Token[] val ? $"[{string.Join(", ", val)}]" : value is List<Token> ls ? $"[{string.Join(", ", ls)}]" : $"\"{value}\"";
     return $"[{type}]({v})";
   }
 }

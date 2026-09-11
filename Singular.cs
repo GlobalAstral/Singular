@@ -65,7 +65,7 @@ partial class Singular
       throw new PlatformNotSupportedException($"Platform {host} is not currently supported");
 
     Preprocessor.Preprocessor preprocessor = new([.. allContents], importPath, platform);
-    Token[] processed = preprocessor.Process();
+    Token[] processed = preprocessor.Flatten(preprocessor.Process());
     
     if (argHelper.GetFlag(ArgHelper.Flag.Debug))
     {

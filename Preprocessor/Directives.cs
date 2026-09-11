@@ -231,7 +231,7 @@ public partial class Preprocessor
       return [];
     });
 
-    Directive(Token.Type.GENERIC, true, outputList =>
+    Directive(Token.Type.GENERIC, true, () =>
     {
       List<string> generics = [];
       Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.ANGLE_BLOCK)).value!;
@@ -246,9 +246,10 @@ public partial class Preprocessor
       if (macros.ContainsKey(name))
         Error($"Macro {name} already exists");
       body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
-      Macro macro = new GenericMacro(name, [ .. generics ], body, outputList.Count, outputList);
+      Token genericSlot = new(Token.Type.GENERIC_SLOT, new List<Token>());
+      Macro macro = new GenericMacro(name, [ .. generics ], body, genericSlot);
       macros[name] = macro;
-      return [];
+      return genericSlot;
     });
   }
 }

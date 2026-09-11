@@ -362,7 +362,8 @@ public partial class Preprocessor
     currentMacroArgs["self"] = genericName;
 
     Token[] decl = Switch(genericMacro.Content, Process);
-    genericMacro.GenerationOutput.InsertRange(genericMacro.GenerationSpot, decl);
+    Token genericslot = genericMacro.GenericSlot;
+    ((List<Token>) genericslot.value!).AddRange(decl);
     GenericBlocks.Add(genstrname);
     currentMacroArgs.Clear();
     return genericName;
@@ -393,4 +394,4 @@ public partial class Preprocessor
 public record Macro { }
 public record SimpleMacro(string Name, Token[] Content) : Macro { }
 public record ArgsMacro(string Name, Token[] Content, string[] Arguments, string? Variadic) : Macro { }
-public record GenericMacro(string Name, string[] Generics, Token[] Content, int GenerationSpot, List<Token> GenerationOutput) : Macro { }
+public record GenericMacro(string Name, string[] Generics, Token[] Content, Token GenericSlot) : Macro { }

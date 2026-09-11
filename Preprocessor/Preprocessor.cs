@@ -116,9 +116,11 @@ public partial class Preprocessor : Processor<Token, Token>
       return [new Token(Token.Type.CURLY_BLOCK, Peek().info, Switch((Token[]) Consume().value!, Process))];
     if (Peek(Token.Get(Token.Type.ANGLE_BLOCK)))
       return [new Token(Token.Type.ANGLE_BLOCK, Peek().info, Switch((Token[]) Consume().value!, Process))];
+    if (Peek().type == Token.Type.GENERIC_SLOT)
+      return Switch([ .. (List<Token>) Consume().value! ], Process);
 
     List<Token> ret = [];
-    while (HasPeek() && !Peek(Token.Get(Token.Type.DOLLAR)) && !Peek(Token.Get(Token.Type.PAREN_BLOCK)) && !Peek(Token.Get(Token.Type.SQUARE_BLOCK)) && !Peek(Token.Get(Token.Type.CURLY_BLOCK)) && !Peek(Token.Get(Token.Type.ANGLE_BLOCK)))
+    while (HasPeek() && !Peek(Token.Get(Token.Type.DOLLAR)) && !Peek(Token.Get(Token.Type.PAREN_BLOCK)) && !Peek(Token.Get(Token.Type.SQUARE_BLOCK)) && !Peek(Token.Get(Token.Type.CURLY_BLOCK)) && !Peek(Token.Get(Token.Type.ANGLE_BLOCK)) && Peek().type != Token.Type.GENERIC_SLOT)
       ret.Add(Consume());
     return [.. ret];
   }
@@ -135,4 +137,26 @@ public partial class Preprocessor : Processor<Token, Token>
       ret.AddRange(PreprocessOne(ret));
     return [.. ret];
   }
+
+  public Token[] Flatten(Token[] tokens) =>
+    Switch(tokens, () =>
+    {
+      List<Token> result = [];
+      while (HasPeek())
+      {
+        if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
+          result.Add(new Token(Token.Type.PAREN_BLOCK, Peek().info, Flatten((Token[]) Consume().value!)));
+        else if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
+          result.Add(new Token(Token.Type.SQUARE_BLOCK, Peek().info, Flatten((Token[]) Consume().value!)));
+        else if (Peek(Token.Get(Token.Type.CURLY_BLOCK)))
+          result.Add(new Token(Token.Type.CURLY_BLOCK, Peek().info, Flatten((Token[]) Consume().value!)));
+        else if (Peek(Token.Get(Token.Type.ANGLE_BLOCK)))
+          result.Add(new Token(Token.Type.ANGLE_BLOCK, Peek().info, Flatten((Token[]) Consume().value!)));
+        else if (Peek().type == Token.Type.GENERIC_SLOT)
+          result.AddRange(Switch([ .. (List<Token>) Consume().value! ], Process));
+        else
+          result.Add(Consume());
+      }
+      return result.ToArray();
+    });
 }
