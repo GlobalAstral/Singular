@@ -120,6 +120,8 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
       string identifier = builder.ToString();
       return new Token(Token.Type.IDENTIFIER, line, file, identifier);
     }
+    else if (TryConsume('@'))
+      return new Token(Token.Type.AT, line, file);
 
     else if (TryConsume('\''))
     {

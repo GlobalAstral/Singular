@@ -12,7 +12,12 @@ public partial class Parser
     {
       if (!InGlobalScope())
         Error("Namespaces cannot be outside of global scope");
-      string name = (string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+      string name = NoMangle();
+      if (TryConsume(Token.Get(Token.Type.SEMI)))
+      {
+        namespaces.Push(name);
+        return new Nop();
+      }
       namespaces.Push(name);
       Token[] content = (Token[])TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
       Statement[] statements = Switch(content, Process);
@@ -44,7 +49,7 @@ public partial class Parser
       return new Scope(info, [.. statements]);
     });
 
-    Wakeup(Token.Type.FUN, true, ParseFunction);
+    Wakeup(Token.Type.FUN, true, info => ParseFunction(info));
 
     Wakeup(Token.Type.RETURN, true, info =>
     {
@@ -86,7 +91,7 @@ public partial class Parser
       if (!TryConsume(Token.Get(Token.Type.INFER)))
         type = ParseType();
 
-      string name = MangleIdentifier(InGlobalScope());
+      string name = Mangle(InGlobalScope() ? SymbolType.GlobalDeclaration : SymbolType.LocalVariableDecl);
       Expression? val = null;
       if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
         val = ParseExpression(type);
@@ -103,7 +108,7 @@ public partial class Parser
     {
       if (!InGlobalScope())
         Error("Type declarations cannot be outside of global scope");
-      string name = MangleIdentifier();
+      string name = Mangle(SymbolType.GlobalDeclaration);
       TryConsumeError(Token.Get(Token.Type.EQUALS_SYMBOL));
       DataType type = ParseType();
       Semi();
@@ -173,7 +178,7 @@ public partial class Parser
 
       (Statement Init, Expression cond, Statement update, Variable var) = Switch(condition, () =>
       {
-        Variable variable = new(new ModifierHandler().Mutable(), ParseType(), MangleIdentifier(false));
+        Variable variable = new(new ModifierHandler().Mutable(), ParseType(), Mangle(SymbolType.LocalVariableDecl));
         TryConsumeError(Token.Get(Token.Type.IN));
         bool reverse = TryConsume(Token.Get(Token.Type.EXCLAMATION));
         Expression start = ParseExpression(variable.Type);
@@ -272,7 +277,7 @@ public partial class Parser
         string s = ((StringLiteral) lit).String;
         return ParseABI(info, s);
       }
-      return ParseExtern(info, () => MangleIdentifier());
+      return ParseExtern(info, () => Mangle(SymbolType.GlobalDeclaration));
     });
 
     Wakeup(Token.Type.ENUM, true, info =>
@@ -280,7 +285,7 @@ public partial class Parser
       if (!InGlobalScope())
         Error("Enum cannot be outside of global scope");
       
-      string name = MangleIdentifier();
+      string name = Mangle(SymbolType.GlobalDeclaration);
 
       Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
 
@@ -289,7 +294,7 @@ public partial class Parser
 
       Switch(body, () =>
       {
-        string entry = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+        string entry = NoMangle();
         if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
         {
           Expression expression = ParseExpression(null);
@@ -327,7 +332,7 @@ public partial class Parser
       namespaces.Push(name);
       foreach (var pair in entries)
       {
-        Variable var = new(new ModifierHandler().Static(), varType, MangleIdentifier(pair.Key));
+        Variable var = new(new ModifierHandler().Static(), varType, Switch([new(Token.Type.IDENTIFIER, pair.Key)], () => Mangle(SymbolType.GlobalDeclaration)));
         AddVariable(var);
         Expression expr = new LiteralExpr(factory(pair.Value));
         statements.Add(new VariableDecl(info, var, expr));

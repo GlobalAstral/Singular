@@ -1,5 +1,8 @@
 
 $export "once" errors {
+  extern "C" fun exit(int code);
+  extern "C" fun perror(string msg);
+
   namespace std {
     struct Err {
       string msg;
@@ -26,6 +29,11 @@ $export "once" errors {
 
       }
     }
+
+    fun static panic(Err error) {
+      @perror(error.msg);
+      @exit(1);
+    }
   }
 }
 
@@ -38,11 +46,12 @@ $export "once" core {
 $export "once" mem {
   $import std.core;
   $import std.errors;
-  $cinclude("stdlib.h")
+
+  extern "C" fun malloc(std::size_t size) : dynamic;
 
   namespace std {
     fun static malloc(size_t size) : $ErrOr<dynamic>  {
-      var dynamic m = rawc { malloc(size) };
+      var dynamic m = @malloc(size);
       if (isnull m)
         return std::$ErrOr<dynamic>::Err({"Cannot allocate memory"});
       return std::$ErrOr<dynamic>::Ok(m);

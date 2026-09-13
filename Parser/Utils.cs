@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using Lexer;
 
 namespace Parser;
@@ -77,6 +76,8 @@ public partial class Parser
       return handler;
     });
   }
+
+  protected bool PeekIdentifier() => Peek(Token.Get(Token.Type.AT)) && Peek(Token.Get(Token.Type.IDENTIFIER), 1) || Peek(Token.Get(Token.Type.IDENTIFIER), 0);
   
   protected DataType ParseType()
   {
@@ -127,9 +128,9 @@ public partial class Parser
         result = ParseType();
       return References.GetFunctionType(result, args, variadic);
     }
-    else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
+    else if (PeekIdentifier())
     {
-      string ident = MangleIdentifier(true, false);
+      string ident = Mangle(SymbolType.NamedType);
       if (aliases.TryGetValue(ident, out var value))
         dataType = References.GetAliasType(ident, value);
       else if (composites.TryGetValue(ident, out var val))
@@ -144,7 +145,7 @@ public partial class Parser
       Switch(body, () =>
       {
         DataType type = ParseType();
-        string name = Peek(Token.Get(Token.Type.IDENTIFIER)) ? (string) Consume().value! : $"item{count++}";
+        string name = PeekIdentifier() ? NoMangle() : $"item{count++}";
         fields.Add(new(new ModifierHandler().Mutable(), type, name));
       }, Token.Get(Token.Type.COMMA));
       string compName = $"S_{GetHashCode()}_{string.Join('_', fields.Select(v => $"{v.Type.Stringify()}_{v.Name}"))}";
@@ -180,44 +181,12 @@ public partial class Parser
         Error("Argument cannot be static");
 
       DataType t = ParseType();
-      string ident = MangleIdentifier(false);
+      string ident = Mangle(SymbolType.LocalVariableDecl);
       if (arguments.Any(v => v.Name == ident))
         Error($"Function type cannot have duplicate arguments");
       arguments.Add(new Variable(handler, t, ident));
     }), Token.Get(Token.Type.COMMA));
     return ([.. arguments], variadic);
-  }
-
-  protected string MangleIdentifier(bool mangle = true, bool compositeMangle = true) => MangleIdentifier((string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!, mangle, compositeMangle);
-
-  protected string MangleIdentifier(string ident, bool mangle = true, bool compositeMangle = true)
-  {
-    StringBuilder builder = new();
-
-    if (Peek(Token.Get(Token.Type.COLON)) && Peek(Token.Get(Token.Type.COLON)))
-    {
-      builder.Append(ident);
-      while (Peek(Token.Get(Token.Type.COLON)) && Peek(Token.Get(Token.Type.COLON)))
-      {
-        Consume(2);
-        builder.Append($"_{(string)TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!}");
-      }
-      return builder.ToString();
-    }
-
-    if (!mangle)
-      return ident;
-
-    if (compositeMangle && currentContext.Count != 0 && currentContext.Peek() is CompositeContext context)
-      return $"{context.Comp.Name}_{ident}";
-
-
-    foreach (string namesp in namespaces.Reverse())
-      builder.Append($"{namesp}_");
-
-    builder.Append(ident);
-
-    return builder.ToString();
   }
 
   protected bool InFunction(out FunctionContext? context)
@@ -323,12 +292,12 @@ public partial class Parser
     return new FunctionDecl(info, f);
   }
 
-  private Statement ParseFunction(TokenInfo info) => ParseFunction(info, () => MangleIdentifier());
+  private Statement ParseFunction(TokenInfo info, bool isInComposite = false) => ParseFunction(info, () => Mangle(isInComposite ? SymbolType.CompositeInternal : SymbolType.GlobalDeclaration));
 
   private Statement ParseComposite(TokenInfo info, Composite.Type kind, Func<Composite, Statement> factory) {
     if (!InGlobalScope())
       Error($"{kind} cannot be outside of global scope");
-    string ident = MangleIdentifier();
+    string ident = Mangle(SymbolType.GlobalDeclaration);
     
     if (TryConsume(Token.Get(Token.Type.SEMI)))
     {
@@ -344,13 +313,12 @@ public partial class Parser
       Composite s = new(ident, [], [], kind);
       Context ctx = new CompositeContext(s);
       composites[ident] = s;
+      currentContext.Push(ctx);
       while (HasPeek())
       {
         if (TryConsume(Token.Get(Token.Type.FUN)))
         {
-          currentContext.Push(ctx);
-          Statement func = ParseFunction(info);
-          currentContext.Pop();
+          Statement func = ParseFunction(info, true);
           group.Add(func);
         }
         else
@@ -358,16 +326,13 @@ public partial class Parser
           ModifierHandler modifiers = GetModifiers(handler => { if (!handler.IsStatic) handler.Mutable(); });
 
           DataType type = ParseType();
-          string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
           
           bool isStatic = modifiers.IsStatic;
 
           Variable variable;
           if (isStatic)
           {
-            namespaces.Push(ident);
-            string temp = MangleIdentifier(name);
-            namespaces.Pop();
+            string temp = Mangle(SymbolType.CompositeInternal);
             variable = new(modifiers, type, temp);
             if (s.Statics.Keys.Any(v => v.Name == variable.Name))
               Error($"{kind} static field {variable.Name} already exists");
@@ -380,6 +345,7 @@ public partial class Parser
           }
           else
           {
+            string name = NoMangle();
             variable = new(modifiers, type, name);
             if (s.Fields.Any(v => v.Name == variable.Name))
               Error($"{kind} non-static field {variable.Name} already exists");
@@ -388,6 +354,7 @@ public partial class Parser
           TryConsumeError(Token.Get(Token.Type.SEMI));
         }
       }
+      currentContext.Pop();
       return s; 
     });
     group.Insert(0, factory(s));
@@ -456,7 +423,7 @@ public partial class Parser
     {
       if (!baseType.Matches<CompositeType>() && !(baseType.Matches<PointerType>(out var ptr) && ptr!.Target.Matches<CompositeType>())) Error("Cannot access member of non composite or composite pointer type");
       CompositeType type = baseType.Matches<PointerType>(out var p) ? (CompositeType) p!.Target : (CompositeType) baseType;
-      string name = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+      string name = NoMangle();
       Variable? field = type.Comp.Fields.Find(f => f.Name == name);
       if (field == null) Error($"{type.Comp.Name} does not have a member named {name}");
       return new MemberAccess(@base, field);
@@ -667,9 +634,9 @@ public partial class Parser
       if (typeCheckerContext.Count == 0) Error("Cannot infer type of null value");
       expression = typeCheckerContext.Peek()!.GetNull();
     }
-    else if (Peek(Token.Get(Token.Type.IDENTIFIER)))
+    else if (PeekIdentifier())
     {
-      string name = MangleIdentifier(false);
+      string name = Mangle(SymbolType.Variable);
       Function? fn = functions.Find(f => f.Name == name);
 
       if (fn != null)
@@ -720,7 +687,7 @@ public partial class Parser
         if (TryConsume(Token.Get(Token.Type.DOT)))
         {
           named = true;
-          string ident = (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!;
+          string ident = NoMangle();
           TryConsumeError(Token.Get(Token.Type.EQUALS_SYMBOL));
           Variable? found = composite.Comp.Fields.Find(v => v.Name == ident);
           if (found == null) Error($"Type {composite} has no field named {ident}");
@@ -877,7 +844,7 @@ public partial class Parser
 
   protected Statement ParseABI(TokenInfo info, string abi) => abi switch
   {
-    "C" => ParseExtern(info, () => (string) TryConsumeError(Token.Get(Token.Type.IDENTIFIER)).value!),
+    "C" => ParseExtern(info, () => NoMangle()),
 
     _ => throw new Exception($"Unsupported ABI {abi}"),
   };
