@@ -7,6 +7,20 @@ partial class Singular
   static readonly TomlTable platforms = ResourceHelper.ExtractToml("platforms");
   static void Main(string[] args)
   {
+    try
+    {
+      main(args);
+    } catch
+    {
+      Logger.Finalize();
+    }
+    finally
+    {
+      Logger.Finalize();
+    }
+  }
+  static void main(string[] args)
+  {
     var info = new ProcessStartInfo
     {
       FileName = "gcc",
@@ -42,6 +56,9 @@ partial class Singular
     string cfile = argHelper.GetCFile();
     string host = argHelper.GetHost();
 
+    if (argHelper.GetFlag(ArgHelper.Flag.Debug))
+      Logger.EnableDebug();
+
     List<Token> allContents = [];
 
     foreach (string input in inputs)
@@ -51,12 +68,7 @@ partial class Singular
       Lexer.Lexer lexer = new([.. content], input);
       Token[] tokens = lexer.Process();
 
-      if (argHelper.GetFlag(ArgHelper.Flag.Debug))
-      {
-        Console.WriteLine("TOKENS:\n");
-        foreach (Token item in tokens)
-          Console.WriteLine(item.ToString());
-      }
+      Logger.DebugBlock(tokens, "TOKENS:");
 
       allContents.AddRange(tokens);
     }
@@ -67,12 +79,7 @@ partial class Singular
     Preprocessor.Preprocessor preprocessor = new([.. allContents], importPath, platform);
     Token[] processed = preprocessor.Flatten(preprocessor.Process());
     
-    if (argHelper.GetFlag(ArgHelper.Flag.Debug))
-    {
-      Console.WriteLine("PREPROCESSED:\n");
-      foreach (Token item in processed)
-        Console.WriteLine(item.ToString());
-    }
+    Logger.DebugBlock(processed, "PREPROCESSED:");
 
     if (argHelper.GetFlag(ArgHelper.Flag.Preprocessor))
     {
@@ -86,21 +93,12 @@ partial class Singular
     Parser.Parser parser = new(processed);
     Statement[] statements = parser.Process();
     
-    if (argHelper.GetFlag(ArgHelper.Flag.Debug))
-    {
-      Console.WriteLine("Statements:\n");
-      foreach (Statement item in statements)
-        Console.WriteLine(item);
-    }
+    Logger.DebugBlock(statements, "STATEMENTS:");
 
     Generator.Generator generator = new(statements, parser.GetHashCode());
     string src = string.Join("\n", generator.Process());
     
-    if (argHelper.GetFlag(ArgHelper.Flag.Debug))
-    {
-      Console.WriteLine("Compiling...");
-      Console.WriteLine(src);
-    }
+    Logger.DebugBlock(src, "COMPILED:");
 
     string clangFormat = ResourceHelper.ExtractClangFormat();
     info = new ProcessStartInfo
@@ -154,8 +152,8 @@ partial class Singular
 
     process.WaitForExit();
 
-    Console.Write(stdout);
-    Console.Error.Write(stderr);
+    Logger.Log(stdout);
+    Logger.Log(stderr);
 
     if (!argHelper.GetFlag(ArgHelper.Flag.KeepC))
       File.Delete(cfile);
