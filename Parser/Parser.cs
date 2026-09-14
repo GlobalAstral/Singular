@@ -16,6 +16,7 @@ public partial class Parser : Processor<Token, Statement>
   private readonly Dictionary<string, DataType> aliases = [];
   private readonly HashSet<string> declared_errors = [];
   private uint IgnoringExpression = 0;
+  private uint TryingExpression = 0;
   private bool extendedExpr = true;
   private readonly List<ParsingProcess> processes = [];
   private readonly Stack<TokenInfo> tokenInfos = [];
@@ -27,6 +28,16 @@ public partial class Parser : Processor<Token, Statement>
     if (info == null)
       base.Error(msg);
     base.Error($"{msg} at (ln: {info.Line}, file: {info.File})");
+  }
+
+  protected override void Warn(string msg)
+  {
+    TokenInfo? info = tokenInfos.Count == 0 ? null : tokenInfos.Peek();
+    if (info == null) {
+      base.Warn(msg);
+      return;
+    }
+    base.Warn($"{msg} at (ln: {info.Line}, file: {info.File})");
   }
 
   protected static string EXPECTED_ERROR(Token expected, Token found, TokenInfo info) => $"Error: {EXPECTED_ERROR(expected, found)} at (ln: {info.Line}, file: {info.File})";

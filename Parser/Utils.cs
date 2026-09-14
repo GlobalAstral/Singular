@@ -731,7 +731,9 @@ public partial class Parser
     }
     else if (TryConsume(Token.Get(Token.Type.TRY)))
     {
+      TryingExpression++;
       Expression expr = ParseExpression(null);
+      TryingExpression--;
       DataType res = expr.GetReturnType();
       if (!res.Matches(out ErrorUnion? union))
         Error("try expression cannot be applied to a type that is not an error union");
@@ -773,6 +775,9 @@ public partial class Parser
     
     DataType expr_type = expression!.GetReturnType();
     DataType? check_type = typeCheckerContext.Peek();
+
+    if (expr_type.Matches<ErrorUnion>() && TryingExpression == 0)
+      Warn("Returned error union not handled as it should be");
     
     if (check_type != null && !check_type.CanAccept(expr_type))
       Error($"Expected {check_type} got {expr_type} instead");
