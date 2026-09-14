@@ -344,3 +344,9 @@ public class BinaryExpr : Expression
     _ => throw new ArgumentOutOfRangeException(nameof(Operator)),
   };
 }
+
+public class ErrorExpr(string Err) : Expression
+{
+  public string Err {get;} = Err;
+  public DataType GetReturnType() => ErrorType.INSTANCE;
+}

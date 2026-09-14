@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Formats.Asn1;
 using Lexer;
 
 namespace Parser;
@@ -77,7 +78,7 @@ public partial class Parser
     });
   }
 
-  protected bool PeekIdentifier() => Peek(Token.Get(Token.Type.AT)) && Peek(Token.Get(Token.Type.IDENTIFIER), 1) || Peek(Token.Get(Token.Type.IDENTIFIER), 0);
+  protected bool PeekIdentifier() => PeekDblCln() || Peek(Token.Get(Token.Type.AT)) && Peek(Token.Get(Token.Type.IDENTIFIER), 1) || Peek(Token.Get(Token.Type.IDENTIFIER), 0);
   
   protected DataType ParseType()
   {
@@ -113,6 +114,8 @@ public partial class Parser
       dataType = DynamicType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.STRING)))
       dataType = StringType.INSTANCE;
+    else if (TryConsume(Token.Get(Token.Type.ERROR)))
+      dataType = ErrorType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.SELF)))
     {
       if (currentContext.Peek() is CompositeContext context)
@@ -639,7 +642,9 @@ public partial class Parser
       string name = Mangle(SymbolType.Variable);
       Function? fn = functions.Find(f => f.Name == name);
 
-      if (fn != null)
+      if (declared_errors.Contains(name))
+        expression = new ErrorExpr(name);
+      else if (fn != null)
         expression = new FunctionPointer(fn);
       else
       {

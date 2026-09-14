@@ -14,6 +14,7 @@ public partial class Parser : Processor<Token, Statement>
   private readonly List<Variable> globals = [];
   private readonly Dictionary<string, Composite> composites = [];
   private readonly Dictionary<string, DataType> aliases = [];
+  private readonly HashSet<string> declared_errors = [];
   private uint IgnoringExpression = 0;
   private bool extendedExpr = true;
   private readonly List<ParsingProcess> processes = [];

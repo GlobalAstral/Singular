@@ -340,5 +340,27 @@ public partial class Parser
       namespaces.Pop();
       return new Group(info, [ .. statements ]);
     });
+
+    Wakeup(Token.Type.ERROR, true, info =>
+    {
+      if (!InGlobalScope())
+        Error("Error types cannot be declared outside of global scope");
+      
+      string name = NoMangle();
+
+      Token[] body = (Token[]) TryConsumeError(Token.Get(Token.Type.CURLY_BLOCK)).value!;
+      
+      namespaces.Push(name);
+      Switch(body, () =>
+      {
+        string name = Mangle(SymbolType.GlobalDeclaration);
+        if (declared_errors.Contains(name))
+          Error($"Error {name} already declared");
+        declared_errors.Add(name);
+      }, Token.Get(Token.Type.COMMA));
+      namespaces.Pop();
+      
+      return new Nop();
+    });
   }
 }

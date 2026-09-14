@@ -6,6 +6,7 @@ namespace Generator;
 
 public partial class Generator
 {
+  protected readonly Dictionary<string, int> errorIDs = [];
   protected bool IsMemcmpDeclared = false;
   protected string Indent() => new('\t', indentLevel);
   protected string NewLine() => $"\n{Indent()}";
@@ -74,7 +75,7 @@ public partial class Generator
     UShortType => "unsigned short",
     ShortType => "short",
     UIntType => "unsigned int",
-    IntType => "int",
+    IntType or ErrorType => "int",
     ULongType => "unsigned long long",
     LongType => "long long",
     FloatType => "float",
@@ -154,6 +155,17 @@ public partial class Generator
     BinaryExpr.BinaryOp.Assign => $"{GenerateExpression(left)} = {GenerateExpression(right)}",
     _ => throw new UnreachableException()
   };
+  protected int GenerateErrorExpr(string err)
+  {
+    if (errorIDs.TryGetValue(err, out var id))
+      return id;
+    
+    int hash = err.GetHashCode();
+    while (errorIDs.ContainsValue(hash))
+      hash++;
+    errorIDs[err] = hash;
+    return hash;
+  }
   protected string GenerateExpression(Expression expression) => expression switch
   {
     RawExpr raw => raw.Generated,
@@ -172,6 +184,7 @@ public partial class Generator
     TernaryOperator ternary => $"({GenerateExpression(ternary.Condition)}) ? {GenerateExpression(ternary.Success)} : {GenerateExpression(ternary.Fail)}",
     PostIncrement post => $"{GenerateExpression(post.Base)}{(post.Direction > 0 ? "++" : "--")}",
     BinaryExpr bin => GenerateBinary(bin.Left, bin.Right, bin.Operator),
+    ErrorExpr err => $"{GenerateErrorExpr(err.Err)}",
     _ => throw new UnreachableException()
   };
 

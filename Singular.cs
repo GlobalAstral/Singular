@@ -10,8 +10,9 @@ partial class Singular
     try
     {
       main(args);
-    } catch
+    } catch (Exception e)
     {
+      Logger.Debug($"ERROR: {e}");
       Logger.Finalize();
     }
     finally

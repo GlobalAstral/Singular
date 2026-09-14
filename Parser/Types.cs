@@ -34,7 +34,7 @@ public class ByteType : DataType
 {
   public static readonly Func<long, Literal> Factory = l => new ByteLiteral((byte)l);
   public static readonly DataType INSTANCE = new ByteType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned char)0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned char){0}");
   public override Expression GetNull() => NULL;
 
   public override string Stringify() => ToString();
@@ -45,7 +45,7 @@ public class CharType : DataType
 {
   public static readonly Func<long, Literal> Factory = l => new CharLiteral(((char)l).ToString());
   public static readonly DataType INSTANCE = new CharType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(char)0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(char){0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "char";
@@ -54,7 +54,7 @@ public class UShortType : DataType
 {
   public static readonly Func<long, Literal> Factory = l => new UShortLiteral((ushort)l);
   public static readonly DataType INSTANCE = new UShortType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned short)0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned short){0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "ushort";
@@ -63,7 +63,7 @@ public class ShortType : DataType
 {
   public static readonly Func<long, Literal> Factory = l => new ShortLiteral((short)l);
   public static readonly DataType INSTANCE = new ShortType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(short)0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(short){0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "short";
@@ -72,7 +72,7 @@ public class UIntType : DataType
 {
   public static readonly Func<long, Literal> Factory = l => new UIntLiteral((uint)l);
   public static readonly DataType INSTANCE = new UIntType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned int)0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned int){0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "uint";
@@ -81,7 +81,7 @@ public class IntType : DataType
 {
   public static readonly Func<long, Literal> Factory = l => new IntLiteral((int)l);
   public static readonly DataType INSTANCE = new IntType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(int)0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(int){0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "int";
@@ -90,7 +90,7 @@ public class ULongType : DataType
 {
   public static readonly Func<long, Literal> Factory = l => new ULongLiteral((ulong)l);
   public static readonly DataType INSTANCE = new ULongType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned long long)0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned long long){0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "ulong";
@@ -99,7 +99,7 @@ public class LongType : DataType
 {
   public static readonly Func<long, Literal> Factory = l => new LongLiteral(l);
   public static readonly DataType INSTANCE = new LongType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(long long)0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(long long){0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "long";
@@ -107,7 +107,7 @@ public class LongType : DataType
 public class BooleanType : DataType
 {
   public static readonly DataType INSTANCE = new BooleanType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "false");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(unsigned char){0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "boolean";
@@ -115,7 +115,7 @@ public class BooleanType : DataType
 public class FloatType : DataType
 {
   public static readonly DataType INSTANCE = new FloatType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(float)0.0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(float){0.0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "float";
@@ -123,7 +123,7 @@ public class FloatType : DataType
 public class DoubleType : DataType
 {
   public static readonly DataType INSTANCE = new DoubleType();
-  public static readonly Expression NULL = new RawExpr(INSTANCE, "(double)0.0");
+  public static readonly Expression NULL = new RawExpr(INSTANCE, "(double){0.0}");
   public override Expression GetNull() => NULL;
   public override string Stringify() => ToString();
   public override string ToString() => "double";
@@ -227,11 +227,26 @@ public class CompositeType(Composite Comp, bool Anon) : DataType
   public override string Stringify() => Comp.Name;
 }
 
+public class ErrorType : DataType
+{
+  public override string ToString() => $"error";
+  public override Expression GetNull() => new RawExpr(IntType.INSTANCE, "(int){0}");
+  public static readonly ErrorType INSTANCE = new();
+  public override string Stringify() => $"error";
+  public override bool CanAccept(DataType other)
+  {
+    if (other.Matches<AliasType>(out var alias))
+      return CanAccept(alias!.Type);
+    return other.Matches<ErrorType>();
+  }
+}
+
 public static class References {
   private static readonly List<PointerType> PointerCache = [];
   private static readonly Dictionary<string, AliasType> AliasCache = [];
   private static readonly Dictionary<string, CompositeType> StructCache = [];
   private static readonly List<FunctionType> FunctionCache = [];
+  private static readonly Dictionary<string, ErrorType> ErrorCache = [];
 
   public static DataType GetPointerType(DataType target, bool mutable)
   {

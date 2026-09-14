@@ -20,9 +20,9 @@ $export "once" errors {
           };
         }
 
-        fun static Err(Err error) : Self {
+        fun static Err(Err #error) : Self {
           return {
-            { .err = error },
+            { .err = #error },
             true
           };
         }
@@ -30,8 +30,8 @@ $export "once" errors {
       }
     }
 
-    fun static panic(Err error) {
-      @perror(error.msg);
+    fun static panic(Err #error) {
+      @perror(#error.msg);
       @exit(1);
     }
   }
