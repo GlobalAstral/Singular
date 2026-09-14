@@ -350,3 +350,17 @@ public class ErrorExpr(string Err) : Expression
   public string Err {get;} = Err;
   public DataType GetReturnType() => ErrorType.INSTANCE;
 }
+
+public class ErrorUnionSuccessExpr(ErrorUnion ErrorUnion, Expression Success) : Expression
+{
+  public ErrorUnion ErrorUnion {get;} = ErrorUnion;
+  public Expression Success {get;} = Success;
+  public DataType GetReturnType() => ErrorUnion;
+}
+
+public class ErrorUnionFailExpr(ErrorUnion ErrorUnion, Expression Fail) : Expression
+{
+  public ErrorUnion ErrorUnion {get;} = ErrorUnion;
+  public Expression Fail {get;} = Fail;
+  public DataType GetReturnType() => ErrorUnion;
+}

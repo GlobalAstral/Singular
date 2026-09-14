@@ -88,6 +88,8 @@ public partial class Parser
       bool mutable = TryConsume(Token.Get(Token.Type.MUT));
       dataType = References.GetPointerType(ParseType(), mutable);
     }
+    else if (TryConsume(Token.Get(Token.Type.EXCLAMATION)))
+      dataType = References.GetErrorUnionType(ParseType());
     else if (TryConsume(Token.Get(Token.Type.BYTE)))
       dataType = ByteType.INSTANCE;
     else if (TryConsume(Token.Get(Token.Type.CHAR)))
@@ -742,6 +744,14 @@ public partial class Parser
     
     if (check_type != null && !check_type.CanAccept(expr_type))
       Error($"Expected {check_type} got {expr_type} instead");
+
+    if (check_type != null && check_type.Matches<ErrorUnion>(out var errorUnion))
+    {
+      if (errorUnion!.Success.CanAccept(expr_type))
+        return new ErrorUnionSuccessExpr(errorUnion, expression);
+      if (expr_type.Matches<ErrorType>())
+        return new ErrorUnionFailExpr(errorUnion, expression);
+    }
 
     return expression;
   }

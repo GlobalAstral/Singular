@@ -241,12 +241,34 @@ public class ErrorType : DataType
   }
 }
 
+public class ErrorUnion(DataType Success) : DataType
+{
+  public DataType Success {get;} = Success;
+  private static string Qualify(string s) => $"EU_{s.Length}{s}";
+  public string Qualified {get;} = Qualify(Success.Stringify());
+  public override Expression GetNull() => new RawExpr(this, $"({Qualified}) {{0}}");
+  public override string ToString() => $"!{Success}";
+  public override string Stringify() => $"{Success.Stringify()}_or_error";
+  public override bool CanAccept(DataType other)
+  {
+    if (ReferenceEquals(this, other))
+      return true;
+    if (other.Matches<AliasType>(out var alias))
+      return this == other || CanAccept(alias!.Type);
+    
+    if (other.Matches<ErrorType>() || Success.CanAccept(other))
+      return true;
+
+    return this == other;
+  }
+}
+
 public static class References {
   private static readonly List<PointerType> PointerCache = [];
   private static readonly Dictionary<string, AliasType> AliasCache = [];
   private static readonly Dictionary<string, CompositeType> StructCache = [];
   private static readonly List<FunctionType> FunctionCache = [];
-  private static readonly Dictionary<string, ErrorType> ErrorCache = [];
+  private static readonly Dictionary<DataType, ErrorUnion> ErrorUnionCache = [];
 
   public static DataType GetPointerType(DataType target, bool mutable)
   {
@@ -301,5 +323,15 @@ public static class References {
       FunctionCache.Add(found);
     }
     return found;
+  }
+
+  public static DataType GetErrorUnionType(DataType success)
+  {
+    if (!ErrorUnionCache.TryGetValue(success, out var union))
+    {
+      union = new ErrorUnion(success);
+      ErrorUnionCache[success] = union;
+    }
+    return union;
   }
 }

@@ -1,42 +1,3 @@
-
-$export "once" errors {
-  extern "C" fun exit(int code);
-  extern "C" fun perror(string msg);
-
-  namespace std {
-    struct Err {
-      string msg;
-    }
-
-    $generic<T> ErrOr {
-      struct $self {
-        variant($T value, Err err) v;
-        boolean is_err;
-        
-        fun static Ok($T value) : Self {
-          return {
-            { .value = value },
-            false
-          };
-        }
-
-        fun static Err(Err #error) : Self {
-          return {
-            { .err = #error },
-            true
-          };
-        }
-
-      }
-    }
-
-    fun static panic(Err #error) {
-      @perror(#error.msg);
-      @exit(1);
-    }
-  }
-}
-
 $export "once" core {
   namespace std {
     type size_t = $__SIZE_T__;
@@ -45,16 +6,19 @@ $export "once" core {
 
 $export "once" mem {
   $import std.core;
-  $import std.errors;
 
   extern "C" fun malloc(std::size_t size) : dynamic;
 
   namespace std {
-    fun static malloc(size_t size) : $ErrOr<dynamic>  {
+    error MemoryError {
+      CannotAllocate
+    }
+    
+    fun static malloc(size_t size) : !dynamic  {
       var dynamic m = @malloc(size);
       if (isnull m)
-        return std::$ErrOr<dynamic>::Err({"Cannot allocate memory"});
-      return std::$ErrOr<dynamic>::Ok(m);
+        return ::MemoryError::CannotAllocate;
+      return m;
     }
   }
 

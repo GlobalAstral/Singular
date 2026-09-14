@@ -6,6 +6,7 @@ namespace Generator;
 
 public partial class Generator
 {
+  protected readonly HashSet<string> generatedErrorUnions = [];
   protected readonly Dictionary<string, int> errorIDs = [];
   protected bool IsMemcmpDeclared = false;
   protected string Indent() => new('\t', indentLevel);
@@ -68,6 +69,22 @@ public partial class Generator
     return comp.Name;
   }
 
+  protected string GenerateErrorUnionType(ErrorUnion errorUnion)
+  {
+    if (generatedErrorUnions.Contains(errorUnion.Qualified))
+      return errorUnion.Qualified;
+    
+    string typedef = $$"""
+    typedef struct {{errorUnion.Qualified}} {
+      int error;
+      {{GenerateType(errorUnion.Success)}} value;
+    } {{errorUnion.Qualified}};
+    """;
+    contexts.Peek()!.Prologue(typedef);
+    generatedErrorUnions.Add(errorUnion.Qualified);
+    return errorUnion.Qualified;
+  }
+
   protected string GenerateType(DataType dataType) => dataType switch
   {
     ByteType or BooleanType => "unsigned char",
@@ -87,6 +104,7 @@ public partial class Generator
     FunctionType fn => GenerateFunctionType(fn.Return, fn.Arguments, fn.Variadic),
     AliasType alias => alias.Alias,
     CompositeType comp => GenerateCompositeType(comp.Comp, comp.Anon),
+    ErrorUnion errorUnion => GenerateErrorUnionType(errorUnion),
     _ => throw new UnreachableException()
   };
 
@@ -185,6 +203,8 @@ public partial class Generator
     PostIncrement post => $"{GenerateExpression(post.Base)}{(post.Direction > 0 ? "++" : "--")}",
     BinaryExpr bin => GenerateBinary(bin.Left, bin.Right, bin.Operator),
     ErrorExpr err => $"{GenerateErrorExpr(err.Err)}",
+    ErrorUnionSuccessExpr success => $"({success.ErrorUnion.Qualified}){{.value = {GenerateExpression(success.Success)}, .error = 0}}",
+    ErrorUnionFailExpr fail => $"({fail.ErrorUnion.Qualified}){{.error = {GenerateExpression(fail.Fail)}, .value = {GenerateExpression(fail.ErrorUnion.Success.GetNull())}}}",
     _ => throw new UnreachableException()
   };
 
