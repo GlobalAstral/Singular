@@ -161,7 +161,7 @@ public partial class Generator
       return id;
     
     int hash = err.GetHashCode();
-    while (errorIDs.ContainsValue(hash))
+    while (hash == 0 || errorIDs.ContainsValue(hash))
       hash++;
     errorIDs[err] = hash;
     return hash;
