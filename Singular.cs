@@ -43,7 +43,6 @@ partial class Singular
 
     // ArgHelper argHelper = new(args);
     ArgHelper argHelper = new([
-      "--debug",
       "-kC",
       "main.sgl",
     ]);
