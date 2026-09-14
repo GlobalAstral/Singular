@@ -206,9 +206,9 @@ public partial class Parser
       currentContext.Pop();
 
       if (InScope(out var s))
-        s!.Locals.RemoveAll(v => v.Name == var.Name);
+        s!.Locals.RemoveRange(saved, s.Locals.Count - saved);
       else
-        globals.RemoveAll(v => v.Name == var.Name);
+        globals.RemoveRange(saved, globals.Count - saved);
 
       return new ForStmt(info, Init, cond, update, body);
     });
