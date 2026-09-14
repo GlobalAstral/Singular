@@ -13,9 +13,9 @@ $export "once" mem {
     error MemoryError {
       CannotAllocate
     }
-    
+
     fun static malloc(size_t size) : !dynamic  {
-      var dynamic m = @malloc(size);
+      var mut dynamic m = @malloc(size);
       if (isnull m)
         return ::MemoryError::CannotAllocate;
       return m;
