@@ -245,6 +245,8 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
         "tuple" => new(Token.Type.TUPLE, line, file),
         "isnull" => new(Token.Type.ISNULL, line, file),
         "error" => new(Token.Type.ERROR, line, file),
+        "try" => new(Token.Type.TRY, line, file),
+        "catch" => new(Token.Type.CATCH, line, file),
         _ => new Token(Token.Type.IDENTIFIER, line, file, identifier),
       };
     }

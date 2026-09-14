@@ -172,7 +172,7 @@ public partial class Parser
     {
       Token[] condition = (Token[]) TryConsumeError(Token.Get(Token.Type.PAREN_BLOCK)).value!;
       
-      int saved = InScope(out var scope) ? scope!.Locals.Count : globals.Count;
+      PushSnapshot();
 
       currentContext.Push(new LoopContext());
 
@@ -205,10 +205,7 @@ public partial class Parser
 
       currentContext.Pop();
 
-      if (InScope(out var s))
-        s!.Locals.RemoveRange(saved, s.Locals.Count - saved);
-      else
-        globals.RemoveRange(saved, globals.Count - saved);
+      PopSnapshot();
 
       return new ForStmt(info, Init, cond, update, body);
     });

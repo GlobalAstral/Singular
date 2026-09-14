@@ -11,6 +11,8 @@ public partial class Generator(Statement[] statements, int hash) : Processor<Sta
   protected uint lambdaID = 0;
   protected static readonly double RandomDouble = new Random().NextDouble();
   protected readonly int RandomizedParserHash = HashCode.Combine(hash, RandomDouble);
+  protected uint tempID = 0;
+  protected uint GenerateTempID() => tempID++;
 
   protected string GenerateLineDirective(TokenInfo info) => $"{NewLine()}#line {info.Line} \"{info.File}\"{NewLine()}";
 

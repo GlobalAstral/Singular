@@ -184,6 +184,41 @@ public partial class Generator
     errorIDs[err] = hash;
     return hash;
   }
+
+  protected string GenerateTryDefault(TryDefaultExpression tryDefault)
+  {
+    string varname = $"temp_{GenerateTempID()}";
+    string result = $$"""
+    ({
+      {{GenerateType(tryDefault.Expression.GetReturnType())}} {{varname}} = {{GenerateExpression(tryDefault.Expression)}};
+      {{varname}}.error ? {{GenerateExpression(tryDefault.Default)}} : {{varname}}.value;
+    })
+    """;
+
+    return result;
+  }
+
+  protected string GenerateTryCatch(TryCatchExpression tryCatch)
+  {
+    string varname = $"temp_{GenerateTempID()}";
+    string varname2 = $"temp_{GenerateTempID()}";
+    string result = $$"""
+    ({
+      {{GenerateVarDecl(new(new ModifierHandler().Mutable(), tryCatch.ReturnType, varname2), tryCatch.ReturnType.GetNull())}}
+      {{GenerateVarDecl(new(new ModifierHandler(), tryCatch.Expression.GetReturnType(), varname), tryCatch.Expression)}}
+      if ({{varname}}.error) {
+        {{(tryCatch.Error != null ? GenerateVarDecl(tryCatch.Error, new RawExpr(ErrorType.INSTANCE, $"{varname}.error")) : "")}}
+        {{Switch([tryCatch.Catch], ProcessOne)}}
+      } else {
+        {{varname2}} = {{varname}}.value;
+      }
+      {{varname2}};
+    })
+    """;
+
+    return result;
+  }
+
   protected string GenerateExpression(Expression expression) => expression switch
   {
     RawExpr raw => raw.Generated,
@@ -205,6 +240,8 @@ public partial class Generator
     ErrorExpr err => $"{GenerateErrorExpr(err.Err)}",
     ErrorUnionSuccessExpr success => $"({success.ErrorUnion.Qualified}){{.value = {GenerateExpression(success.Success)}, .error = 0}}",
     ErrorUnionFailExpr fail => $"({fail.ErrorUnion.Qualified}){{.error = {GenerateExpression(fail.Fail)}, .value = {GenerateExpression(fail.ErrorUnion.Success.GetNull())}}}",
+    TryDefaultExpression tryDefault => GenerateTryDefault(tryDefault),
+    TryCatchExpression tryCatch => GenerateTryCatch(tryCatch),
     _ => throw new UnreachableException()
   };
 

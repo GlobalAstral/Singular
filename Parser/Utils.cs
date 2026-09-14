@@ -727,7 +727,40 @@ public partial class Parser
       DataType? retType = typeCheckerContext.Peek();
       if ((typeCheckerContext.Count == 0 || retType == null) && IgnoringExpression == 0)
         Error("Expression is not ignored as it ought to be");
-      return new RawExpr(retType!, code);
+      expression = new RawExpr(retType!, code);
+    }
+    else if (TryConsume(Token.Get(Token.Type.TRY)))
+    {
+      Expression expr = ParseExpression(null);
+      DataType res = expr.GetReturnType();
+      if (!res.Matches(out ErrorUnion? union))
+        Error("try expression cannot be applied to a type that is not an error union");
+      if (TryConsume(Token.Get(Token.Type.DEFAULT)))
+        expression = new TryDefaultExpression(union!.Success, expr, ParseExpression(union.Success));
+      else
+      {
+        TryConsumeError(Token.Get(Token.Type.CATCH));
+        Variable? get_err()
+        {
+          if (PeekIdentifier())
+            return new Variable(new ModifierHandler(), ErrorType.INSTANCE, Mangle(SymbolType.LocalVariableDecl));
+          return null;
+        }
+        Variable? variable = get_err();
+
+        if (variable != null)
+        {
+          PushSnapshot();
+          AddVariable(variable);
+        }
+
+        Statement body = ProcessOne();
+
+        if (variable != null)
+          PopSnapshot();
+
+        expression = new TryCatchExpression(union!.Success, expr, variable, body);
+      }
     }
     else Error("Expected Expression");
 
@@ -868,4 +901,21 @@ public partial class Parser
     processes.Add(new ParsingProcess(token, consume, action));
   }
   protected void Semi() => TryConsumeError(Token.Get(Token.Type.SEMI));
+
+  protected readonly Stack<(List<Variable> vars, int saved)> saved_snapshots = [];
+
+  protected void PushSnapshot()
+  {
+    if (InScope(out var ctx))
+    {
+      saved_snapshots.Push((ctx!.Locals, ctx.Locals.Count));
+      return;
+    }
+    saved_snapshots.Push((globals, globals.Count));
+  }
+  protected void PopSnapshot()
+  {
+    (List<Variable> current, int saved) = saved_snapshots.Pop();
+    current.RemoveRange(saved, current.Count - saved);
+  }
 }

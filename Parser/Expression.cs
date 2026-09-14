@@ -364,3 +364,20 @@ public class ErrorUnionFailExpr(ErrorUnion ErrorUnion, Expression Fail) : Expres
   public Expression Fail {get;} = Fail;
   public DataType GetReturnType() => ErrorUnion;
 }
+
+public class TryDefaultExpression(DataType returnType, Expression expression, Expression def) : Expression
+{
+  public DataType ReturnType {get;} = returnType;
+  public Expression Expression {get;} = expression;
+  public Expression Default {get;} = def;
+  public DataType GetReturnType() => ReturnType;
+}
+
+public class TryCatchExpression(DataType returnType, Expression expression, Variable? err, Statement cat) : Expression
+{
+  public DataType ReturnType {get;} = returnType;
+  public Expression Expression {get;} = expression;
+  public Variable? Error {get;} = err;
+  public Statement Catch {get;} = cat;
+  public DataType GetReturnType() => ReturnType;
+}

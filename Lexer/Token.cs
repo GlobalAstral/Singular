@@ -11,7 +11,7 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     GENERIC_SLOT,
     
     MUT, CURLY_BLOCK, STATIC, PAREN_BLOCK, RETURN, SQUARE_BLOCK, ANGLE_BLOCK, NAMESPACE, VAR, TYPE, DEFER, IF, ELSE, INFER, WHILE, DO, LOOP, FOR, IN,
-    BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM, ERROR,
+    BREAK, CONTINUE, SWITCH, CASE, DEFAULT, RAWC, EXTERN, ENUM, ERROR, TRY, CATCH,
     
     EXPORT, IMPORT, CINCLUDE, INCLUDE_STR, INCLUDE_BYTES, MACRO, STRINGIFY, CONCAT, DEL, OPTIONAL, GENERIC,
     
@@ -112,6 +112,8 @@ public struct Token(Token.Type type, TokenInfo info, object? value)
     [Type.ISNULL] = new(Type.ISNULL),
     [Type.AT] = new(Type.AT),
     [Type.ERROR] = new(Type.ERROR),
+    [Type.TRY] = new(Type.TRY),
+    [Type.CATCH] = new(Type.CATCH),
   };
 
   public static Token Get(Type type) => INSTANCES[type];
