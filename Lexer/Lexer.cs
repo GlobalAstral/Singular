@@ -18,7 +18,32 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
   }
   public override Token ProcessOne()
   { 
-    if (TryConsume('\n'))
+    if (TryConsume('/'))
+    {
+      if (TryConsume('/'))
+      {
+        comment = true;
+        return new();
+      }
+      if (TryConsume('*'))
+      {
+        multicomment = true;
+        return new();
+      }
+      return new Token(Token.Type.SLASH, line, file);
+    }
+
+    else if (TryConsume('*'))
+    {
+      if (TryConsume('/'))
+      {
+        multicomment = false;
+        return new();
+      }
+      return new Token(Token.Type.STAR, line, file);
+    }
+    
+    else if (TryConsume('\n'))
     {
       line++;
       comment = false;
@@ -58,16 +83,6 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
     
     else if (TryConsume(';'))
       return new Token(Token.Type.SEMI, line, file);
-
-    else if (TryConsume('*'))
-    {
-      if (TryConsume('/'))
-      {
-        multicomment = false;
-        return new();
-      }
-      return new Token(Token.Type.STAR, line, file);
-    }
     else if (TryConsume('='))
       return new Token(Token.Type.EQUALS_SYMBOL, line, file);
     else if (TryConsume('.'))
@@ -84,20 +99,6 @@ public class Lexer(char[] content, string file) : Processor<char, Token>(content
       return new Token(Token.Type.AMPER, line, file);
     else if (TryConsume('?'))
       return new Token(Token.Type.QUESTION, line, file);
-    else if (TryConsume('/'))
-    {
-      if (TryConsume('/'))
-      {
-        comment = true;
-        return new();
-      }
-      if (TryConsume('*'))
-      {
-        multicomment = true;
-        return new();
-      }
-      return new Token(Token.Type.SLASH, line, file);
-    }
     else if (TryConsume('%'))
       return new Token(Token.Type.PERCENT, line, file);
     else if (TryConsume('^'))
