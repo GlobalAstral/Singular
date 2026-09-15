@@ -605,7 +605,7 @@ public partial class Parser
     Expression right = ParseExpression(null);
     Expression result = new BinaryExpr(left, right, op);
 
-    if (right is BinaryExpr rbin && BinaryExpr.Precedence(op) > BinaryExpr.Precedence(rbin.Operator))
+    if (op != BinaryExpr.BinaryOp.Assign && right is BinaryExpr rbin && BinaryExpr.Precedence(op) > BinaryExpr.Precedence(rbin.Operator))
     {
       Expression l = new BinaryExpr(left, rbin.Left, op);
       result = new BinaryExpr(l, rbin.Right, rbin.Operator);
