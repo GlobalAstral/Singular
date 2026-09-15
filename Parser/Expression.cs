@@ -386,6 +386,11 @@ public class TryCatchExpression(DataType returnType, Expression expression, Vari
 
 public partial class Parser
 {
+  private enum ExpressionKind
+  {
+    FULL,
+    BASE,
+  }
   private bool PeekUnary() => (Peek(Token.Get(Token.Type.PLUS)) && Peek(Token.Get(Token.Type.PLUS), 1)) || Peek(Token.Get(Token.Type.MINUS)) ||
     Peek(Token.Get(Token.Type.EXCLAMATION)) || Peek(Token.Get(Token.Type.TILDE)) || Peek(Token.Get(Token.Type.STAR)) || Peek(Token.Get(Token.Type.AMPER)) ||
     Peek(Token.Get(Token.Type.SIZEOF)) || Peek(Token.Get(Token.Type.ISNULL));
@@ -421,7 +426,7 @@ public partial class Parser
       throw new Exception("Expected Unary Operator");
     
     extendedExpr = false;
-    Expression e = ParseExpression(null);
+    Expression e = ParseExpression(null, ExpressionKind.BASE);
     UnaryExpression r = new(e, (UnaryExpression.UnaryOperator)op);
     return r;
   }
@@ -528,10 +533,6 @@ public partial class Parser
       return new PostIncrement(@base, -1);
     }
 
-    BinaryExpr.BinaryOp? op = PeekBinary();
-    if (op != null)
-      return ParseBinary(@base, (BinaryExpr.BinaryOp) op);
-
     return null;
   }
 
@@ -619,41 +620,34 @@ public partial class Parser
     return result;
   }
 
-  private Expression ParseExpression()
+  private Expression ParseBaseExpr()
   {
-    Expression? expression = null;
     if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
-      expression = Switch((Token[])Consume().value!, ParseExpression);
-    else if (PeekUnary())
-      expression = ParseUnary();
-    else if (Peek(Token.Get(Token.Type.LITERAL)))
-    {
-      string lit = (string)Consume().value!;
-      expression = new LiteralExpr(Literal.ParseLiteral(lit));
-    }
-    else if (TryConsume(Token.Get(Token.Type.NULL)))
+      return Switch((Token[])Consume().value!, () => ParseExpression(null));
+    if (PeekUnary())
+      return ParseUnary();
+    if (Peek(Token.Get(Token.Type.LITERAL)))
+      return new LiteralExpr(Literal.ParseLiteral((string)Consume().value!));
+    if (TryConsume(Token.Get(Token.Type.NULL)))
     {
       if (typeCheckerContext.Count == 0) Error("Cannot infer type of null value");
-      expression = typeCheckerContext.Peek()!.GetNull();
+      return typeCheckerContext.Peek()!.GetNull();
     }
-    else if (PeekIdentifier())
+    if (PeekIdentifier())
     {
       string name = Mangle(SymbolType.Variable);
       Function? fn = functions.Find(f => f.Name == name);
 
       if (declared_errors.Contains(name))
-        expression = new ErrorExpr(name);
-      else if (fn != null)
-        expression = new FunctionPointer(fn);
-      else
-      {
-        Variable? variable = SearchVariable(name);
-        if (variable == null)
-          Error($"Variable {name} does not exist");
-        expression = new IdentifierExpression(variable);
-      }
+        return new ErrorExpr(name);
+      if (fn != null)
+        return new FunctionPointer(fn);
+      Variable? variable = SearchVariable(name);
+      if (variable == null)
+        Error($"Variable {name} does not exist");
+      return new IdentifierExpression(variable);
     }
-    else if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
+    if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
     {
       Token[] body = (Token[]) Consume().value!;
       List<Expression> expressions = [];
@@ -672,9 +666,9 @@ public partial class Parser
       if (arr.Size != null)
         Error("Cannot specify array size when initializing it with an ArrayLiteral");
       arr.Size = new LiteralExpr(new ULongLiteral((ulong) expressions.Count));
-      expression = new ArrayLiteral(locked_type!, [.. expressions]);
+      return new ArrayLiteral(locked_type!, [.. expressions]);
     }
-    else if (Peek(Token.Get(Token.Type.CURLY_BLOCK)))
+    if (Peek(Token.Get(Token.Type.CURLY_BLOCK)))
     {
       Token[] body = (Token[]) Consume().value!;
       DataType? required = typeCheckerContext.Peek();
@@ -708,61 +702,65 @@ public partial class Parser
         }
       }, Token.Get(Token.Type.COMMA));
 
-      expression = new CompositeLiteral(composite, keyValues);
+      return new CompositeLiteral(composite, keyValues);
     }
-    else if (TryConsume(Token.Get(Token.Type.FUN)))
+    if (TryConsume(Token.Get(Token.Type.FUN)))
     {
       (Variable[] arguments, bool variadic) = ParseArgs();
       DataType? retType = null;
       if (TryConsume(Token.Get(Token.Type.COLON)))
         retType = ParseType();
       Statement body = ProcessOne();
-      expression = new Lambda(arguments, retType, body, variadic);
+      return new Lambda(arguments, retType, body, variadic);
     }
-    else if (Peek(Token.Get(Token.Type.RAWC)))
+    if (Peek(Token.Get(Token.Type.RAWC)))
     {
       string code = (string) Consume().value!;
       DataType? retType = typeCheckerContext.Peek();
       if ((typeCheckerContext.Count == 0 || retType == null) && IgnoringExpression == 0)
         Error("Expression is not ignored as it ought to be");
-      expression = new RawExpr(retType!, code);
+      return new RawExpr(retType!, code);
     }
-    else if (TryConsume(Token.Get(Token.Type.TRY)))
+    if (TryConsume(Token.Get(Token.Type.TRY)))
     {
       TryingExpression++;
-      Expression expr = ParseExpression(null);
+      Expression expr = ParseExpression(null, ExpressionKind.BASE);
       TryingExpression--;
       DataType res = expr.GetReturnType();
       if (!res.Matches(out ErrorUnion? union))
         Error("try expression cannot be applied to a type that is not an error union");
       if (TryConsume(Token.Get(Token.Type.DEFAULT)))
-        expression = new TryDefaultExpression(union!.Success, expr, ParseExpression(union.Success));
-      else
+        return new TryDefaultExpression(union!.Success, expr, ParseExpression(union.Success));
+
+      TryConsumeError(Token.Get(Token.Type.CATCH));
+      Variable? get_err()
       {
-        TryConsumeError(Token.Get(Token.Type.CATCH));
-        Variable? get_err()
-        {
-          if (PeekIdentifier())
-            return new Variable(new ModifierHandler(), ErrorType.INSTANCE, Mangle(SymbolType.LocalVariableDecl));
-          return null;
-        }
-        Variable? variable = get_err();
-
-        if (variable != null)
-        {
-          PushSnapshot();
-          AddVariable(variable);
-        }
-
-        Statement body = ProcessOne();
-
-        if (variable != null)
-          PopSnapshot();
-
-        expression = new TryCatchExpression(union!.Success, expr, variable, body);
+        if (PeekIdentifier())
+          return new Variable(new ModifierHandler(), ErrorType.INSTANCE, Mangle(SymbolType.LocalVariableDecl));
+        return null;
       }
+      Variable? variable = get_err();
+
+      if (variable != null)
+      {
+        PushSnapshot();
+        AddVariable(variable);
+      }
+
+      Statement body = ProcessOne();
+
+      if (variable != null)
+        PopSnapshot();
+
+      return new TryCatchExpression(union!.Success, expr, variable, body);
     }
-    else Error("Expected Expression");
+    Error("Expected Expression");
+    throw new UnreachableException();
+  }
+
+  private Expression ParseExpression(ExpressionKind kind = ExpressionKind.FULL)
+  {
+    Expression expression = ParseBaseExpr();
 
     Expression? result = ParsePostExpression(expression);
     while (result != null)
@@ -770,6 +768,10 @@ public partial class Parser
       expression = result;
       result = ParsePostExpression(expression);
     }
+
+    BinaryExpr.BinaryOp? op = PeekBinary();
+    if (kind == ExpressionKind.FULL && op != null)
+      expression = ParseBinary(expression, (BinaryExpr.BinaryOp) op);
     
     DataType expr_type = expression!.GetReturnType();
     DataType? check_type = typeCheckerContext.Peek();

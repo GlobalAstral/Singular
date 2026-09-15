@@ -365,10 +365,10 @@ public partial class Parser
     return new Group(info, [.. group]);
   }
 
-  private Expression ParseExpression(DataType? required)
+  private Expression ParseExpression(DataType? required, ExpressionKind kind = ExpressionKind.FULL)
   {
     typeCheckerContext.Push(required);
-    Expression ret = ParseExpression();
+    Expression ret = ParseExpression(kind);
     typeCheckerContext.Pop();
     return ret;
   }
