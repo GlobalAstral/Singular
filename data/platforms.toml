@@ -1,43 +1,61 @@
 
 [win_x86]
   __SIZE_T__ = "uint"
+  __PTRDIFF_T__ = "int"
 [win_arm]
   __SIZE_T__ = "uint"
+  __PTRDIFF_T__ = "int"
 [win_x64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"
 [win_arm64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"
 
 
 [linux_arm]
   __SIZE_T__ = "uint"
+  __PTRDIFF_T__ = "int"
 [linux_rv32]
   __SIZE_T__ = "uint"
+  __PTRDIFF_T__ = "int"
 [linux_x86]
   __SIZE_T__ = "uint"
+  __PTRDIFF_T__ = "int"
 [linux_arm64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"
 [linux_rv64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"
 [linux_x64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"
 
 
 [macos_x86]
   __SIZE_T__ = "uint"
+  __PTRDIFF_T__ = "int"
 [macos_x64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"
 [macos_arm64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"
 
 
 [freebsd_x64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"
 [freebsd_arm64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"
 [freebsd_x86]
   __SIZE_T__ = "uint"
+  __PTRDIFF_T__ = "int"
 [freebsd_arm]
   __SIZE_T__ = "uint"
+  __PTRDIFF_T__ = "int"
 [freebsd_rv64]
   __SIZE_T__ = "ulong"
+  __PTRDIFF_T__ = "long"

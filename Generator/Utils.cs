@@ -153,7 +153,7 @@ public partial class Generator
   protected string GenerateBinary(Expression left, Expression right, BinaryExpr.BinaryOp op) => op switch
   {
     BinaryExpr.BinaryOp.Add => $"{GenerateExpression(left)} + {GenerateExpression(right)}",
-    BinaryExpr.BinaryOp.Sub => $"{GenerateExpression(left)} + {GenerateExpression(right)}",
+    BinaryExpr.BinaryOp.Sub => $"{GenerateExpression(left)} - {GenerateExpression(right)}",
     BinaryExpr.BinaryOp.Mul => $"{GenerateExpression(left)} * {GenerateExpression(right)}",
     BinaryExpr.BinaryOp.Div => $"{GenerateExpression(left)} / {GenerateExpression(right)}",
     BinaryExpr.BinaryOp.Mod => $"{GenerateExpression(left)} % {GenerateExpression(right)}",

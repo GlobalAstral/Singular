@@ -1,6 +1,8 @@
 $export "once" core {
   namespace std {
     type size_t = $__SIZE_T__;
+    type intptr_t = size_t;
+    type ptrdiff_t = $__PTRDIFF_T__;
   }
 }
 

@@ -279,7 +279,7 @@ public class BinaryExpr : Expression
   {
     DataType LeftType = Left.GetReturnType();
     DataType RightType = Right.GetReturnType();
-    if ((!DataType.IsNumeric(LeftType) && !LeftType.Matches<PointerType>()) || (!DataType.IsNumeric(RightType) && !RightType.Matches<PointerType>()))
+    if ((!DataType.IsNumeric(LeftType) && !LeftType.Matches<PointerType>() && !LeftType.Matches<DynamicType>()) || (!DataType.IsNumeric(RightType) && !RightType.Matches<PointerType>() && !RightType.Matches<DynamicType>()))
       throw new Exception("Cannot do arithmetics with non-numeric types and non-pointer types");
     if (!LeftType.CanAccept(RightType))
       throw new Exception("Cannot do arithmetics with non-compatible types");

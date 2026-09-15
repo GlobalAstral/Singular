@@ -12,7 +12,7 @@ partial class Singular
       main(args);
     } catch (Exception e)
     {
-      Logger.Debug($"ERROR: {e}");
+      Logger.Log($"ERROR: {e}");
       Logger.Finalize();
     }
     finally
