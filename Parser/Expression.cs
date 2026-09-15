@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Text;
+using Lexer;
 
 namespace Parser;
 
@@ -380,4 +382,412 @@ public class TryCatchExpression(DataType returnType, Expression expression, Vari
   public Variable? Error {get;} = err;
   public Statement Catch {get;} = cat;
   public DataType GetReturnType() => ReturnType;
+}
+
+public partial class Parser
+{
+  private bool PeekUnary() => (Peek(Token.Get(Token.Type.PLUS)) && Peek(Token.Get(Token.Type.PLUS), 1)) || Peek(Token.Get(Token.Type.MINUS)) ||
+    Peek(Token.Get(Token.Type.EXCLAMATION)) || Peek(Token.Get(Token.Type.TILDE)) || Peek(Token.Get(Token.Type.STAR)) || Peek(Token.Get(Token.Type.AMPER)) ||
+    Peek(Token.Get(Token.Type.SIZEOF)) || Peek(Token.Get(Token.Type.ISNULL));
+
+  private UnaryExpression ParseUnary()
+  {
+    UnaryExpression.UnaryOperator? op = null;
+    if (Peek(Token.Get(Token.Type.PLUS)) && Peek(Token.Get(Token.Type.PLUS), 1))
+    {
+      Consume(2);
+      op = UnaryExpression.UnaryOperator.PreInc;
+    }
+    else if (TryConsume(Token.Get(Token.Type.MINUS))) {
+      if (TryConsume(Token.Get(Token.Type.MINUS)))
+        op = UnaryExpression.UnaryOperator.PreDec;
+      else
+        op = UnaryExpression.UnaryOperator.Minus;
+    }
+    else if (TryConsume(Token.Get(Token.Type.EXCLAMATION)))
+      op = UnaryExpression.UnaryOperator.Not;
+    else if (TryConsume(Token.Get(Token.Type.TILDE)))
+      op = UnaryExpression.UnaryOperator.BitNot;
+    else if (TryConsume(Token.Get(Token.Type.STAR)))
+      op = UnaryExpression.UnaryOperator.Deref;
+    else if (TryConsume(Token.Get(Token.Type.AMPER)))
+      op = TryConsume(Token.Get(Token.Type.MUT)) ? UnaryExpression.UnaryOperator.MutRef : UnaryExpression.UnaryOperator.Ref;
+    else if (TryConsume(Token.Get(Token.Type.SIZEOF)))
+      op = UnaryExpression.UnaryOperator.Sizeof;
+    else if (TryConsume(Token.Get(Token.Type.ISNULL)))
+      op = UnaryExpression.UnaryOperator.IsNull;
+
+    if (op == null)
+      throw new Exception("Expected Unary Operator");
+    
+    extendedExpr = false;
+    Expression e = ParseExpression(null);
+    UnaryExpression r = new(e, (UnaryExpression.UnaryOperator)op);
+    return r;
+  }
+
+  private Expression? ParsePostExpression(Expression @base)
+  {
+    if (!extendedExpr)
+    {
+      extendedExpr = true;
+      return null;
+    }
+
+    DataType baseType = @base.GetReturnType();
+
+    if (TryConsume(Token.Get(Token.Type.DOT)))
+    {
+      if (!baseType.Matches<CompositeType>() && !(baseType.Matches<PointerType>(out var ptr) && ptr!.Target.Matches<CompositeType>())) Error("Cannot access member of non composite or composite pointer type");
+      CompositeType type = baseType.Matches<PointerType>(out var p) ? (CompositeType) p!.Target : (CompositeType) baseType;
+      string name = NoMangle();
+      Variable? field = type.Comp.Fields.Find(f => f.Name == name);
+      if (field == null) Error($"{type.Comp.Name} does not have a member named {name}");
+      return new MemberAccess(@base, field);
+    }
+
+    if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
+    {
+      DataType target;
+      if (baseType.Matches<ArrayType>(out var arr))
+        target = arr!.Elements;
+      else if (baseType.Matches<PointerType>(out var ptr))
+        target = ptr!.Target;
+      else if (baseType.Matches<StringType>())
+        target = CharType.INSTANCE;
+      else
+      {
+        Error("Cannot index non-array type or non-pointer type or non-string type");
+        throw new UnreachableException();
+      }
+      Token[] body = (Token[]) Consume().value!;
+      Expression index = Switch(body, () => ParseExpression(ULongType.INSTANCE));
+      return new IndexExpr(@base, index, target);
+    }
+
+    if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
+    {
+      if (!baseType.Matches<FunctionType>())
+        Error("Cannot call a non-function type");
+      FunctionType functionType = (FunctionType) baseType;
+      Token[] body = (Token[]) Consume().value!;
+
+      List<Expression> values = [];
+
+      int argIndex = 0;
+      Switch(body, () =>
+      {
+        if (!functionType.Variadic && argIndex >= functionType.Arguments.Length)
+          Error($"Invalid function arguments. Provided {argIndex+1} Expected {functionType.Arguments.Length}");
+        DataType? type = argIndex < functionType.Arguments.Length ? functionType.Arguments[argIndex] : null;
+        values.Add(ParseExpression(type));
+        argIndex++;
+      }, Token.Get(Token.Type.COMMA));
+      
+      if (values.Count < functionType.Arguments.Length)
+        Error($"Invalid function arguments. Provided {values.Count} Expected {functionType.Arguments.Length}");
+      
+      if (functionType.Return == null && IgnoringExpression == 0)
+        Error("Not returned value not ignored as it ought to be");
+      
+      return new FunctionCall(@base, [.. values], functionType.Return!);
+    }
+
+    if (TryConsume(Token.Get(Token.Type.AS)))
+    {
+      DataType type = ParseType();
+      return new Cast(@base, type);
+    }
+
+    if (TryConsume(Token.Get(Token.Type.BITCAST)))
+    {
+      DataType type = ParseType();
+      return new BitCast(@base, type);
+    }
+
+    if (TryConsume(Token.Get(Token.Type.QUESTION)))
+    {
+      if (!baseType.Matches<BooleanType>()) Error("Condition cannot be a non-boolean type");
+      Expression success = ParseExpression(null);
+      TryConsumeError(Token.Get(Token.Type.COLON));
+      Expression fail = ParseExpression(success.GetReturnType());
+      return new TernaryOperator(@base, success, fail);
+    }
+
+    if (Peek(Token.Get(Token.Type.PLUS)) && Peek(Token.Get(Token.Type.PLUS), 1)) {
+      Consume(2);
+      if (!DataType.IsNumeric(baseType))
+        Error("Cannot use a numeric operator on a non-numeric type");
+      return new PostIncrement(@base, 1);
+    }
+
+    if (Peek(Token.Get(Token.Type.MINUS)) && Peek(Token.Get(Token.Type.MINUS), 1)) {
+      Consume(2);
+      if (!DataType.IsNumeric(baseType))
+        Error("Cannot use a numeric operator on a non-numeric type");
+      return new PostIncrement(@base, -1);
+    }
+
+    BinaryExpr.BinaryOp? op = PeekBinary();
+    if (op != null)
+      return ParseBinary(@base, (BinaryExpr.BinaryOp) op);
+
+    return null;
+  }
+
+  private BinaryExpr.BinaryOp? PeekBinary()
+  {
+    if (TryConsume(Token.Get(Token.Type.PLUS)))
+      return BinaryExpr.BinaryOp.Add;
+    if (TryConsume(Token.Get(Token.Type.MINUS)))
+      return BinaryExpr.BinaryOp.Sub;
+    if (TryConsume(Token.Get(Token.Type.STAR)))
+      return BinaryExpr.BinaryOp.Mul;
+    if (TryConsume(Token.Get(Token.Type.SLASH)))
+      return BinaryExpr.BinaryOp.Div;
+    if (TryConsume(Token.Get(Token.Type.PERCENT)))
+      return BinaryExpr.BinaryOp.Mod;
+    if (TryConsume(Token.Get(Token.Type.AMPER)))
+    {
+      if (TryConsume(Token.Get(Token.Type.AMPER)))
+        return BinaryExpr.BinaryOp.And;
+      return BinaryExpr.BinaryOp.BitAnd;
+    }
+    if (TryConsume(Token.Get(Token.Type.PIPE)))
+    {
+      if (TryConsume(Token.Get(Token.Type.PIPE)))
+        return BinaryExpr.BinaryOp.Or;
+      return BinaryExpr.BinaryOp.BitOr;
+    }
+    if (TryConsume(Token.Get(Token.Type.CARET)))
+      return BinaryExpr.BinaryOp.BitXor;
+    if (TryConsume(Token.Get(Token.Type.LANGLE)))
+    {
+      if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
+        return BinaryExpr.BinaryOp.LessEqual;
+      if (TryConsume(Token.Get(Token.Type.LANGLE)))
+        return BinaryExpr.BinaryOp.Shl;
+      return BinaryExpr.BinaryOp.Less;
+    }
+    if (TryConsume(Token.Get(Token.Type.RANGLE)))
+    {
+      if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
+        return BinaryExpr.BinaryOp.GreaterEqual;
+      if (TryConsume(Token.Get(Token.Type.RANGLE)))
+        return BinaryExpr.BinaryOp.Shr;
+      return BinaryExpr.BinaryOp.Greater;
+    }
+    if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
+    {
+      if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
+        return BinaryExpr.BinaryOp.Equals;
+      return BinaryExpr.BinaryOp.Assign;
+    }
+    if (Peek(Token.Get(Token.Type.EXCLAMATION)) && Peek(Token.Get(Token.Type.EQUALS_SYMBOL), 1))
+    {
+      Consume(2);
+      return BinaryExpr.BinaryOp.NotEquals;
+    }
+    
+    return null;
+  }
+
+  private Expression ParseBinary(Expression left, BinaryExpr.BinaryOp op)
+  {
+    bool compound = false;
+    if (TryConsume(Token.Get(Token.Type.EQUALS_SYMBOL)))
+    {
+      if (!BinaryExpr.IsBinaryOpAssignable(op)) Error($"Cannot compound operator {op} into an assignment");
+      compound = true;
+    }
+
+    Expression right = ParseExpression(null);
+    Expression result = new BinaryExpr(left, right, op);
+
+    if (right is BinaryExpr rbin && BinaryExpr.Precedence(op) > BinaryExpr.Precedence(rbin.Operator))
+    {
+      Expression l = new BinaryExpr(left, rbin.Left, op);
+      result = new BinaryExpr(l, rbin.Right, rbin.Operator);
+    }
+
+    if (compound && BinaryExpr.IsNotLValue(left))
+      Error($"{left} is not a modifiable lvalue");
+
+    if (compound)
+      result = new BinaryExpr(left, result, BinaryExpr.BinaryOp.Assign);
+
+    return result;
+  }
+
+  private Expression ParseExpression()
+  {
+    Expression? expression = null;
+    if (Peek(Token.Get(Token.Type.PAREN_BLOCK)))
+      expression = Switch((Token[])Consume().value!, ParseExpression);
+    else if (PeekUnary())
+      expression = ParseUnary();
+    else if (Peek(Token.Get(Token.Type.LITERAL)))
+    {
+      string lit = (string)Consume().value!;
+      expression = new LiteralExpr(Literal.ParseLiteral(lit));
+    }
+    else if (TryConsume(Token.Get(Token.Type.NULL)))
+    {
+      if (typeCheckerContext.Count == 0) Error("Cannot infer type of null value");
+      expression = typeCheckerContext.Peek()!.GetNull();
+    }
+    else if (PeekIdentifier())
+    {
+      string name = Mangle(SymbolType.Variable);
+      Function? fn = functions.Find(f => f.Name == name);
+
+      if (declared_errors.Contains(name))
+        expression = new ErrorExpr(name);
+      else if (fn != null)
+        expression = new FunctionPointer(fn);
+      else
+      {
+        Variable? variable = SearchVariable(name);
+        if (variable == null)
+          Error($"Variable {name} does not exist");
+        expression = new IdentifierExpression(variable);
+      }
+    }
+    else if (Peek(Token.Get(Token.Type.SQUARE_BLOCK)))
+    {
+      Token[] body = (Token[]) Consume().value!;
+      List<Expression> expressions = [];
+      DataType? locked_type = typeCheckerContext.Peek();
+      if (locked_type == null)  
+        Error("Cannot infer type from Array Literal");
+      if (locked_type is not ArrayType)
+        Error("Cannot initialize non-array type with ArrayLiteral");
+      ArrayType arr = (locked_type as ArrayType)!;
+      locked_type = arr.Elements;
+      Switch(body, () =>
+      {
+        Expression e = ParseExpression(locked_type);
+        expressions.Add(e);
+      }, Token.Get(Token.Type.COMMA));
+      if (arr.Size != null)
+        Error("Cannot specify array size when initializing it with an ArrayLiteral");
+      arr.Size = new LiteralExpr(new ULongLiteral((ulong) expressions.Count));
+      expression = new ArrayLiteral(locked_type!, [.. expressions]);
+    }
+    else if (Peek(Token.Get(Token.Type.CURLY_BLOCK)))
+    {
+      Token[] body = (Token[]) Consume().value!;
+      DataType? required = typeCheckerContext.Peek();
+      if (required == null || !required.Matches<CompositeType>()) Error($"Cannot initialize a non-composite type to a composite literal value");
+
+      CompositeType composite = (CompositeType) required;
+      
+      bool named = false;
+      int field_index = 0;
+      Dictionary<string, Expression> keyValues = [];
+      
+      Switch(body, () =>
+      {
+        if (TryConsume(Token.Get(Token.Type.DOT)))
+        {
+          named = true;
+          string ident = NoMangle();
+          TryConsumeError(Token.Get(Token.Type.EQUALS_SYMBOL));
+          Variable? found = composite.Comp.Fields.Find(v => v.Name == ident);
+          if (found == null) Error($"Type {composite} has no field named {ident}");
+          Expression e = ParseExpression(found.Type);
+          keyValues[ident] = e;
+        }
+        else
+        {
+          if (named) Error("Cannot mix named and unnamed initialization");
+          if (field_index >= composite.Comp.Fields.Count) Error("Too many values for initialization");
+          Variable variable = composite.Comp.Fields[field_index++];
+          Expression e = ParseExpression(variable.Type);
+          keyValues[variable.Name] = e;
+        }
+      }, Token.Get(Token.Type.COMMA));
+
+      expression = new CompositeLiteral(composite, keyValues);
+    }
+    else if (TryConsume(Token.Get(Token.Type.FUN)))
+    {
+      (Variable[] arguments, bool variadic) = ParseArgs();
+      DataType? retType = null;
+      if (TryConsume(Token.Get(Token.Type.COLON)))
+        retType = ParseType();
+      Statement body = ProcessOne();
+      expression = new Lambda(arguments, retType, body, variadic);
+    }
+    else if (Peek(Token.Get(Token.Type.RAWC)))
+    {
+      string code = (string) Consume().value!;
+      DataType? retType = typeCheckerContext.Peek();
+      if ((typeCheckerContext.Count == 0 || retType == null) && IgnoringExpression == 0)
+        Error("Expression is not ignored as it ought to be");
+      expression = new RawExpr(retType!, code);
+    }
+    else if (TryConsume(Token.Get(Token.Type.TRY)))
+    {
+      TryingExpression++;
+      Expression expr = ParseExpression(null);
+      TryingExpression--;
+      DataType res = expr.GetReturnType();
+      if (!res.Matches(out ErrorUnion? union))
+        Error("try expression cannot be applied to a type that is not an error union");
+      if (TryConsume(Token.Get(Token.Type.DEFAULT)))
+        expression = new TryDefaultExpression(union!.Success, expr, ParseExpression(union.Success));
+      else
+      {
+        TryConsumeError(Token.Get(Token.Type.CATCH));
+        Variable? get_err()
+        {
+          if (PeekIdentifier())
+            return new Variable(new ModifierHandler(), ErrorType.INSTANCE, Mangle(SymbolType.LocalVariableDecl));
+          return null;
+        }
+        Variable? variable = get_err();
+
+        if (variable != null)
+        {
+          PushSnapshot();
+          AddVariable(variable);
+        }
+
+        Statement body = ProcessOne();
+
+        if (variable != null)
+          PopSnapshot();
+
+        expression = new TryCatchExpression(union!.Success, expr, variable, body);
+      }
+    }
+    else Error("Expected Expression");
+
+    Expression? result = ParsePostExpression(expression);
+    while (result != null)
+    {
+      expression = result;
+      result = ParsePostExpression(expression);
+    }
+    
+    DataType expr_type = expression!.GetReturnType();
+    DataType? check_type = typeCheckerContext.Peek();
+
+    if (expr_type.Matches<ErrorUnion>() && TryingExpression == 0)
+      Warn("Returned error union not handled as it should be");
+    
+    if (check_type != null && !check_type.CanAccept(expr_type))
+      Error($"Expected {check_type} got {expr_type} instead");
+
+    if (check_type != null && check_type.Matches<ErrorUnion>(out var errorUnion))
+    {
+      if (errorUnion!.Success.CanAccept(expr_type))
+        return new ErrorUnionSuccessExpr(errorUnion, expression);
+      if (expr_type.Matches<ErrorType>())
+        return new ErrorUnionFailExpr(errorUnion, expression);
+    }
+
+    return expression;
+  }
 }
